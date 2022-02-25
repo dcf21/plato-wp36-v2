@@ -1,0 +1,48 @@
+{
+  "job_name": "test730_psls_synthesise_earth",
+  "clean_up": 0,
+  "task_list": [
+    {
+      "task": "psls_synthesise",
+      "target": {
+        "filename": "test730_6earth_psls.gz",
+        "source": "archive"
+      },
+      "specs": {
+        "duration": 730,
+        "planet_radius": "6*Rearth",
+        "orbital_period": 75,
+        "semi_major_axis": 1,
+        "orbital_angle": 0, "enable_systematics": 1
+      }
+    },
+    {
+      "task": "batman_synthesise",
+      "target": {
+        "filename": "test730_6earth_clean.gz",
+        "source": "archive"
+      },
+      "specs": {
+        "duration": 730,
+        "planet_radius": "6*Rearth",
+        "orbital_period": 75,
+        "semi_major_axis": 1,
+        "orbital_angle": 0
+      }
+    },
+    {
+      "task": "verify",
+      "source": {
+        "filename": "test730_6earth_clean.gz",
+        "source": "archive"
+      }
+    },
+    {
+      "task": "verify",
+      "source": {
+        "filename": "test730_6earth_psls.gz",
+        "source": "archive"
+      }
+    }
+  ]
+}

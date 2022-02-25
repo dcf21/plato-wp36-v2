@@ -1,0 +1,52 @@
+{
+  "job_name": "earth_vs_size_batman",
+  "iterations": [
+    {
+      "name": "tda",
+      "values": ["tls", "bls_reference"]
+    },
+    {
+      "name": "cadence",
+      "values": [900, 25]
+    },
+    {
+      "name": "size",
+      "log_range": [
+        "Rearth/4",
+        "Rearth*4",
+        "10"
+      ]
+    }
+  ],
+  "task_list": [
+    {
+      "task": "batman_synthesise",
+      "target": {
+        "filename": "evsize_batman_${index}.gz"
+      },
+      "specs": {
+        "duration": 730,
+        "planet_radius": "${size}",
+        "orbital_period": 240,
+        "semi_major_axis": 1,
+        "orbital_angle": 0,
+        "noise": "plato_noise",
+        "sampling_cadence": "${cadence}"
+      }
+    },
+    {
+      "task": "verify",
+      "source": {
+        "filename": "evsize_batman_${index}.gz"
+      }
+    },
+    {
+      "task": "transit_search",
+      "source": {
+        "filename": "evsize_batman_${index}.gz"
+      },
+      "lc_duration": 730,
+      "tda_name": "tls"
+    }
+  ]
+}

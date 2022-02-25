@@ -1,0 +1,43 @@
+{
+  "job_name": "earth_vs_snr",
+  "iterations": [
+    {
+      "name": "nsr",
+      "log_range": [
+        "73/5",
+        "73*5",
+        "10"
+      ]
+    }
+  ],
+  "task_list": [
+    {
+      "task": "psls_synthesise",
+      "target": {
+        "filename": "evs_${index}.gz"
+      },
+      "specs": {
+        "duration": 730,
+        "planet_radius": "Rearth",
+        "orbital_period": 240,
+        "semi_major_axis": 1,
+        "orbital_angle": 0,
+        "nsr": "${nsr}"
+      }
+    },
+    {
+      "task": "verify",
+      "source": {
+        "filename": "evs_${index}.gz"
+      }
+    },
+    {
+      "task": "transit_search",
+      "source": {
+        "filename": "evs_${index}.gz"
+      },
+      "lc_duration": 730,
+      "tda_name": "tls"
+    }
+  ]
+}
