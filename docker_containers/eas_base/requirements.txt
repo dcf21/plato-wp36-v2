@@ -1,0 +1,12 @@
+astropy
+pytest
+cython
+flask
+numpy
+scipy
+pyyaml
+mysqlclient
+pika
+kubernetes
+batman-package
+psls

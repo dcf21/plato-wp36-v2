@@ -12,15 +12,3 @@ spec:
     - ReadWriteOnce
   hostPath:
     path: "/mnt/datadir_output/mysql"
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mysql-pv-claim
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 20Gi

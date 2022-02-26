@@ -4,7 +4,7 @@ This directory contains the test-bench code, plus all the scripts needed to buil
 
 The directory structure is as follows:
 
-* `testbench` -- All the code comprising the core test-bench code.
+* `eas_base` -- All the core code comprising the test-bench infrastructure, signalling and control.
 
 * `worker-xxx` -- Scripts for building each transit-detection code into a separate container.
 
