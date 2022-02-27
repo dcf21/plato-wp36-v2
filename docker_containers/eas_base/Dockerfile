@@ -23,6 +23,14 @@ RUN virtualenv -p python3 data/datadir_local/virtualenv
 RUN /plato_eas/data/datadir_local/virtualenv/bin/pip install numpy  # Required by batman installer
 RUN /plato_eas/data/datadir_local/virtualenv/bin/pip install -r requirements.txt
 
-# Copy PLATO EAS code into Docker container
-WORKDIR /plato_eas/docker_containers
+# Copy PLATO EAS Python modules into Docker container
+ADD python_modules
+
+# Build and install plato_wp36 modules
+WORKDIR /plato_eas/python_modules/plato_wp36/
+RUN /plato_eas/datadir_local/virtualenv/bin/python3 setup.py develop
+WORKDIR /plato_eas/python_modules/eas_psls_wrapper/
+RUN /plato_eas/datadir_local/virtualenv/bin/python3 setup.py develop
+WORKDIR /plato_eas/python_modules/eas_batman_wrapper/
+RUN /plato_eas/datadir_local/virtualenv/bin/python3 setup.py develop
 

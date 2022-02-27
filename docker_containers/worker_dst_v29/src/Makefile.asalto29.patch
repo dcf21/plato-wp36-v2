@@ -1,0 +1,671 @@
+--- Makefile.original	2020-10-04 23:36:27.000000000 +0000
++++ Makefile	2020-10-04 23:42:41.288535000 +0000
+@@ -1,7 +1,3 @@
+-# ordena
+-#-----------------------------
+-ORDENA := $(shell hostname)
+-
+ 
+ 
+ # compilador
+@@ -25,73 +21,16 @@
+ 
+ # main path
+ #-----------------------------
+-ifeq ($(ORDENA),pf-070210dl.intra.dlr.de)
+-  MAIN_PATH=/scr2/cabr_ju/ross/blind/asalto29
+-else
+-ifeq ($(ORDENA),canijo)
+-  MAIN_PATH=/datos/blind/asalto29
+-else
+-ifeq ($(ORDENA),gmork)
+-  MAIN_PATH=/home/juano/blind/asalto29
+-else
+-ifeq ($(ORDENA),warg01)
+-  MAIN_PATH=/home/warg01/cabrera/blind/asalto29
+-else
+-ifeq ($(ORDENA),warg02)
+-  MAIN_PATH=/home/warg01/cabrera/blind/asalto29
+-else
+-ifeq ($(ORDENA),ngtshead)
+-  MAIN_PATH=/home/juan/codigo
+-else
+-  $(error error, computer $(ORDENA) not recognized)
+-endif
+-endif
+-endif
+-endif
+-endif
+-endif
++MAIN_PATH=.
+ 
+ 
+ 
+ # cfitsio
+ #-----------------------------
+-ifeq ($(ORDENA),pf-070210dl.intra.dlr.de)
+-  CFSIO_PATH = /usr
+-  CFSIO_LIB_PATH = $(CFSIO_PATH)/lib
+-  CFSIO_INC_PATH = $(CFSIO_PATH)/include/cfitsio
+-else
+-ifeq ($(ORDENA),canijo)
+-  CFSIO_PATH = /usr
+-  CFSIO_LIB_PATH = $(CFSIO_PATH)/lib/x86_64-linux-gnu
+-  CFSIO_INC_PATH = $(CFSIO_PATH)/include
+-else
+-ifeq ($(ORDENA),gmork)
+-  CFSIO_PATH = /usr
+-  CFSIO_LIB_PATH = $(CFSIO_PATH)/lib/x86_64-linux-gnu
+-  CFSIO_INC_PATH = $(CFSIO_PATH)/include
+-else
+-ifeq ($(ORDENA),warg01)
+-  CFSIO_PATH = /usr
+-  CFSIO_LIB_PATH = $(CFSIO_PATH)/lib
+-  CFSIO_INC_PATH = $(CFSIO_PATH)/include
+-else
+-ifeq ($(ORDENA),warg02)
+-  CFSIO_PATH = /usr
+-  CFSIO_LIB_PATH = $(CFSIO_PATH)/lib
+-  CFSIO_INC_PATH = $(CFSIO_PATH)/include
+-else
+-ifeq ($(ORDENA),ngtshead)
+-  CFSIO_PATH = /usr/local/cfitsio
+-  CFSIO_LIB_PATH = $(CFSIO_PATH)/lib
+-  CFSIO_INC_PATH = $(CFSIO_PATH)/include
+-else
+-  $(error error, computer $(ORDENA) not recognized)
+-endif
+-endif
+-endif
+-endif
+-endif
+-endif
++CFSIO_PATH = .
++CFSIO_LIB_PATH = .
++CFSIO_INC_PATH = .
++
+ #--
+ CFSIO_INC = -I $(CFSIO_INC_PATH)
+ CFSIO_LNK = -L$(CFSIO_LIB_PATH) -lcfitsio -lm
+@@ -100,43 +39,10 @@
+ 
+ # GSL
+ #-----------------------------
+-ifeq ($(ORDENA),pf-070210dl.intra.dlr.de)
+-  GSL_PATH=/usr
+-  GSL_LIB_PATH=$(GSL_PATH)/lib64
+-  GSL_INC_PATH=$(GSL_PATH)/include/gsl
+-else
+-ifeq ($(ORDENA),canijo)
+-  GSL_PATH=/usr
+-  GSL_LIB_PATH=$(GSL_PATH)/lib
+-  GSL_INC_PATH=$(GSL_PATH)/include/gsl
+-else
+-ifeq ($(ORDENA),gmork)
+-  GSL_PATH=/usr
+-  GSL_LIB_PATH=$(GSL_PATH)/lib
+-  GSL_INC_PATH=$(GSL_PATH)/include/gsl
+-else
+-ifeq ($(ORDENA),warg01)
+-  GSL_PATH=/usr
+-  GSL_LIB_PATH=$(GSL_PATH)/lib
+-  GSL_INC_PATH=$(GSL_PATH)/include/gsl
+-else
+-ifeq ($(ORDENA),warg02)
+-  GSL_PATH=/usr
+-  GSL_LIB_PATH=$(GSL_PATH)/lib
+-  GSL_INC_PATH=$(GSL_PATH)/include/gsl
+-else
+-ifeq ($(ORDENA),ngtshead)
+-  GSL_PATH=/usr/local/gsl
+-  GSL_LIB_PATH=$(GSL_PATH)/lib
+-  GSL_INC_PATH=$(GSL_PATH)/include
+-else
+-  $(error error, computer $(ORDENA) not recognized)
+-endif
+-endif
+-endif
+-endif
+-endif
+-endif
++GSL_PATH=.
++GSL_LIB_PATH=.
++GSL_INC_PATH=.
++
+ #--
+ GSL_INC = -I $(GSL_INC_PATH)
+ GSL_LNK = -L$(GSL_LIB_PATH) -lgsl -lgslcblas -lm
+@@ -161,7 +67,6 @@
+       test
+ 
+ test :
+-	@echo " ordena        : " $(ORDENA)
+ 	@echo " main path     : " $(MAIN_PATH)
+ 	@echo " cfitsio paths : " $(CFSIO_PATH) $(CFSIO_LIB_PATH) $(CFSIO_INC_PATH) 
+ 	@echo " GSL path      : " $(GSL_PATH) $(GSL_LIB_PATH) $(GSL_INC_PATH)
+@@ -193,18 +98,9 @@
+ 	@echo " "
+ 
+ dir :
+-ifeq ($(wildcard bin/$(ORDENA)),) 
+-	mkdir bin
+-	mkdir bin/$(ORDENA)
+-endif
+-ifeq ($(wildcard obj/$(ORDENA)),) 
+-	mkdir obj
+-	mkdir obj/$(ORDENA)
+-endif
+-ifeq ($(wildcard src),) 
+-	mkdir src
+-endif
+-	@echo " folder structure exists"
++	mkdir -p bin
++	mkdir -p obj
++	mkdir -p src
+ 
+ .PHONY : clean tar test dir \
+          DLRUsefulConstants DLRInputParameter DLRXmlParser DLRHsa \
+@@ -215,6 +111,8 @@
+          hsaTest meister \
+          PLATOSimLc PLATOnoise PLATOnoiseFATest PLATOParamRetrieval
+ 
++make_directories:
++	mkdir -p ../juan/obj ../juan/lib ../asalto26.5/obj ../asalto26.5/bin ../asalto26.5/lib ../asalto27/obj ../asalto27/bin ../asalto27/lib obj bin
+ 
+ # filosofia
+ #-----------------------------
+@@ -232,7 +130,7 @@
+ DLRUSEFULCONSTANTS_CLAU = DLRUsefulConstants
+ DLRUSEFULCONSTANTS_HDR = $(MAIN_PATH)/src/$(DLRUSEFULCONSTANTS_CLAU).h
+ DLRUSEFULCONSTANTS_SRC = $(MAIN_PATH)/src/$(DLRUSEFULCONSTANTS_CLAU).cpp
+-DLRUSEFULCONSTANTS_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRUSEFULCONSTANTS_CLAU).o
++DLRUSEFULCONSTANTS_OBJ = $(MAIN_PATH)/obj/$(DLRUSEFULCONSTANTS_CLAU).o
+ DLRUSEFULCONSTANTS_SLS = $(DLRUSEFULCONSTANTS_SRC) $(DLRUSEFULCONSTANTS_HDR)
+ DLRUSEFULCONSTANTS_OLS = $(DLRUSEFULCONSTANTS_OBJ)
+ DLRUSEFULCONSTANTS_INC = -I $(MAIN_PATH)/src/
+@@ -252,7 +150,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRUSEFULCONSTANTS_OBJ) : $(DLRUSEFULCONSTANTS_SLS)
++$(DLRUSEFULCONSTANTS_OBJ) : $(DLRUSEFULCONSTANTS_SLS) make_directories
+ 	@echo "****** compiling $(DLRUSEFULCONSTANTS_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRUSEFULCONSTANTS_SRC) $(DLRUSEFULCONSTANTS_INC) -o $@ 
+ 	@echo "## $(DLRUSEFULCONSTANTS_CLAU) compiled successfully"
+@@ -264,7 +162,7 @@
+ DLRINPUTPARAMETER_CLAU = DLRInputParameter
+ DLRINPUTPARAMETER_HDR = $(MAIN_PATH)/src/$(DLRINPUTPARAMETER_CLAU).h
+ DLRINPUTPARAMETER_SRC = $(MAIN_PATH)/src/$(DLRINPUTPARAMETER_CLAU).cpp
+-DLRINPUTPARAMETER_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRINPUTPARAMETER_CLAU).o
++DLRINPUTPARAMETER_OBJ = $(MAIN_PATH)/obj/$(DLRINPUTPARAMETER_CLAU).o
+ DLRINPUTPARAMETER_SLS = $(DLRINPUTPARAMETER_SRC) $(DLRINPUTPARAMETER_HDR)
+ DLRINPUTPARAMETER_OLS = $(DLRINPUTPARAMETER_OBJ)
+ DLRINPUTPARAMETER_INC = -I $(MAIN_PATH)/src/
+@@ -284,7 +182,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRINPUTPARAMETER_OBJ) : $(DLRINPUTPARAMETER_SLS)
++$(DLRINPUTPARAMETER_OBJ) : $(DLRINPUTPARAMETER_SLS) make_directories
+ 	@echo "****** compiling $(DLRINPUTPARAMETER_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRINPUTPARAMETER_SRC) $(DLRINPUTPARAMETER_INC) -o $@ 
+ 	@echo "## $(DLRINPUTPARAMETER_CLAU) compiled successfully"
+@@ -296,7 +194,7 @@
+ DLRXMLPARSER_CLAU = DLRXmlParser
+ DLRXMLPARSER_HDR = $(MAIN_PATH)/src/$(DLRXMLPARSER_CLAU).h
+ DLRXMLPARSER_SRC = $(MAIN_PATH)/src/$(DLRXMLPARSER_CLAU).cpp
+-DLRXMLPARSER_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRXMLPARSER_CLAU).o
++DLRXMLPARSER_OBJ = $(MAIN_PATH)/obj/$(DLRXMLPARSER_CLAU).o
+ DLRXMLPARSER_SLS = $(DLRXMLPARSER_SRC) $(DLRXMLPARSER_HDR)
+ DLRXMLPARSER_OLS = $(DLRXMLPARSER_OBJ)
+ DLRXMLPARSER_INC = -I $(MAIN_PATH)/src/
+@@ -316,7 +214,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRXMLPARSER_OBJ) : $(DLRXMLPARSER_SLS)
++$(DLRXMLPARSER_OBJ) : $(DLRXMLPARSER_SLS) make_directories
+ 	@echo "****** compiling $(DLRXMLPARSER_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRXMLPARSER_SRC) $(DLRXMLPARSER_INC) -o $@ 
+ 	@echo "## $(DLRXMLPARSER_CLAU) compiled successfully"
+@@ -328,7 +226,7 @@
+ DLRHSA_CLAU = DLRHsa
+ DLRHSA_HDR = $(MAIN_PATH)/src/$(DLRHSA_CLAU).h
+ DLRHSA_SRC = $(MAIN_PATH)/src/$(DLRHSA_CLAU).cpp
+-DLRHSA_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRHSA_CLAU).o
++DLRHSA_OBJ = $(MAIN_PATH)/obj/$(DLRHSA_CLAU).o
+ DLRHSA_SLS = $(DLRHSA_SRC) $(DLRHSA_HDR) $(DLRXMLPARSER_HDR)
+ DLRHSA_OLS = $(DLRHSA_OBJ) $(DLRXMLPARSER_OLS)
+ DLRHSA_INC = $(NR3_INC) $(DLRXMLPARSER_INC) $(GSL_INC)
+@@ -348,7 +246,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRHSA_OBJ) : $(DLRHSA_SLS)
++$(DLRHSA_OBJ) : $(DLRHSA_SLS) make_directories
+ 	@echo "****** compiling $(DLRHSA_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRHSA_SRC) $(DLRHSA_INC) -o $@ 
+ 	@echo "## $(DLRHSA_CLAU) compiled successfully"
+@@ -360,7 +258,7 @@
+ DLRF_CLAU = DLRFile
+ DLRF_HDR = $(MAIN_PATH)/src/$(DLRF_CLAU).h
+ DLRF_SRC = $(MAIN_PATH)/src/$(DLRF_CLAU).cpp
+-DLRF_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRF_CLAU).o
++DLRF_OBJ = $(MAIN_PATH)/obj/$(DLRF_CLAU).o
+ DLRF_SLS = $(DLRF_SRC) $(DLRF_HDR) $(DLRUSEFULCONSTANTS_HDR) $(DLRXMLPARSER_HDR)
+ DLRF_OLS = $(DLRF_OBJ) $(DLRUSEFULCONSTANTS_OLS) $(DLRXMLPARSER_OLS)
+ DLRF_INC = -I $(MAIN_PATH)/src/ $(GSL_INC) 
+@@ -380,7 +278,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRF_OBJ) : $(DLRF_SLS)
++$(DLRF_OBJ) : $(DLRF_SLS) make_directories
+ 	@echo "****** compiling $(DLRF_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRF_SRC) $(DLRF_INC) -o $@ 
+ 	@echo "## $(DLRF_CLAU) compiled successfully"
+@@ -392,7 +290,7 @@
+ DLRLC_CLAU = DLRLc
+ DLRLC_HDR = $(MAIN_PATH)/src/$(DLRLC_CLAU).h
+ DLRLC_SRC = $(MAIN_PATH)/src/$(DLRLC_CLAU).cpp
+-DLRLC_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRLC_CLAU).o
++DLRLC_OBJ = $(MAIN_PATH)/obj/$(DLRLC_CLAU).o
+ DLRLC_SLS = $(DLRLC_SRC) $(DLRLC_HDR) $(DLRF_SLS)
+ DLRLC_OLS = $(DLRLC_OBJ) $(DLRF_OLS)
+ DLRLC_INC = $(DLRF_INC) 
+@@ -412,7 +310,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRLC_OBJ) : $(DLRLC_SLS)
++$(DLRLC_OBJ) : $(DLRLC_SLS) make_directories
+ 	@echo "****** compiling $(DLRLC_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRLC_SRC) $(DLRLC_INC) -o $@ 
+ 	@echo "## $(DLRLC_CLAU) compiled successfully"
+@@ -424,7 +322,7 @@
+ DLRTRANSITLC_CLAU = DLRTransitLc
+ DLRTRANSITLC_HDR = $(MAIN_PATH)/src/$(DLRTRANSITLC_CLAU).h
+ DLRTRANSITLC_SRC = $(MAIN_PATH)/src/$(DLRTRANSITLC_CLAU).cpp
+-DLRTRANSITLC_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRTRANSITLC_CLAU).o
++DLRTRANSITLC_OBJ = $(MAIN_PATH)/obj/$(DLRTRANSITLC_CLAU).o
+ DLRTRANSITLC_SLS = $(DLRTRANSITLC_SRC) $(DLRTRANSITLC_HDR) $(DLRHSA_HDR) $(DLRLC_SLS) 
+ DLRTRANSITLC_OLS = $(DLRTRANSITLC_OBJ) $(DLRHSA_OBJ) $(DLRLC_OLS)
+ DLRTRANSITLC_INC = $(DLRLC_INC) 
+@@ -444,7 +342,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRTRANSITLC_OBJ) : $(DLRTRANSITLC_SLS)
++$(DLRTRANSITLC_OBJ) : $(DLRTRANSITLC_SLS) make_directories
+ 	@echo "****** compiling $(DLRTRANSITLC_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRTRANSITLC_SRC) $(DLRTRANSITLC_INC) -o $@ 
+ 	@echo "## $(DLRTRANSITLC_CLAU) compiled successfully"
+@@ -456,7 +354,7 @@
+ DLRDST_CLAU = DLRDST
+ DLRDST_HDR = $(MAIN_PATH)/src/$(DLRDST_CLAU).h
+ DLRDST_SRC = $(MAIN_PATH)/src/$(DLRDST_CLAU).cpp
+-DLRDST_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRDST_CLAU).o
++DLRDST_OBJ = $(MAIN_PATH)/obj/$(DLRDST_CLAU).o
+ DLRDST_SLS = $(DLRDST_SRC) $(DLRDST_HDR) $(DLRLC_SLS)
+ DLRDST_OLS = $(DLRDST_OBJ) $(DLRLC_OLS)
+ DLRDST_INC = $(DLRLC_INC) 
+@@ -476,7 +374,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRDST_OBJ) : $(DLRDST_SLS)
++$(DLRDST_OBJ) : $(DLRDST_SLS) make_directories
+ 	@echo "****** compiling $(DLRDST_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRDST_SRC) $(DLRDST_INC) -o $@ 
+ 	@echo "## $(DLRDST_CLAU) compiled successfully"
+@@ -488,7 +386,7 @@
+ DLRFSF_CLAU = DLRFitsFile
+ DLRFSF_HDR = $(MAIN_PATH)/src/$(DLRFSF_CLAU).h
+ DLRFSF_SRC = $(MAIN_PATH)/src/$(DLRFSF_CLAU).cpp
+-DLRFSF_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRFSF_CLAU).o
++DLRFSF_OBJ = $(MAIN_PATH)/obj/$(DLRFSF_CLAU).o
+ DLRFSF_SLS = $(DLRFSF_SRC) $(DLRFSF_HDR) $(DLRLC_SLS)
+ DLRFSF_OLS = $(DLRFSF_OBJ) $(DLRLC_OLS)
+ DLRFSF_INC = -I $(MAIN_PATH)/src/ $(CFSIO_INC) $(DLRLC_INC)
+@@ -508,7 +406,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRFSF_OBJ) : $(DLRFSF_SLS)
++$(DLRFSF_OBJ) : $(DLRFSF_SLS) make_directories
+ 	@echo "****** compiling $(DLRFSF_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRFSF_SRC) $(DLRFSF_INC) -o $@ 
+ 	@echo "## $(DLRFSF_CLAU) compiled successfully"
+@@ -520,7 +418,7 @@
+ DLRK2C_CLAU = DLRK2Centroid
+ DLRK2C_HDR = $(MAIN_PATH)/src/$(DLRK2C_CLAU).h
+ DLRK2C_SRC = $(MAIN_PATH)/src/$(DLRK2C_CLAU).cpp
+-DLRK2C_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRK2C_CLAU).o
++DLRK2C_OBJ = $(MAIN_PATH)/obj/$(DLRK2C_CLAU).o
+ DLRK2C_SLS = $(DLRK2C_SRC) $(DLRK2C_HDR) $(DLRXMLPARSER_SLS)
+ DLRK2C_OLS = $(DLRK2C_OBJ) $(DLRXMLPARSER_OLS)
+ DLRK2C_INC = -I $(MAIN_PATH)/src/ $(DLRXMLPARSER_INC)
+@@ -540,7 +438,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRK2C_OBJ) : $(DLRK2C_SLS)
++$(DLRK2C_OBJ) : $(DLRK2C_SLS) make_directories
+ 	@echo "****** compiling $(DLRK2C_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRK2C_SRC) $(DLRK2C_INC) -o $@ 
+ 	@echo "## $(DLRK2C_CLAU) compiled successfully"
+@@ -552,7 +450,7 @@
+ DLRNGTSP_CLAU = DLRNGTSPipeline
+ DLRNGTSP_HDR = $(MAIN_PATH)/src/$(DLRNGTSP_CLAU).h
+ DLRNGTSP_SRC = $(MAIN_PATH)/src/$(DLRNGTSP_CLAU).cpp
+-DLRNGTSP_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRNGTSP_CLAU).o
++DLRNGTSP_OBJ = $(MAIN_PATH)/obj/$(DLRNGTSP_CLAU).o
+ DLRNGTSP_SLS = $(DLRNGTSP_SRC) $(DLRNGTSP_HDR) $(DLRFSF_SLS) $(DLRDST_SLS)
+ DLRNGTSP_OLS = $(DLRNGTSP_OBJ) $(DLRFSF_OLS) $(DLRDST_OBJ)
+ DLRNGTSP_INC = $(DLRFSF_INC)
+@@ -572,7 +470,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRNGTSP_OBJ) : $(DLRNGTSP_SLS)
++$(DLRNGTSP_OBJ) : $(DLRNGTSP_SLS) make_directories
+ 	@echo "****** compiling $(DLRNGTSP_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRNGTSP_SRC) $(DLRNGTSP_INC) -o $@ 
+ 	@echo "## $(DLRNGTSP_CLAU) compiled successfully"
+@@ -584,7 +482,7 @@
+ DLRWASPP_CLAU = DLRWASPPipeline
+ DLRWASPP_HDR = $(MAIN_PATH)/src/$(DLRWASPP_CLAU).h
+ DLRWASPP_SRC = $(MAIN_PATH)/src/$(DLRWASPP_CLAU).cpp
+-DLRWASPP_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRWASPP_CLAU).o
++DLRWASPP_OBJ = $(MAIN_PATH)/obj/$(DLRWASPP_CLAU).o
+ DLRWASPP_SLS = $(DLRWASPP_SRC) $(DLRWASPP_HDR) $(DLRFSF_SLS) $(DLRDST_SLS)
+ DLRWASPP_OLS = $(DLRWASPP_OBJ) $(DLRFSF_OLS) $(DLRDST_OBJ)
+ DLRWASPP_INC = $(DLRFSF_INC)
+@@ -604,7 +502,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRWASPP_OBJ) : $(DLRWASPP_SLS)
++$(DLRWASPP_OBJ) : $(DLRWASPP_SLS) make_directories
+ 	@echo "****** compiling $(DLRWASPP_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRWASPP_SRC) $(DLRWASPP_INC) -o $@ 
+ 	@echo "## $(DLRWASPP_CLAU) compiled successfully"
+@@ -616,7 +514,7 @@
+ DLRCLCP_CLAU = DLRCoRoTLCPipeline
+ DLRCLCP_HDR = $(MAIN_PATH)/src/$(DLRCLCP_CLAU).h
+ DLRCLCP_SRC = $(MAIN_PATH)/src/$(DLRCLCP_CLAU).cpp
+-DLRCLCP_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRCLCP_CLAU).o
++DLRCLCP_OBJ = $(MAIN_PATH)/obj/$(DLRCLCP_CLAU).o
+ DLRCLCP_SLS = $(DLRCLCP_SRC) $(DLRCLCP_HDR) $(DLRFSF_SLS)
+ DLRCLCP_OLS = $(DLRCLCP_OBJ) $(DLRFSF_OLS)
+ DLRCLCP_INC = $(DLRFSF_INC)
+@@ -636,7 +534,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRCLCP_OBJ) : $(DLRCLCP_SLS)
++$(DLRCLCP_OBJ) : $(DLRCLCP_SLS) make_directories
+ 	@echo "****** compiling $(DLRCLCP_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRCLCP_SRC) $(DLRCLCP_INC) -o $@ 
+ 	@echo "## $(DLRCLCP_CLAU) compiled successfully"
+@@ -648,7 +546,7 @@
+ DLRKLCP_CLAU = DLRKeplerLCPipeline
+ DLRKLCP_HDR = $(MAIN_PATH)/src/$(DLRKLCP_CLAU).h
+ DLRKLCP_SRC = $(MAIN_PATH)/src/$(DLRKLCP_CLAU).cpp
+-DLRKLCP_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRKLCP_CLAU).o
++DLRKLCP_OBJ = $(MAIN_PATH)/obj/$(DLRKLCP_CLAU).o
+ DLRKLCP_SLS = $(DLRKLCP_SRC) $(DLRKLCP_HDR) $(DLRFSF_SLS)
+ DLRKLCP_OLS = $(DLRKLCP_OBJ) $(DLRFSF_OLS)
+ DLRKLCP_INC = $(DLRFSF_INC)
+@@ -668,7 +566,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRKLCP_OBJ) : $(DLRKLCP_SLS)
++$(DLRKLCP_OBJ) : $(DLRKLCP_SLS) make_directories
+ 	@echo "****** compiling $(DLRKLCP_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRKLCP_SRC) $(DLRKLCP_INC) -o $@ 
+ 	@echo "## $(DLRKLCP_CLAU) compiled successfully"
+@@ -680,7 +578,7 @@
+ DLRK2IP_CLAU = DLRK2ImagettePipeline
+ DLRK2IP_HDR = $(MAIN_PATH)/src/$(DLRK2IP_CLAU).h
+ DLRK2IP_SRC = $(MAIN_PATH)/src/$(DLRK2IP_CLAU).cpp
+-DLRK2IP_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRK2IP_CLAU).o
++DLRK2IP_OBJ = $(MAIN_PATH)/obj/$(DLRK2IP_CLAU).o
+ DLRK2IP_SLS = $(DLRK2IP_SRC) $(DLRK2IP_HDR) $(DLRFSF_SLS)
+ DLRK2IP_OLS = $(DLRK2IP_OBJ) $(DLRFSF_OLS)
+ DLRK2IP_INC = $(DLRFSF_INC)
+@@ -700,7 +598,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRK2IP_OBJ) : $(DLRK2IP_SLS)
++$(DLRK2IP_OBJ) : $(DLRK2IP_SLS) make_directories
+ 	@echo "****** compiling $(DLRK2IP_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRK2IP_SRC) $(DLRK2IP_INC) -o $@ 
+ 	@echo "## $(DLRK2IP_CLAU) compiled successfully"
+@@ -712,7 +610,7 @@
+ DLRK2PHOTP_CLAU = DLRK2PhotometryPipeline
+ DLRK2PHOTP_HDR = $(MAIN_PATH)/src/$(DLRK2PHOTP_CLAU).h
+ DLRK2PHOTP_SRC = $(MAIN_PATH)/src/$(DLRK2PHOTP_CLAU).cpp
+-DLRK2PHOTP_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRK2PHOTP_CLAU).o
++DLRK2PHOTP_OBJ = $(MAIN_PATH)/obj/$(DLRK2PHOTP_CLAU).o
+ DLRK2PHOTP_SLS = $(DLRK2PHOTP_SRC) $(DLRK2PHOTP_HDR) $(DLRFSF_SLS) $(DLRK2C_SLS)
+ DLRK2PHOTP_OLS = $(DLRK2PHOTP_OBJ) $(DLRFSF_OLS) $(DLRK2C_OLS)
+ DLRK2PHOTP_INC = $(DLRFSF_INC)
+@@ -732,7 +630,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRK2PHOTP_OBJ) : $(DLRK2PHOTP_SLS)
++$(DLRK2PHOTP_OBJ) : $(DLRK2PHOTP_SLS) make_directories
+ 	@echo "****** compiling $(DLRK2PHOTP_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRK2PHOTP_SRC) $(DLRK2PHOTP_INC) -o $@ 
+ 	@echo "## $(DLRK2PHOTP_CLAU) compiled successfully"
+@@ -743,7 +641,7 @@
+ DLRK2VDBP_CLAU = DLRK2VanderburgPipeline
+ DLRK2VDBP_HDR = $(MAIN_PATH)/src/$(DLRK2VDBP_CLAU).h
+ DLRK2VDBP_SRC = $(MAIN_PATH)/src/$(DLRK2VDBP_CLAU).cpp
+-DLRK2VDBP_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(DLRK2VDBP_CLAU).o
++DLRK2VDBP_OBJ = $(MAIN_PATH)/obj/$(DLRK2VDBP_CLAU).o
+ DLRK2VDBP_SLS = $(DLRK2VDBP_SRC) $(DLRK2VDBP_HDR) $(DLRFSF_SLS)
+ DLRK2VDBP_OLS = $(DLRK2VDBP_OBJ) $(DLRFSF_OLS)
+ DLRK2VDBP_INC = $(DLRFSF_INC)
+@@ -763,7 +661,7 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(DLRK2VDBP_OBJ) : $(DLRK2VDBP_SLS)
++$(DLRK2VDBP_OBJ) : $(DLRK2VDBP_SLS) make_directories
+ 	@echo "****** compiling $(DLRK2VDBP_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(DLRK2VDBP_SRC) $(DLRK2VDBP_INC) -o $@ 
+ 	@echo "## $(DLRK2VDBP_CLAU) compiled successfully"
+@@ -775,8 +673,8 @@
+ #-----------------------------
+ HSATEST_CLAU = hsaTest
+ HSATEST_SRC = $(MAIN_PATH)/src/$(HSATEST_CLAU).cpp
+-HSATEST_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(HSATEST_CLAU).o
+-HSATEST_EXE = $(MAIN_PATH)/bin/$(ORDENA)/$(HSATEST_CLAU).exe
++HSATEST_OBJ = $(MAIN_PATH)/obj/$(HSATEST_CLAU).o
++HSATEST_EXE = $(MAIN_PATH)/bin/$(HSATEST_CLAU).exe
+ HSATEST_SLS = $(HSATEST_SRC) $(DLRHSA_HDR)
+ HSATEST_OLS = $(HSATEST_OBJ) $(DLRHSA_OLS)
+ HSATEST_INC = -I $(MAIN_PATH)/src/ $(DLRHSA_INC) $(GSL_INC)
+@@ -796,12 +694,12 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(HSATEST_EXE) : $(HSATEST_OLS) 
++$(HSATEST_EXE) : $(HSATEST_OLS)  make_directories
+ 	@echo "****** linking $(HSATEST_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) $(HSATEST_OLS) $(HSATEST_LNK) -o $@ 
+ 	@echo "## $(HSATEST_CLAU) linked successfully"
+ 
+-$(HSATEST_OBJ) : $(HSATEST_SLS) 
++$(HSATEST_OBJ) : $(HSATEST_SLS)  make_directories
+ 	@echo "****** compiling $(HSATEST_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(HSATEST_SRC) $(HSATEST_INC) -o $@
+ 	@echo "## $(HSATEST_CLAU) compiled successfully"
+@@ -812,16 +710,12 @@
+ #-----------------------------
+ MEISTER_CLAU = meister
+ MEISTER_SRC = $(MAIN_PATH)/src/$(MEISTER_CLAU).cpp
+-MEISTER_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(MEISTER_CLAU).o
+-MEISTER_EXE = $(MAIN_PATH)/bin/$(ORDENA)/$(MEISTER_CLAU).exe
++MEISTER_OBJ = $(MAIN_PATH)/obj/$(MEISTER_CLAU).o
++MEISTER_EXE = $(MAIN_PATH)/bin/$(MEISTER_CLAU).exe
+ MEISTER_SLS = $(MEISTER_SRC) $(DLRFSF_SLS) $(DLRDST_SLS) $(DLRNGTSP_HDR) $(DLRWASPP_HDR) $(DLRCLCP_HDR) $(DLRKLCP_HDR) $(DLRK2IP_HDR) $(DLRK2VDBP_HDR) $(DLRK2PHOTP_HDR)
+ MEISTER_OLS = $(MEISTER_OBJ) $(DLRFSF_OLS) $(DLRDST_OBJ) $(DLRNGTSP_OBJ) $(DLRWASPP_OBJ) $(DLRCLCP_OBJ) $(DLRKLCP_OBJ) $(DLRK2IP_OBJ) $(DLRK2VDBP_OBJ) $(DLRK2PHOTP_OBJ) $(DLRK2C_OBJ) 
+ MEISTER_INC = $(DLRFSF_INC)
+-ifeq ($(ORDENA),ngtshead)
+-  MEISTER_LNK = $(DLRFSF_LNK) -pthread
+-else
+-  MEISTER_LNK = $(DLRFSF_LNK)
+-endif
++MEISTER_LNK = $(DLRFSF_LNK)
+ 
+ $(MEISTER_CLAU) : $(MEISTER_EXE)
+ 	@echo " clau: $(MEISTER_CLAU)"
+@@ -837,12 +731,12 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(MEISTER_EXE) : $(MEISTER_OLS) 
++$(MEISTER_EXE) : $(MEISTER_OLS)  make_directories
+ 	@echo "****** linking $(MEISTER_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) $(MEISTER_OLS) $(MEISTER_LNK) -o $@ 
+ 	@echo "## $(MEISTER_CLAU) linked successfully"
+ 
+-$(MEISTER_OBJ) : $(MEISTER_SLS) 
++$(MEISTER_OBJ) : $(MEISTER_SLS)  make_directories
+ 	@echo "****** compiling $(MEISTER_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(MEISTER_SRC) $(MEISTER_INC) -o $@
+ 	@echo "## $(MEISTER_CLAU) compiled successfully"
+@@ -853,7 +747,7 @@
+ PLATOSIMLC_CLAU = PLATOSimLc
+ PLATOSIMLC_HDR = $(MAIN_PATH)/src/$(PLATOSIMLC_CLAU).h
+ PLATOSIMLC_SRC = $(MAIN_PATH)/src/$(PLATOSIMLC_CLAU).cpp
+-PLATOSIMLC_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(PLATOSIMLC_CLAU).o
++PLATOSIMLC_OBJ = $(MAIN_PATH)/obj/$(PLATOSIMLC_CLAU).o
+ PLATOSIMLC_SLS = $(PLATOSIMLC_SRC) $(DLRINPUTPARAMETER_HDR) $(PLATOSIMLC_HDR) $(DLRTRANSITLC_SLS)
+ PLATOSIMLC_OLS = $(PLATOSIMLC_OBJ) $(DLRINPUTPARAMETER_OLS) $(DLRTRANSITLC_OLS)
+ PLATOSIMLC_INC = $(DLRTRANSITLC_INC)
+@@ -873,12 +767,12 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(PLATOSIMLC_EXE) : $(PLATOSIMLC_OLS) 
++$(PLATOSIMLC_EXE) : $(PLATOSIMLC_OLS)  make_directories
+ 	@echo "****** linking $(PLATOSIMLC_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) $(PLATOSIMLC_OLS) $(PLATOSIMLC_LNK) -o $@ 
+ 	@echo "## $(PLATOSIMLC_CLAU) linked successfully"
+ 
+-$(PLATOSIMLC_OBJ) : $(PLATOSIMLC_SLS) 
++$(PLATOSIMLC_OBJ) : $(PLATOSIMLC_SLS)  make_directories
+ 	@echo "****** compiling $(PLATOSIMLC_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(PLATOSIMLC_SRC) $(PLATOSIMLC_INC) -o $@
+ 	@echo "## $(PLATOSIMLC_CLAU) compiled successfully"
+@@ -889,8 +783,8 @@
+ #-----------------------------
+ PLATONOISE_CLAU = PLATOnoise
+ PLATONOISE_SRC = $(MAIN_PATH)/src/$(PLATONOISE_CLAU).cpp
+-PLATONOISE_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(PLATONOISE_CLAU).o
+-PLATONOISE_EXE = $(MAIN_PATH)/bin/$(ORDENA)/$(PLATONOISE_CLAU).exe
++PLATONOISE_OBJ = $(MAIN_PATH)/obj/$(PLATONOISE_CLAU).o
++PLATONOISE_EXE = $(MAIN_PATH)/bin/$(PLATONOISE_CLAU).exe
+ PLATONOISE_SLS = $(PLATONOISE_SRC) $(PLATOSIMLC_SLS) $(DLRDST_SLS) 
+ PLATONOISE_OLS = $(PLATONOISE_OBJ) $(PLATOSIMLC_OLS) $(DLRDST_OBJ)
+ PLATONOISE_INC = -I $(MAIN_PATH)/src/ $(PLATOSIMLC_INC)
+@@ -910,12 +804,12 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(PLATONOISE_EXE) : $(PLATONOISE_OLS) 
++$(PLATONOISE_EXE) : $(PLATONOISE_OLS)  make_directories
+ 	@echo "****** linking $(PLATONOISE_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) $(PLATONOISE_OLS) $(PLATONOISE_LNK) -o $@ 
+ 	@echo "## $(PLATONOISE_CLAU) linked successfully"
+ 
+-$(PLATONOISE_OBJ) : $(PLATONOISE_SLS) 
++$(PLATONOISE_OBJ) : $(PLATONOISE_SLS)  make_directories
+ 	@echo "****** compiling $(PLATONOISE_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(PLATONOISE_SRC) $(PLATONOISE_INC) -o $@
+ 	@echo "## $(PLATONOISE_CLAU) compiled successfully"
+@@ -926,8 +820,8 @@
+ #-----------------------------
+ PLATONOISEFAT_CLAU = PLATOnoiseFATest
+ PLATONOISEFAT_SRC = $(MAIN_PATH)/src/$(PLATONOISEFAT_CLAU).cpp
+-PLATONOISEFAT_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(PLATONOISEFAT_CLAU).o
+-PLATONOISEFAT_EXE = $(MAIN_PATH)/bin/$(ORDENA)/$(PLATONOISEFAT_CLAU).exe
++PLATONOISEFAT_OBJ = $(MAIN_PATH)/obj/$(PLATONOISEFAT_CLAU).o
++PLATONOISEFAT_EXE = $(MAIN_PATH)/bin/$(PLATONOISEFAT_CLAU).exe
+ PLATONOISEFAT_SLS = $(PLATONOISEFAT_SRC) $(PLATOSIMLC_SLS) $(DLRDST_SLS)
+ PLATONOISEFAT_OLS = $(PLATONOISEFAT_OBJ) $(PLATOSIMLC_OLS) $(DLRDST_OBJ)
+ PLATONOISEFAT_INC = -I $(MAIN_PATH)/src/ $(PLATOSIMLC_INC)
+@@ -947,12 +841,12 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(PLATONOISEFAT_EXE) : $(PLATONOISEFAT_OLS) 
++$(PLATONOISEFAT_EXE) : $(PLATONOISEFAT_OLS)  make_directories
+ 	@echo "****** linking $(PLATONOISEFAT_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) $(PLATONOISEFAT_OLS) $(PLATONOISEFAT_LNK) -o $@ 
+ 	@echo "## $(PLATONOISEFAT_CLAU) linked successfully"
+ 
+-$(PLATONOISEFAT_OBJ) : $(PLATONOISEFAT_SLS) 
++$(PLATONOISEFAT_OBJ) : $(PLATONOISEFAT_SLS)  make_directories
+ 	@echo "****** compiling $(PLATONOISEFAT_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(PLATONOISEFAT_SRC) $(PLATONOISEFAT_INC) -o $@
+ 	@echo "## $(PLATONOISEFAT_CLAU) compiled successfully"
+@@ -963,8 +857,8 @@
+ #-----------------------------
+ PLATOPARRETR_CLAU = PLATOParamRetrieval
+ PLATOPARRETR_SRC = $(MAIN_PATH)/src/$(PLATOPARRETR_CLAU).cpp
+-PLATOPARRETR_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(PLATOPARRETR_CLAU).o
+-PLATOPARRETR_EXE = $(MAIN_PATH)/bin/$(ORDENA)/$(PLATOPARRETR_CLAU).exe
++PLATOPARRETR_OBJ = $(MAIN_PATH)/obj/$(PLATOPARRETR_CLAU).o
++PLATOPARRETR_EXE = $(MAIN_PATH)/bin/$(PLATOPARRETR_CLAU).exe
+ PLATOPARRETR_SLS = $(PLATOPARRETR_SRC) $(PLATOSIMLC_SLS) $(DLRDST_SLS)
+ PLATOPARRETR_OLS = $(PLATOPARRETR_OBJ) $(PLATOSIMLC_OLS) $(DLRDST_OBJ)
+ PLATOPARRETR_INC = $(PLATOSIMLC_INC)
+@@ -984,12 +878,12 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(PLATOPARRETR_EXE) : $(PLATOPARRETR_OLS) 
++$(PLATOPARRETR_EXE) : $(PLATOPARRETR_OLS)  make_directories
+ 	@echo "****** linking $(PLATOPARRETR_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) $(PLATOPARRETR_OLS) $(PLATOPARRETR_LNK) -o $@ 
+ 	@echo "## $(PLATOPARRETR_CLAU) linked successfully"
+ 
+-$(PLATOPARRETR_OBJ) : $(PLATOPARRETR_SLS) 
++$(PLATOPARRETR_OBJ) : $(PLATOPARRETR_SLS)  make_directories
+ 	@echo "****** compiling $(PLATOPARRETR_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(PLATOPARRETR_SRC) $(PLATOPARRETR_INC) -o $@
+ 	@echo "## $(PLATOPARRETR_CLAU) compiled successfully"
+@@ -1001,8 +895,8 @@
+ #-----------------------------
+ FCOPY_CLAU = fitscopy
+ FCOPY_SRC = $(MAIN_PATH)/src/$(FCOPY_CLAU).c
+-FCOPY_OBJ = $(MAIN_PATH)/obj/$(ORDENA)/$(FCOPY_CLAU).o
+-FCOPY_EXE = $(MAIN_PATH)/bin/$(ORDENA)/$(FCOPY_CLAU).exe
++FCOPY_OBJ = $(MAIN_PATH)/obj/$(FCOPY_CLAU).o
++FCOPY_EXE = $(MAIN_PATH)/bin/$(FCOPY_CLAU).exe
+ FCOPY_SLS = $(FCOPY_SRC) 
+ FCOPY_OLS = $(FCOPY_OBJ) 
+ FCOPY_INC = -I $(MAIN_PATH) $(CFSIO_INC) 
+@@ -1022,12 +916,12 @@
+ 	@echo "----------------------------------------"
+ 	@echo " "
+ 
+-$(FCOPY_EXE) : $(FCOPY_OLS) 
++$(FCOPY_EXE) : $(FCOPY_OLS)  make_directories
+ 	@echo "****** linking $(FCOPY_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) $(FCOPY_OLS) $(FCOPY_LNK) -o $@ 
+ 	@echo "## $(FCOPY_CLAU) linked successfully"
+ 
+-$(FCOPY_OBJ) : $(FCOPY_SLS) 
++$(FCOPY_OBJ) : $(FCOPY_SLS)  make_directories
+ 	@echo "****** compiling $(FCOPY_CLAU) *****"
+ 	$(COMPILADORCPP) $(FLAGS) -c $(FCOPY_SRC) $(FCOPY_INC) -o $@
+ 	@echo "## $(FCOPY_CLAU) compiled successfully"
