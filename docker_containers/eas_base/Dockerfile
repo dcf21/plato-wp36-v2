@@ -14,23 +14,25 @@ RUN apt-get install -y apt-utils dialog git vim net-tools wget rsync \
                        ; apt-get clean
 
 # Install Python requirements
-WORKDIR /plato_eas
+WORKDIR /plato-wp36-v2/docker_containers/eas_base/
 ADD requirements.txt requirements.txt
 
 # We install all Python dependencies into a virtual environment
-RUN mkdir -p data/datadir_local
-RUN virtualenv -p python3 data/datadir_local/virtualenv
-RUN /plato_eas/data/datadir_local/virtualenv/bin/pip install numpy  # Required by batman installer
-RUN /plato_eas/data/datadir_local/virtualenv/bin/pip install -r requirements.txt
+RUN mkdir -p /plato-wp36-v2/data/datadir_local
+RUN virtualenv -p python3 /plato-wp36-v2/data/datadir_local/virtualenv
+RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install numpy  # Required by batman installer
+RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install -r requirements.txt
+
+# Copy configuration into container
+ADD configuration_local configuration_local
 
 # Copy PLATO EAS Python modules into Docker container
-ADD python_modules
+ADD python_modules python_modules
 
 # Build and install plato_wp36 modules
-WORKDIR /plato_eas/python_modules/plato_wp36/
-RUN /plato_eas/datadir_local/virtualenv/bin/python3 setup.py develop
-WORKDIR /plato_eas/python_modules/eas_psls_wrapper/
-RUN /plato_eas/datadir_local/virtualenv/bin/python3 setup.py develop
-WORKDIR /plato_eas/python_modules/eas_batman_wrapper/
-RUN /plato_eas/datadir_local/virtualenv/bin/python3 setup.py develop
-
+WORKDIR /plato-wp36-v2/docker_containers/eas_base/python_modules/plato_wp36/
+RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/python3 setup.py develop
+WORKDIR /plato-wp36-v2/docker_containers/eas_base/python_modules/eas_psls_wrapper/
+RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/python3 setup.py develop
+WORKDIR /plato-wp36-v2/docker_containers/eas_base/python_modules/eas_batman_wrapper/
+RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/python3 setup.py develop

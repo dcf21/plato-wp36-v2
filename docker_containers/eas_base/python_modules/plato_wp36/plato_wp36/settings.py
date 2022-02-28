@@ -13,15 +13,15 @@ import sys
 
 # Fetch path to local installation settings file
 our_path = os.path.abspath(__file__)
-root_path = re.match(r"(.*)/eas_base/", our_path).group(1)
-if not os.path.exists(os.path.join(root_path, "configuration_local/installation_settings.conf")):
+root_path = re.match(r"(.*)/python_modules/", our_path).group(1)
+if not os.path.exists(os.path.join(root_path, "../configuration_local/installation_settings.conf")):
     sys.stderr.write(
         "You must create a file <configuration_local/installation_settings.conf> with local settings.\n")
     sys.exit(1)
 
 # Read the local installation information from <configuration_local/installation_settings.conf>
 installation_info = {}
-for line in open(os.path.join(root_path, "configuration_local/installation_settings.conf")):
+for line in open(os.path.join(root_path, "../configuration_local/installation_settings.conf")):
     line = line.strip()
 
     # Ignore blank lines and comment lines
@@ -46,16 +46,16 @@ for line in open(os.path.join(root_path, "configuration_local/installation_setti
 
 # The path to the <datadir> directory which is shared between Docker containers, used to store both input and output
 # data from the pipeline
-data_directory = os.path.join(root_path, "../datadir_output")
+data_directory = os.path.join(root_path, "../../../data/datadir_output")
 
 # The path to the directory which contains input lightcurves
-lc_directory = os.path.join(root_path, "../datadir_input")
+lc_directory = os.path.join(root_path, "../../../data/datadir_input")
 
 # The path to the directory which contains input data such as PSLS's frequency data
-input_directory = os.path.join(root_path, "../datadir_input")
+input_directory = os.path.join(root_path, "../../../data/datadir_input")
 
 # The path to the directory which contains local installation
-locals_directory = os.path.join(root_path, "../datadir_local")
+locals_directory = os.path.join(root_path, "../../../data/datadir_local")
 
 # The default settings are below
 settings = {
