@@ -6,30 +6,7 @@ import argparse
 import logging
 import os
 
-from plato_wp36 import settings
-
-
-def make_mysql_login_config(db_user: str, db_passwd: str, db_host: str, db_port: int, db_name: str):
-    """
-    Create MySQL configuration file with username and password, which means we can log into database without
-    supplying these on the command line.
-
-    :return:
-        None
-    """
-
-    pwd = os.getcwd()
-    db_config = os.path.join(pwd, "../../data/datadir_local/mysql_login.cfg")
-
-    config_text = """
-[client]
-user = {:s}
-password = {:s}
-host = {:s}
-port = {:d}
-default-character-set = utf8mb4
-""".format(db_user, db_passwd, db_host, db_port)
-    open(db_config, "w").write(config_text)
+from plato_wp36 import connect_db, settings
 
 
 def init_schema(db_user: str, db_passwd: str, db_host: str, db_port: int, db_name: str):
@@ -40,13 +17,17 @@ def init_schema(db_user: str, db_passwd: str, db_host: str, db_port: int, db_nam
         None
     """
 
-    pwd = os.getcwd()
+    # Instantiate database connection class
+    db = DatabaseConnector()
+
+    # Read database schema
+    pwd = os.path.abspath(__file__)
     sql = os.path.join(pwd, "schema.sql")
-    db_config = os.path.join(pwd, "../../data/datadir_local/mysql_login.cfg")
+    db_config = db.mysql_login_config_path()
 
     # Create mysql login config file
-    make_mysql_login_config(db_user=db_user, db_passwd=db_passwd,
-                            db_host=db_host, db_port=db_port)
+    db.make_mysql_login_config(db_user=db_user, db_passwd=db_passwd,
+                               db_host=db_host, db_port=db_port)
 
     # Recreate database from scratch
     cmd = "echo 'DROP DATABASE IF EXISTS {:s};' | mysql --defaults-extra-file={:s}".format(db_name, db_config)

@@ -9,8 +9,9 @@ Module for connecting to MySQL database for storage of results.
 import warnings
 
 import MySQLdb
+import os
 
-from .settings import installation_info
+from .settings import settings, installation_info
 
 warnings.filterwarnings("ignore", ".*Unknown table .*")
 
@@ -29,7 +30,7 @@ class DatabaseConnector:
 
     def test_database_exists(self):
         """
-        Test whether the results database has already been set up.
+        Test whether the status database has already been set up.
 
         :return:
             Boolean indicating whether the database has been set up
@@ -44,6 +45,37 @@ class DatabaseConnector:
 
         db.close()
         return True
+
+    @staticmethod
+    def mysql_login_config_path():
+        """
+        Path to MySQL configuration file with username and password.
+
+        :return:
+            str
+        """
+        return os.path.join(settings['pythonPath'], "../data/datadir_local/mysql_login.cfg")
+
+    def make_mysql_login_config(self, db_user: str, db_passwd: str, db_host: str, db_port: int):
+        """
+        Create MySQL configuration file with username and password, which means we can log into database without
+        supplying these on the command line.
+
+        :return:
+            None
+        """
+
+        db_config = self.mysql_login_config_path()
+
+        config_text = """
+[client]
+user = {:s}
+password = {:s}
+host = {:s}
+port = {:d}
+default-character-set = utf8mb4
+""".format(db_user, db_passwd, db_host, db_port)
+        open(db_config, "w").write(config_text)
 
     def connect_db(self, database=0):
         """
