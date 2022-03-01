@@ -9,7 +9,7 @@ CREATE TABLE eas_task_types
     taskName   VARCHAR(64) UNIQUE NOT NULL,
     queueName  VARCHAR(64) UNIQUE NOT NULL,
     workerName VARCHAR(64) NOT NULL
-)
+);
 
 # Table of tasks EAS is scheduled to run
 CREATE TABLE eas_task
@@ -17,7 +17,7 @@ CREATE TABLE eas_task
     taskId INTEGER PRIMARY KEY,
     taskTypeId INTEGER NOT NULL,
     FOREIGN KEY (taskTypeId) REFERENCES eas_task_types (taskTypeId)
-)
+);
 
 # Table of each time a task is scheduled on the cluster
 CREATE TABLE eas_scheduling_attempt
@@ -31,7 +31,7 @@ CREATE TABLE eas_scheduling_attempt
     runTimeCpu REAL,
     runTimeCpuIncChildren REAL,
     FOREIGN KEY (taskId) REFERENCES eas_task (taskId)
-)
+);
 
 # Table of metadata association with each time a task runs
 CREATE TABLE eas_metadata_keys
@@ -39,7 +39,7 @@ CREATE TABLE eas_metadata_keys
     keyId INTEGER PRIMARY KEY,
     name  VARCHAR(64) UNIQUE NOT NULL,
     INDEX (name)
-)
+);
 
 CREATE TABLE eas_scheduling_attempt_metadata
 (
@@ -48,28 +48,28 @@ CREATE TABLE eas_scheduling_attempt_metadata
     valueFloat REAL,
     valueString TEXT,
     FOREIGN KEY (schedulingAttemptId) REFERENCES eas_scheduling_attempt (schedulingAttemptId),
-    FOREIGN KEY (metadataKey) REFERENCES eas_metadata_keys (metadataKey)
-)
+    FOREIGN KEY (metadataKey) REFERENCES eas_metadata_keys (keyId)
+);
 
 # Table of all intermediate file products
 CREATE TABLE eas_product
 (
-    product INTEGER PRIMARY KEY,
+    productId INTEGER PRIMARY KEY,
     generatorTask INTEGER NOT NULL,
     filename VARCHAR(255) UNIQUE NOT NULL,
     created BOOLEAN DEFAULT FALSE,
     passedQc BOOLEAN,
     FOREIGN KEY (generatorTask) REFERENCES eas_scheduling_attempt (schedulingAttemptId)
-)
+);
 
 # Table of intermediate products required by each task
 CREATE TABLE eas_task_input
 (
     taskId INTEGER NOT NULL,
     inputId INTEGER NOT NULL,
-    FOREIGN KEY (taskId) REFERENCES eas_task (taskId)
+    FOREIGN KEY (taskId) REFERENCES eas_task (taskId),
     FOREIGN KEY (inputId) REFERENCES eas_product (productId)
-)
+);
 
 # Trigger to propagate QC from individual file products to the tasks that created them
 DELIMITER //

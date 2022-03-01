@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 # init_schema.py
 
+"""
+Create a set of empty database tables, initialising the schema of the results database.
+"""
+
 import argparse
 import logging
 import os
@@ -18,10 +22,10 @@ def init_schema(db_user: str, db_passwd: str, db_host: str, db_port: int, db_nam
     """
 
     # Instantiate database connection class
-    db = DatabaseConnector()
+    db = connect_db.DatabaseConnector()
 
     # Read database schema
-    pwd = os.path.abspath(__file__)
+    pwd = os.path.split(os.path.abspath(__file__))[0]
     sql = os.path.join(pwd, "schema.sql")
     db_config = db.mysql_login_config_path()
 
@@ -45,7 +49,7 @@ def init_schema(db_user: str, db_passwd: str, db_host: str, db_port: int, db_nam
 if __name__ == "__main__":
     # Read command-line arguments
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--db_user', default="plato", type=str, dest='db_user', help='Database user')
+    parser.add_argument('--db_user', default="root", type=str, dest='db_user', help='Database user')
     parser.add_argument('--db_passwd', default="plato", type=str, dest='db_passwd', help='Database password')
     parser.add_argument('--db_host', default="localhost", type=str, dest='db_host', help='Database host')
     parser.add_argument('--db_port', default=30036, type=int, dest='db_port', help='Database port')

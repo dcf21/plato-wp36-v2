@@ -54,7 +54,7 @@ class DatabaseConnector:
         :return:
             str
         """
-        return os.path.join(settings['pythonPath'], "../data/datadir_local/mysql_login.cfg")
+        return os.path.join(settings['pythonPath'], "../../data/datadir_local/mysql_login.cfg")
 
     def make_mysql_login_config(self, db_user: str, db_passwd: str, db_host: str, db_port: int):
         """
