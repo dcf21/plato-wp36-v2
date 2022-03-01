@@ -13,7 +13,7 @@ import yaml
 from kubernetes import client, config
 
 def deploy_all():
-    components = ["mysql-pv-minikube", "mysql-pvc-minikube", "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service"]
+    components = ["input-pv", "input-pvc", "output-pv", "output-pvc", "mysql-pv-minikube", "mysql-pvc-minikube", "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service", "eas-debugging"]
 
     for item in components:
         deploy_item(name=item)

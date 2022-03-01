@@ -1,5 +1,5 @@
 # Use standardised Python environment with EAS pipeline code
-FROM plato/eas:v1
+FROM plato/eas_base:v1
 
 # Copy source code into the Docker container
 WORKDIR /plato-wp36-v2/docker_containers/worker_bls_kovacs

@@ -42,4 +42,4 @@ cd /plato-wp36-v2/docker_containers/worker_dst_v26/private_code/asalto26.5
 make -j 4
 
 # Write list of available software
-RUN echo '["dst_v26"]' > /plato-wp36-v2/installed_software.json
+echo '["dst_v26"]' > /plato-wp36-v2/installed_software.json

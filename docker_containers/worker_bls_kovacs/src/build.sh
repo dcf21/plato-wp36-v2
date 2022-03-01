@@ -10,4 +10,5 @@ cd python-bls
 /plato-wp36-v2/data/datadir_local/virtualenv/bin/python3 setup.py install
 
 # Write list of available TDAs
-echo '["bls_kovacs"]' > /plato_eas/docker_containers/tda_list.json
+echo '["bls_kovacs"]' > /plato-wp36-v2/installed_software.json
+
