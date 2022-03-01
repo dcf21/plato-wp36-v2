@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plato
+spec:
+  selector:
+    matchLabels:
+      app: plato
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: plato
+    spec:
+      containers:
+        - image: plato/eas_base:v1
+          name: plato
+          command: [ 'sleep' ]
+          args: [ '360000' ]
+          volumeMounts:
+            - name: output-persistent-storage
+              mountPath: /plato-wp36-v2/data/datadir_output
+            - name: input-persistent-storage
+              mountPath: /plato-wp36-v2/data/datadir_input
+      volumes:
+        - name: output-persistent-storage
+          persistentVolumeClaim:
+            claimName: output-pv-claim
+        - name: input-persistent-storage
+          persistentVolumeClaim:
+            claimName: input-pv-claim
