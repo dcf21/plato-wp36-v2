@@ -12,6 +12,3 @@ patch Makefile < Makefile.asalto29.patch
 
 # Make asalto29
 make -j 4
-
-# Write list of available software
-echo '["dst_v29"]' > /plato-wp36-v2/installed_software.json

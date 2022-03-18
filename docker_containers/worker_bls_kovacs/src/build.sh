@@ -8,7 +8,3 @@ cd /plato-wp36-v2/data/datadir_local
 git clone https://github.com/dfm/python-bls.git
 cd python-bls
 /plato-wp36-v2/data/datadir_local/virtualenv/bin/python3 setup.py install
-
-# Write list of available TDAs
-echo '["bls_kovacs"]' > /plato-wp36-v2/installed_software.json
-

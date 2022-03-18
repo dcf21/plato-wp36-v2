@@ -12,6 +12,5 @@ ADD src src
 # Now build the transit-detection code
 RUN ./src/build.sh
 
-# *** Write list of available TDAs
-RUN echo '["dst_v29"]' > /plato-wp36-v2/installed_software.json
-
+# *** Write name of the Docker container into its root
+RUN echo 'worker_dst_v29' > /plato-wp36-v2/container_name.txt

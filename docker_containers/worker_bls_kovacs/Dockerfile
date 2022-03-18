@@ -8,5 +8,5 @@ ADD src src
 # Now build the BLS code
 RUN ./src/build.sh
 
-# *** Write list of available TDAs
-RUN echo '["bls_kovacs"]' > /plato-wp36-v2/installed_software.json
+# *** Write name of the Docker container into its root
+RUN echo 'worker_bls_kovacs' > /plato-wp36-v2/container_name.txt

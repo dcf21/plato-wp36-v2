@@ -8,6 +8,5 @@ ADD src src
 # Now build the BLS reference implementation
 RUN ./src/build.sh
 
-# *** Write list of available TDAs
-RUN echo '["bls_reference"]' > /plato-wp36-v2/installed_software.json
-
+# *** Write name of the Docker container into its root
+RUN echo 'worker_bls_reference' > /plato-wp36-v2/container_name.txt

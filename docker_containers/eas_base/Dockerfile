@@ -36,3 +36,6 @@ WORKDIR /plato-wp36-v2/docker_containers/eas_base/python_modules/eas_psls_wrappe
 RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/python3 setup.py develop
 WORKDIR /plato-wp36-v2/docker_containers/eas_base/python_modules/eas_batman_wrapper/
 RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/python3 setup.py develop
+
+# *** Write name of the Docker container into its root
+RUN echo 'eas_base' > /plato-wp36-v2/container_name.txt
