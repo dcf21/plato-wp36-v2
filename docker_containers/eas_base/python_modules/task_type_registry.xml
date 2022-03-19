@@ -42,6 +42,14 @@
             <container>all</container>
         </task>
         <task>
+            <name>execution_chain</name>
+            <container>all</container>
+        </task>
+        <task>
+            <name>iteration</name>
+            <container>all</container>
+        </task>
+        <task>
             <name>batman_synthesise</name>
             <container>worker_batman</container>
         </task>

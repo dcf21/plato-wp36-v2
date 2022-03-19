@@ -14,11 +14,15 @@ CREATE TABLE eas_task_types
 # Table of tasks EAS is scheduled to run
 CREATE TABLE eas_task
 (
-    taskId     INTEGER PRIMARY KEY,
-    parentTask INTEGER,
-    taskTypeId INTEGER NOT NULL,
+    taskId            INTEGER PRIMARY KEY,
+    parentTask        INTEGER,
+    taskTypeId        INTEGER       NOT NULL,
+    jobName           VARCHAR(256),
+    working_directory VARCHAR(1024) NOT NULL,
     FOREIGN KEY (parentTask) REFERENCES eas_task (taskId) ON DELETE CASCADE,
-    FOREIGN KEY (taskTypeId) REFERENCES eas_task_types (taskTypeId) ON DELETE CASCADE
+    FOREIGN KEY (taskTypeId) REFERENCES eas_task_types (taskTypeId) ON DELETE CASCADE,
+    INDEX (parentTask),
+    INDEX (jobName)
 );
 
 # Table of each time a task is scheduled on the cluster
@@ -37,7 +41,30 @@ CREATE TABLE eas_scheduling_attempt
     FOREIGN KEY (taskId) REFERENCES eas_task (taskId) ON DELETE CASCADE
 );
 
-# Table of metadata association with each time a task runs
+# Table of semantic types of file products
+CREATE TABLE eas_semantic_type
+(
+    semanticTypeId INTEGER PRIMARY KEY,
+    name           VARCHAR(256) UNIQUE NOT NULL,
+    INDEX (name)
+);
+
+# Table of all intermediate file products
+CREATE TABLE eas_product
+(
+    productId     INTEGER PRIMARY KEY,
+    repositoryId  VARCHAR(64) UNIQUE  NOT NULL,
+    generatorTask INTEGER             NOT NULL,
+    directory     VARCHAR(1024)       NOT NULL,
+    filename      VARCHAR(255) UNIQUE NOT NULL,
+    semanticType  INTEGER             NOT NULL,
+    created       BOOLEAN DEFAULT FALSE,
+    passedQc      BOOLEAN,
+    FOREIGN KEY (generatorTask) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE,
+    FOREIGN KEY (semanticType) REFERENCES eas_semantic_type (semanticTypeId) ON DELETE CASCADE
+);
+
+# Table of metadata association with tasks or scheduling attempts, or file products
 CREATE TABLE eas_metadata_keys
 (
     keyId INTEGER PRIMARY KEY,
@@ -45,26 +72,23 @@ CREATE TABLE eas_metadata_keys
     INDEX (name)
 );
 
-CREATE TABLE eas_scheduling_attempt_metadata
+CREATE TABLE eas_metadata_item
 (
+    taskId              INTEGER,
     schedulingAttemptId INTEGER,
+    productId           INTEGER,
     metadataKey         INTEGER,
     valueFloat          REAL,
     valueString         TEXT,
+    FOREIGN KEY (taskId) REFERENCES eas_task (taskId) ON DELETE CASCADE,
     FOREIGN KEY (schedulingAttemptId) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE,
-    FOREIGN KEY (metadataKey) REFERENCES eas_metadata_keys (keyId) ON DELETE CASCADE
+    FOREIGN KEY (productId) REFERENCES eas_product (productId) ON DELETE CASCADE,
+    FOREIGN KEY (metadataKey) REFERENCES eas_metadata_keys (keyId) ON DELETE CASCADE,
+    UNIQUE (taskId, metadataKey),
+    UNIQUE (schedulingAttemptId, metadataKey),
+    UNIQUE (productId, metadataKey)
 );
 
-# Table of all intermediate file products
-CREATE TABLE eas_product
-(
-    productId     INTEGER PRIMARY KEY,
-    generatorTask INTEGER             NOT NULL,
-    filename      VARCHAR(255) UNIQUE NOT NULL,
-    created       BOOLEAN DEFAULT FALSE,
-    passedQc      BOOLEAN,
-    FOREIGN KEY (generatorTask) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE
-);
 
 # Table of intermediate products required by each task
 CREATE TABLE eas_task_input
@@ -92,4 +116,3 @@ END;
 //
 
 COMMIT;
-
