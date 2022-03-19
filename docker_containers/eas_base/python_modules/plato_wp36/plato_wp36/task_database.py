@@ -82,7 +82,10 @@ REPLACE INTO eas_task_types (taskName, workerContainers) VALUES (%s, %s);
 """, (name, json.dumps(containers)))
 
     # Functions relating to metadata items
-    def metadata_fetch(self, task_id: Optional[int], scheduling_attempt_id: Optional[int], product_id: Optional[int]):
+    def metadata_fetch(self,
+                       task_id: Optional[int] = None,
+                       scheduling_attempt_id: Optional[int] = None,
+                       product_id: Optional[int] = None):
         """
         Fetch dictionary of metadata objects associated with an item.
 
@@ -108,7 +111,7 @@ REPLACE INTO eas_task_types (taskName, workerContainers) VALUES (%s, %s);
 
         # Fetch metadata from database
         self.conn.execute("""
-SELECT k.name AS key, m.valueFloat, m.valueString
+SELECT k.name AS keyword, m.valueFloat, m.valueString
 FROM eas_metadata_item m
 INNER JOIN eas_metadata_keys k ON k.keyId=m.metadataKey
 WHERE {};""".format(" AND ".join(constraints)))
@@ -121,7 +124,7 @@ WHERE {};""".format(" AND ".join(constraints)))
             for value_field in ('valueString', 'valueFloat'):
                 if item[value_field]:
                     value = item[value_field]
-            output[item['key']] = MetadataItem(keyword=item['key'], value=value)
+            output[item['keyword']] = MetadataItem(keyword=item['keyword'], value=value)
 
         # Return dictionary of <MetadataItem>s
         return output
@@ -145,7 +148,7 @@ WHERE {};""".format(" AND ".join(constraints)))
                 return result[0]['keyId']
 
             # Create new ID
-            self.conn.execute("INSERT INTO eas_metadata_keys (name) VALUES (%s);", (name,))
+            self.conn.execute("INSERT INTO eas_metadata_keys (name) VALUES (%s);", (keyword,))
 
     def metadata_register(self,
                           task_id: Optional[int], scheduling_attempt_id: Optional[int], product_id: Optional[int],
@@ -194,7 +197,7 @@ VALUES (%s, %s, %s, %s, %s, %s);
         """
 
         # Look up file repository filename
-        self.conn.execute("SELECT repositoryId, directory FROM eas_products WHERE productId = %s;", (product_id,))
+        self.conn.execute("SELECT repositoryId, directory FROM eas_product WHERE productId = %s;", (product_id,))
         result = self.conn.fetchall()
         assert len(result) == 1
 
@@ -209,7 +212,7 @@ VALUES (%s, %s, %s, %s, %s, %s);
         :return:
             True if we have a record with this ID, False otherwise
         """
-        self.conn.execute('SELECT 1 FROM eas_products WHERE productId = %s', (product_id,))
+        self.conn.execute('SELECT 1 FROM eas_product WHERE productId = %s', (product_id,))
         return len(self.conn.fetchall()) > 0
 
     def file_product_delete(self, product_id: int):
@@ -227,7 +230,7 @@ VALUES (%s, %s, %s, %s, %s, %s);
         except OSError:
             logging.warning("Could not delete file <{}>".format(file_path))
             pass
-        self.conn.execute('DELETE FROM eas_products WHERE productId = %s', (product_id,))
+        self.conn.execute('DELETE FROM eas_product WHERE productId = %s', (product_id,))
 
     def file_product_lookup(self, product_id: int):
         """
@@ -243,7 +246,7 @@ VALUES (%s, %s, %s, %s, %s, %s);
         self.conn.execute("""
 SELECT productId, repositoryId, generatorTask, directory, filename, semanticType, created, passedQc,
        s.name AS semanticType
-FROM eas_products p
+FROM eas_product p
 INNER JOIN eas_semantic_type s ON s.semanticTypeId=p.semanticType
 WHERE productId = %s;
 """, (product_id,))

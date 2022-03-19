@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <task_type_registry>
-    <container>
+    <containers>
         <container>
             <name>eas_base</name>
         </container>
@@ -31,7 +31,7 @@
         <container>
             <name>worker_tls</name>
         </container>
-    </container>
+    </containers>
     <tasks>
         <task>
             <name>null</name>

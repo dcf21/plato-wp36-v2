@@ -88,13 +88,20 @@ class TaskTypeList:
             task_name: str = task_item['name']
             docker_containers: Set[str] = set()
 
-            for container_item in task_item['container']:
+            # If we only have a list of one container type, still make sure it's a one-item list
+            container_list = task_item['container']
+            if isinstance(container_list, str):
+                container_list = [container_list]
+
+            # Compile a list of all the containers that can run this task
+            for container_item in container_list:
                 if container_item == "all":
                     # Special container name 'all' indicates that task is available in all containers
                     docker_containers.union(output.container_names)
                 else:
                     # Make sure this container name is recognised
-                    assert container_item in output.container_names
+                    assert container_item in output.container_names, \
+                        "Unrecognised container <{}>".format(container_item)
 
                     # Add container to list of those that can run this task
                     docker_containers.add(container_item)

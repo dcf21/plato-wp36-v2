@@ -10,7 +10,7 @@ import argparse
 import logging
 import os
 
-from plato_wp36 import connect_db, settings
+from plato_wp36 import connect_db, settings, task_database, task_types
 
 
 def init_schema(db_user: str, db_passwd: str, db_host: str, db_port: int, db_name: str):
@@ -43,6 +43,13 @@ def init_schema(db_user: str, db_passwd: str, db_host: str, db_port: int, db_nam
     # Create basic database schema
     cmd = "cat {:s} | mysql --defaults-extra-file={:s} {:s}".format(sql, db_config, db_name)
     os.system(cmd)
+
+    # Read list of known task types
+    tasks = task_types.TaskTypeList.read_from_xml()
+
+    # Write list of task types to the database
+    task_db = task_database.TaskDatabaseConnection()
+    task_db.task_list_to_db(task_list=tasks)
 
 
 # Do it right away if we're run as a script

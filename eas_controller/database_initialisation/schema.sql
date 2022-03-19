@@ -13,7 +13,7 @@ CREATE TABLE eas_task_types
 # Table of tasks EAS is scheduled to run
 CREATE TABLE eas_task
 (
-    taskId            INTEGER PRIMARY KEY,
+    taskId            INTEGER PRIMARY KEY AUTO_INCREMENT,
     parentTask        INTEGER,
     taskTypeId        INTEGER       NOT NULL,
     jobName           VARCHAR(256),
@@ -27,7 +27,7 @@ CREATE TABLE eas_task
 # Table of each time a task is scheduled on the cluster
 CREATE TABLE eas_scheduling_attempt
 (
-    schedulingAttemptId   INTEGER PRIMARY KEY,
+    schedulingAttemptId   INTEGER PRIMARY KEY AUTO_INCREMENT,
     taskId                INTEGER NOT NULL,
     startTime             REAL             DEFAULT NULL,
     endTime               REAL             DEFAULT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE eas_scheduling_attempt
 # Table of semantic types of file products
 CREATE TABLE eas_semantic_type
 (
-    semanticTypeId INTEGER PRIMARY KEY,
+    semanticTypeId INTEGER PRIMARY KEY AUTO_INCREMENT,
     name           VARCHAR(256) UNIQUE NOT NULL,
     INDEX (name)
 );
@@ -51,7 +51,7 @@ CREATE TABLE eas_semantic_type
 # Table of all intermediate file products
 CREATE TABLE eas_product
 (
-    productId     INTEGER PRIMARY KEY,
+    productId     INTEGER PRIMARY KEY AUTO_INCREMENT,
     repositoryId  VARCHAR(64) UNIQUE  NOT NULL,
     generatorTask INTEGER             NOT NULL,
     directory     VARCHAR(1024)       NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE eas_product
 # Table of metadata association with tasks or scheduling attempts, or file products
 CREATE TABLE eas_metadata_keys
 (
-    keyId INTEGER PRIMARY KEY,
+    keyId INTEGER PRIMARY KEY AUTO_INCREMENT,
     name  VARCHAR(64) UNIQUE NOT NULL,
     INDEX (name)
 );
