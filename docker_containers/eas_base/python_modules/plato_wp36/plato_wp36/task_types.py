@@ -16,8 +16,8 @@ from .vendor import xmltodict
 
 class TaskTypeList:
     """
-    Module for reading the list of all known pipeline tasks, and the list of which Docker containers are capable
-    of running each type of task.
+    Class for reading and representing the list of all known pipeline tasks, and the list of which Docker containers
+    are capable of running each type of task.
     """
 
     def __init__(self):

@@ -5,10 +5,9 @@ BEGIN;
 # Table of types of tasks the testbench can run
 CREATE TABLE eas_task_types
 (
-    taskTypeId INTEGER PRIMARY KEY AUTO_INCREMENT,
-    taskName   VARCHAR(64) UNIQUE NOT NULL,
-    queueName  VARCHAR(64) UNIQUE NOT NULL,
-    workerName VARCHAR(64)        NOT NULL
+    taskTypeId       INTEGER PRIMARY KEY AUTO_INCREMENT,
+    taskName         VARCHAR(64) UNIQUE NOT NULL,
+    workerContainers JSON               NOT NULL
 );
 
 # Table of tasks EAS is scheduled to run

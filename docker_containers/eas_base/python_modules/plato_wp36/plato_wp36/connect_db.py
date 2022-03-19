@@ -77,7 +77,7 @@ default-character-set = utf8mb4
 """.format(db_user, db_passwd, db_host, db_port)
         open(db_config, "w").write(config_text)
 
-    def connect_db(self, database=0):
+    def connect_db(self, database=None):
         """
         Return a new MySQLdb connection to the database.
 
@@ -87,7 +87,7 @@ default-character-set = utf8mb4
             List of [database handle, connection handle]
         """
 
-        if database == 0:
+        if database is None:
             database = self.db_database
 
         db = MySQLdb.connect(host=self.db_host, user=self.db_user, passwd=self.db_password, db=database)
