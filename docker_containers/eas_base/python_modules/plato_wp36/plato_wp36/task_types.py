@@ -10,7 +10,7 @@ import os
 
 from typing import Dict, Optional, Set
 
-from .settings import settings
+from .settings import Settings
 from .vendor import xmltodict
 
 
@@ -67,6 +67,9 @@ class TaskTypeList:
             TaskTypeList instance
         """
 
+        # Fetch testbench settings
+        settings = Settings().settings
+
         # Default path for the XML file
         if xml_filename is None:
             xml_filename = os.path.join(settings['pythonPath'], 'task_type_registry.xml')
@@ -97,7 +100,7 @@ class TaskTypeList:
             for container_item in container_list:
                 if container_item == "all":
                     # Special container name 'all' indicates that task is available in all containers
-                    docker_containers.union(output.container_names)
+                    docker_containers = docker_containers.union(output.container_names)
                 else:
                     # Make sure this container name is recognised
                     assert container_item in output.container_names, \

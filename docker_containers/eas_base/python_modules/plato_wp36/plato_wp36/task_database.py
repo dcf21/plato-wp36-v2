@@ -12,7 +12,7 @@ import json
 from typing import Dict, Optional, Set
 
 from .connect_db import DatabaseConnector
-from .settings import settings
+from .settings import Settings
 from .task_objects import MetadataItem, FileProduct, TaskExecutionAttempt, Task
 from .task_types import TaskTypeList
 
@@ -22,10 +22,20 @@ class TaskDatabaseConnection:
     Class for reading and writing task objects to the database.
     """
 
-    def __init__(self, file_store_path: str = settings['dataPath']):
+    def __init__(self, file_store_path: Optional[str] = None):
         """
         Initialise a database connection
         """
+
+        # Null database connection (so destructor doesn't fail if we never open database)
+        self.db = None
+
+        # Fetch testbench settings
+        self.settings = Settings().settings
+
+        # If file store path is not specified, use default
+        if file_store_path is None:
+            file_store_path = self.settings['dataPath']
 
         # Path to where we store all our intermediate file products
         self.file_store_path = file_store_path
@@ -41,8 +51,9 @@ class TaskDatabaseConnection:
         self.db.commit()
 
     def close_db(self):
-        self.conn.close()
-        self.db.close()
+        if self.db is not None:
+            self.db.close()
+            self.db = None
 
     # Functions relating to task type lists
     def task_list_from_db(self):
@@ -76,10 +87,10 @@ FROM eas_task_types""")
         """
 
         # Write each task type in turn
-        for name, containers in task_list.task_list:
+        for name, containers in task_list.task_list.items():
             self.conn.execute("""
 REPLACE INTO eas_task_types (taskName, workerContainers) VALUES (%s, %s);
-""", (name, json.dumps(containers)))
+""", (name, json.dumps(list(containers))))
 
     # Functions relating to metadata items
     def metadata_fetch(self,

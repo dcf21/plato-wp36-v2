@@ -27,11 +27,11 @@ def init_schema(db_user: str, db_passwd: str, db_host: str, db_port: int, db_nam
     # Read database schema
     pwd = os.path.split(os.path.abspath(__file__))[0]
     sql = os.path.join(pwd, "schema.sql")
-    db_config = db.mysql_login_config_path()
+    db_config = db.mysql_login_config_path()[0]
 
     # Create mysql login config file
     db.make_mysql_login_config(db_user=db_user, db_passwd=db_passwd,
-                               db_host=db_host, db_port=db_port)
+                               db_host=db_host, db_port=db_port, db_database=db_name)
 
     # Recreate database from scratch
     cmd = "echo 'DROP DATABASE IF EXISTS {:s};' | mysql --defaults-extra-file={:s}".format(db_name, db_config)
@@ -51,6 +51,10 @@ def init_schema(db_user: str, db_passwd: str, db_host: str, db_port: int, db_nam
     task_db = task_database.TaskDatabaseConnection()
     task_db.task_list_to_db(task_list=tasks)
 
+    # Commit database
+    task_db.commit()
+    task_db.close_db()
+
 
 # Do it right away if we're run as a script
 if __name__ == "__main__":
@@ -62,6 +66,9 @@ if __name__ == "__main__":
     parser.add_argument('--db_port', default=30036, type=int, dest='db_port', help='Database port')
     parser.add_argument('--db_name', default="plato", type=str, dest='db_name', help='Database name')
     args = parser.parse_args()
+
+    # Fetch testbench settings
+    settings = settings.Settings()
 
     # Set up logging
     log_file_path = os.path.join(settings.settings['dataPath'], 'plato_wp36.log')

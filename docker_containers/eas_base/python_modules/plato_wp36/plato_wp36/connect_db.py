@@ -11,7 +11,7 @@ import warnings
 import MySQLdb
 import os
 
-from .settings import settings, installation_info
+from .settings import Settings
 
 warnings.filterwarnings("ignore", ".*Unknown table .*")
 
@@ -22,11 +22,15 @@ class DatabaseConnector:
     """
 
     def __init__(self):
+        # Fetch testbench settings
+        settings = Settings()
+
         # Look up MySQL database log in details
-        self.db_host = installation_info['db_host']
-        self.db_user = installation_info['db_user']
-        self.db_password = installation_info['db_password']
-        self.db_database = installation_info['db_database']
+        self.db_host = settings.installation_info['db_host']
+        self.db_port = int(settings.installation_info['db_port'])
+        self.db_user = settings.installation_info['db_user']
+        self.db_password = settings.installation_info['db_password']
+        self.db_database = settings.installation_info['db_database']
 
     def test_database_exists(self):
         """
@@ -37,7 +41,9 @@ class DatabaseConnector:
         """
 
         try:
-            db = MySQLdb.connect(host=self.db_host, user=self.db_user, passwd=self.db_password, db=self.db_database)
+            db = MySQLdb.connect(host=self.db_host, port=self.db_port,
+                                 user=self.db_user, passwd=self.db_password,
+                                 db=self.db_database)
         except MySQLdb._exceptions.OperationalError as exception:
             if "Unknown database" not in str(exception):
                 raise
@@ -54,9 +60,16 @@ class DatabaseConnector:
         :return:
             str
         """
-        return os.path.join(settings['pythonPath'], "../../data/datadir_local/mysql_login.cfg")
 
-    def make_mysql_login_config(self, db_user: str, db_passwd: str, db_host: str, db_port: int):
+        # Fetch testbench settings
+        settings = Settings().settings
+
+        mysql_config = os.path.join(settings['pythonPath'], "../../data/datadir_local/mysql_login.cfg")
+        python_config = os.path.join(settings['pythonPath'], "../../data/datadir_local/local_settings.conf")
+
+        return mysql_config, python_config
+
+    def make_mysql_login_config(self, db_user: str, db_passwd: str, db_host: str, db_port: int, db_database: str):
         """
         Create MySQL configuration file with username and password, which means we can log into database without
         supplying these on the command line.
@@ -65,8 +78,9 @@ class DatabaseConnector:
             None
         """
 
-        db_config = self.mysql_login_config_path()
+        mysql_config, python_config = self.mysql_login_config_path()
 
+        # Write config file for MySQL
         config_text = """
 [client]
 user = {:s}
@@ -75,7 +89,22 @@ host = {:s}
 port = {:d}
 default-character-set = utf8mb4
 """.format(db_user, db_passwd, db_host, db_port)
-        open(db_config, "w").write(config_text)
+
+        with open(mysql_config, "w") as f:
+            f.write(config_text)
+
+        # Write config file that the plato_wp36 Python settings module uses
+        config_text = """
+# MySQL database settings
+db_host: {:s}
+db_port: {:d}
+db_user: {:s}
+db_password: {:s}
+db_database: {:s}
+""".format(db_host, db_port, db_user, db_passwd, db_database)
+
+        with open(python_config, "w") as f:
+            f.write(config_text)
 
     def connect_db(self, database=None):
         """
@@ -90,7 +119,9 @@ default-character-set = utf8mb4
         if database is None:
             database = self.db_database
 
-        db = MySQLdb.connect(host=self.db_host, user=self.db_user, passwd=self.db_password, db=database)
+        db = MySQLdb.connect(host=self.db_host, port=self.db_port,
+                             user=self.db_user, passwd=self.db_password,
+                             db=database)
         c = db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 
         db.set_character_set('utf8mb4')

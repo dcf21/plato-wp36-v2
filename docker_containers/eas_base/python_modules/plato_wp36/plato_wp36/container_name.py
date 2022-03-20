@@ -10,7 +10,7 @@ import os
 
 from typing import Optional
 
-from .settings import settings
+from .settings import Settings
 
 
 def get_container_name(container_name_filename: Optional[str] = None):
@@ -25,6 +25,9 @@ def get_container_name(container_name_filename: Optional[str] = None):
     :return:
         Name of container
     """
+
+    # Fetch testbench settings
+    settings = Settings().settings
 
     # Default path for name of container
     if container_name_filename is None:

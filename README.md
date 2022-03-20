@@ -10,7 +10,7 @@ The test-bench also serves as a prototype for many of the parallel-computing tec
 
 The test-bench is designed to run in Docker containers within a Kubernetes environment, though it is also possible to run some individual components of it natively under Ubuntu Linux.
 
-Instructions on how to deploy the pipeline can be found in the `build_scripts` directory. The easiest way to create a Kubernetes environment on a single machine is to install the `minikube` package.
+Instructions on how to deploy the pipeline can be found in `install.md`. The easiest way to create a Kubernetes environment on a single machine is to install the `minikube` package.
 
 ### Usage overview
 

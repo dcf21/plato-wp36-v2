@@ -13,7 +13,7 @@ import re
 
 import numpy as np
 
-from .settings import settings
+from .settings import Settings
 
 
 class LightcurveArbitraryRaster:
@@ -108,6 +108,9 @@ class LightcurveArbitraryRaster:
             bool
         """
 
+        # Fetch testbench settings
+        settings = Settings().settings
+
         # Make sure target directory exists
         if create_directory:
             os.system("mkdir -p '{}'".format(os.path.join(settings['lcPath'], directory)))
@@ -164,6 +167,9 @@ class LightcurveArbitraryRaster:
             A <LightcurveArbitraryRaster> object.
         """
 
+        # Fetch testbench settings
+        settings = Settings().settings
+
         times = []  # Times stored as days, but data files contain seconds
         fluxes = []
         uncertainties = []
@@ -173,6 +179,7 @@ class LightcurveArbitraryRaster:
             'directory': directory,
             'filename': filename
         }
+
         # Full path for this lightcurve
         file_path = os.path.join(settings['lcPath'], directory, filename)
 
