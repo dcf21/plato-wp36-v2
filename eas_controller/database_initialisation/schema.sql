@@ -60,15 +60,15 @@ CREATE TABLE eas_product
     modifiedTime  REAL,
     fileMD5       VARCHAR(32),
     fileSize      INTEGER,
-    directory     VARCHAR(1024)      NOT NULL,
-    filename      VARCHAR(255)       NOT NULL,
+    directoryName VARCHAR(512)       NOT NULL,
+    filename      VARCHAR(256)       NOT NULL,
     semanticType  INTEGER            NOT NULL,
     mimeType      VARCHAR(64),
     created       BOOLEAN DEFAULT FALSE,
     passedQc      BOOLEAN,
     FOREIGN KEY (generatorTask) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE,
     FOREIGN KEY (semanticType) REFERENCES eas_semantic_type (semanticTypeId) ON DELETE CASCADE,
-    UNIQUE (directory, filename)
+    UNIQUE (directoryName, filename)
 );
 
 # Table of metadata association with tasks or scheduling attempts, or file products

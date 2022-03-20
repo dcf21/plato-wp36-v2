@@ -86,7 +86,7 @@ class FileProduct:
                   directory: Optional[str] = None, filename: Optional[str] = None,
                   semantic_type: Optional[str] = None, mime_type: Optional[str] = None,
                   created: Optional[bool] = None, passed_qc: Optional[bool] = None,
-                  metadata: List[MetadataItem] = None):
+                  metadata: Dict[str, MetadataItem] = None):
         if product_id is not None:
             self.product_id = product_id
         if repository_id is not None:
@@ -117,7 +117,7 @@ class FileProduct:
             self.passed_qc = passed_qc
         if metadata is not None:
             # Merge new metadata with existing metadata
-            for item in metadata:
+            for item in metadata.values():
                 self.metadata[item.keyword] = item
 
     def as_dict(self):
@@ -172,7 +172,8 @@ class FileProduct:
 
         # Populate metadata
         for item in d['metadata']:
-            output.configure(metadata=[MetadataItem.from_dict(item)])
+            item_object = MetadataItem.from_dict(item)
+            output.configure(metadata={item_object.keyword: item_object})
 
         # Return output
         return output
@@ -208,7 +209,7 @@ class TaskExecutionAttempt:
                   run_time_wall_clock: Optional[float] = None,
                   run_time_cpu: Optional[float] = None,
                   run_time_cpu_inc_children: Optional[float] = None,
-                  metadata: Optional[List[MetadataItem]] = None,
+                  metadata: Optional[Dict[str, MetadataItem]] = None,
                   output_files: Optional[List[int]] = None):
         if attempt_id is not None:
             self.attempt_id = attempt_id
@@ -232,7 +233,7 @@ class TaskExecutionAttempt:
             self.run_time_cpu_inc_children = run_time_cpu_inc_children
         if metadata is not None:
             # Merge new metadata with existing metadata
-            for item in metadata:
+            for item in metadata.values():
                 self.metadata[item.keyword] = item
         if output_files is not None:
             # Merge new output files with existing ones
@@ -284,7 +285,8 @@ class TaskExecutionAttempt:
 
         # Populate metadata
         for item in d['metadata']:
-            output.configure(metadata=[MetadataItem.from_dict(item)])
+            item_object = MetadataItem.from_dict(item)
+            output.configure(metadata={item_object.keyword: item_object})
 
         # Return output
         return output
@@ -315,7 +317,7 @@ class Task:
                   task_type: Optional[str] = None, job_name: Optional[str] = None,
                   working_directory: Optional[str] = None, input_files: Optional[List[int]] = None,
                   execution_attempts: List[TaskExecutionAttempt] = None,
-                  metadata: List[MetadataItem] = None):
+                  metadata: Dict[str, MetadataItem] = None):
         if task_id is not None:
             self.task_id = task_id
         if parent_id is not None:
@@ -337,7 +339,7 @@ class Task:
                 self.execution_attempts[item.attempt_id] = item
         if metadata is not None:
             # Merge new metadata with existing metadata
-            for item in metadata:
+            for item in metadata.values():
                 self.metadata[item.keyword] = item
 
     def as_dict(self):
@@ -383,7 +385,8 @@ class Task:
 
         # Populate metadata
         for item in d['metadata']:
-            output.configure(metadata=[MetadataItem.from_dict(item)])
+            item_object = MetadataItem.from_dict(item)
+            output.configure(metadata={item_object.keyword: item_object})
 
         # Return output
         return output
