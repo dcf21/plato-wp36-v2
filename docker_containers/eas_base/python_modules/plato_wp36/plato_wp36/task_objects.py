@@ -5,6 +5,8 @@
 Pythonic objects to represent pipeline task entries in the database
 """
 
+import time
+
 from typing import Dict, List, Optional, Set
 
 
@@ -13,10 +15,15 @@ class MetadataItem:
     A class representing a metadata value to associate with an item.
     """
 
-    def __init__(self, keyword: str, value):
+    def __init__(self, keyword: str, value, timestamp=None):
+        # Default creation time
+        if timestamp is None:
+            timestamp = time.time()
+
         # Initialise null item
         self.keyword = keyword
         self.value = value
+        self.timestamp = timestamp
 
     def as_dict(self):
         """
@@ -25,7 +32,8 @@ class MetadataItem:
             Dict
         """
         return {"keyword": self.keyword,
-                "value": self.value
+                "value": self.value,
+                "timestamp": self.timestamp
                 }
 
     @classmethod
@@ -38,7 +46,8 @@ class MetadataItem:
             Class instance
         """
         return cls(keyword=d['keyword'],
-                   value=d['value']
+                   value=d['value'],
+                   timestamp=d['timestamp']
                    )
 
 
@@ -52,9 +61,15 @@ class FileProduct:
         self.product_id: Optional[int] = None
         self.repository_id: Optional[str] = None
         self.generator_task: Optional[int] = None
+        self.planned_time: Optional[float] = None
+        self.created_time: Optional[float] = None
+        self.modified_time: Optional[float] = None
+        self.file_md5: Optional[str] = None
+        self.file_size: Optional[int] = None
         self.directory: Optional[str] = None
         self.filename: Optional[str] = None
         self.semantic_type: Optional[str] = None
+        self.mime_type: Optional[str] = None
         self.created: Optional[bool] = None
         self.passed_qc: Optional[bool] = None
         self.metadata: Dict[str, MetadataItem] = {}
@@ -63,8 +78,13 @@ class FileProduct:
         self.configure(**kwargs)
 
     def configure(self, product_id: Optional[int] = None, repository_id: Optional[str] = None,
-                  generator_task: Optional[int] = None, directory: Optional[str] = None,
-                  filename: Optional[str] = None, semantic_type: Optional[str] = None,
+                  generator_task: Optional[int] = None,
+                  planned_time: Optional[float] = None,
+                  created_time: Optional[float] = None,
+                  modified_time: Optional[float] = None,
+                  file_md5: Optional[str] = None, file_size: Optional[int] = None,
+                  directory: Optional[str] = None, filename: Optional[str] = None,
+                  semantic_type: Optional[str] = None, mime_type: Optional[str] = None,
                   created: Optional[bool] = None, passed_qc: Optional[bool] = None,
                   metadata: List[MetadataItem] = None):
         if product_id is not None:
@@ -73,12 +93,24 @@ class FileProduct:
             self.repository_id = repository_id
         if generator_task is not None:
             self.generator_task = generator_task
+        if planned_time is not None:
+            self.planned_time = planned_time
+        if created_time is not None:
+            self.created_time = created_time
+        if modified_time is not None:
+            self.modified_time = modified_time
+        if file_md5 is not None:
+            self.file_md5 = file_md5
+        if file_size is not None:
+            self.file_size = file_size
         if directory is not None:
             self.directory = directory
         if filename is not None:
             self.filename = filename
         if semantic_type is not None:
             self.semantic_type = semantic_type
+        if mime_type is not None:
+            self.mime_type = mime_type
         if created is not None:
             self.created = created
         if passed_qc is not None:
@@ -97,9 +129,15 @@ class FileProduct:
         return {"product_id": self.product_id,
                 "repository_id": self.repository_id,
                 "generator_task": self.generator_task,
+                "planned_time": self.planned_time,
+                "created_time": self.created_time,
+                "modified_time": self.modified_time,
+                "file_md5": self.file_md5,
+                "file_size": self.file_size,
                 "directory": self.directory,
                 "filename": self.filename,
                 "semantic_type": self.semantic_type,
+                "mime_type": self.mime_type,
                 "created": self.created,
                 "passed_qc": self.passed_qc,
                 "metadata": [item.as_dict() for item in self.metadata.values()]
@@ -119,9 +157,15 @@ class FileProduct:
         output = cls(product_id=d['product_id'],
                      repository_id=d['repository_id'],
                      generator_task=d['generator_task'],
+                     planned_time=d['planned_time'],
+                     created_time=d['created_time'],
+                     modified_time=d['modified_time'],
+                     file_md5=d['file_md5'],
+                     file_size=d['file_size'],
                      directory=d['directory'],
                      filename=d['filename'],
                      semantic_type=d['semantic_type'],
+                     mime_type=d['mime_type'],
                      created=d['created'],
                      passed_qc=d['passed_qc']
                      )
@@ -255,6 +299,7 @@ class Task:
         # Initialise null task
         self.task_id: Optional[int] = None
         self.parent_id: Optional[int] = None
+        self.created_time: Optional[float] = None
         self.task_type: Optional[str] = None
         self.job_name: Optional[str] = None
         self.working_directory: Optional[str] = None
@@ -266,6 +311,7 @@ class Task:
         self.configure(**kwargs)
 
     def configure(self, task_id: Optional[int] = None, parent_id: Optional[int] = None,
+                  created_time: Optional[float] = None,
                   task_type: Optional[str] = None, job_name: Optional[str] = None,
                   working_directory: Optional[str] = None, input_files: Optional[List[int]] = None,
                   execution_attempts: List[TaskExecutionAttempt] = None,
@@ -274,6 +320,8 @@ class Task:
             self.task_id = task_id
         if parent_id is not None:
             self.parent_id = parent_id
+        if created_time is not None:
+            self.created_time = created_time
         if task_type is not None:
             self.task_type = task_type
         if job_name is not None:
@@ -300,6 +348,7 @@ class Task:
         """
         return {"task_id": self.task_id,
                 "parent_id": self.parent_id,
+                "created_time": self.created_time,
                 "task_type": self.task_type,
                 "job_name": self.job_name,
                 "working_directory": self.working_directory,
@@ -321,6 +370,7 @@ class Task:
         # Create class instance
         output = cls(task_id=d['task_id'],
                      parent_id=d['parent_id'],
+                     created_time=d['created_time'],
                      task_type=d['task_type'],
                      job_name=d['job_name'],
                      working_directory=d['working_directory'],

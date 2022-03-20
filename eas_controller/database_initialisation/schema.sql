@@ -15,6 +15,7 @@ CREATE TABLE eas_task
 (
     taskId            INTEGER PRIMARY KEY AUTO_INCREMENT,
     parentTask        INTEGER,
+    createdTime       REAL,
     taskTypeId        INTEGER       NOT NULL,
     jobName           VARCHAR(256),
     working_directory VARCHAR(1024) NOT NULL,
@@ -52,15 +53,22 @@ CREATE TABLE eas_semantic_type
 CREATE TABLE eas_product
 (
     productId     INTEGER PRIMARY KEY AUTO_INCREMENT,
-    repositoryId  VARCHAR(64) UNIQUE  NOT NULL,
-    generatorTask INTEGER             NOT NULL,
-    directory     VARCHAR(1024)       NOT NULL,
-    filename      VARCHAR(255) UNIQUE NOT NULL,
-    semanticType  INTEGER             NOT NULL,
+    repositoryId  VARCHAR(64) UNIQUE NOT NULL,
+    generatorTask INTEGER            NOT NULL,
+    plannedTime   REAL,
+    createdTime   REAL,
+    modifiedTime  REAL,
+    fileMD5       VARCHAR(32),
+    fileSize      INTEGER,
+    directory     VARCHAR(1024)      NOT NULL,
+    filename      VARCHAR(255)       NOT NULL,
+    semanticType  INTEGER            NOT NULL,
+    mimeType      VARCHAR(64),
     created       BOOLEAN DEFAULT FALSE,
     passedQc      BOOLEAN,
     FOREIGN KEY (generatorTask) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE,
-    FOREIGN KEY (semanticType) REFERENCES eas_semantic_type (semanticTypeId) ON DELETE CASCADE
+    FOREIGN KEY (semanticType) REFERENCES eas_semantic_type (semanticTypeId) ON DELETE CASCADE,
+    UNIQUE (directory, filename)
 );
 
 # Table of metadata association with tasks or scheduling attempts, or file products
@@ -76,6 +84,7 @@ CREATE TABLE eas_metadata_item
     taskId              INTEGER,
     schedulingAttemptId INTEGER,
     productId           INTEGER,
+    setAtTime           REAL,
     metadataKey         INTEGER,
     valueFloat          REAL,
     valueString         TEXT,
