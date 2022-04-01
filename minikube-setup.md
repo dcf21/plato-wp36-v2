@@ -7,19 +7,21 @@ The prerequisites to deploy the test-bench via minikube are as follows:
    If you need to install minikube, this can be done on a Ubuntu machine as follows. Note that you should install Docker via aptitude, not via snap, if you subsequently want to use minikube:
 
     ```
-    apt install apt-transport-https ca-certificates curl software-properties-common
-    cd
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+    # Install Docker
+    apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     apt update
-    apt-cache policy docker-ce
-    apt install docker-ce
-    systemctl status docker
+    apt install -y docker-ce docker-ce-cli containerd.io
 
-    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
-    apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+    # Install kubeadm
+    sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    apt update
     apt install kubeadm
-    
+
+    # Install minikube
+    cd /root
     wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
     cp minikube-linux-amd64 /usr/local/bin/minikube
     chmod 755 /usr/local/bin/minikube
