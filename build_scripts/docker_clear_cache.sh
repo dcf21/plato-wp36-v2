@@ -10,7 +10,7 @@ cwd=`pwd`
 docker system prune -f
 docker rmi $(docker images -a -q)
 
-# Prune docker environment within minikube environment
+# Prune docker environment within minikube VM
 eval $(minikube -p minikube docker-env)
 docker system prune -f
 docker rmi $(docker images -a -q)

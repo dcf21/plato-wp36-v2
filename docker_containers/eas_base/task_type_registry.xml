@@ -5,9 +5,6 @@
             <name>eas_base</name>
         </container>
         <container>
-            <name>worker_batman</name>
-        </container>
-        <container>
             <name>worker_bls_kovacs</name>
         </container>
         <container>
@@ -23,10 +20,16 @@
             <name>worker_exotrans</name>
         </container>
         <container>
-            <name>worker_psls</name>
+            <name>worker_synthesis_platosim</name>
         </container>
         <container>
             <name>worker_qats</name>
+        </container>
+        <container>
+            <name>worker_synthesis_platosim</name>
+        </container>
+        <container>
+            <name>worker_synthesis_psls_batman</name>
         </container>
         <container>
             <name>worker_tls</name>
@@ -51,11 +54,15 @@
         </task>
         <task>
             <name>batman_synthesise</name>
-            <container>worker_batman</container>
+            <container>worker_synthesis_psls_batman</container>
         </task>
         <task>
             <name>psls_synthesise</name>
-            <container>worker_psls</container>
+            <container>worker_synthesis_psls_batman</container>
+        </task>
+        <task>
+            <name>platosim_synthesise</name>
+            <container>worker_synthesis_platosim</container>
         </task>
         <task>
             <name>multiply</name>

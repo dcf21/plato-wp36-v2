@@ -22,7 +22,7 @@ do
     cd ${cwd}
 done
 
-# Build containers within minikube environment
+# Build containers within minikube environment (which has its own Docker environment in a VM)
 eval $(minikube -p minikube docker-env)
 
 # Build each container in turn

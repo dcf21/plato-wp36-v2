@@ -30,12 +30,12 @@ ADD configuration_local configuration_local
 ADD python_modules python_modules
 
 # Build and install plato_wp36 modules
-WORKDIR /plato-wp36-v2/docker_containers/eas_base/python_modules/plato_wp36/
-RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/python3 setup.py develop
-WORKDIR /plato-wp36-v2/docker_containers/eas_base/python_modules/eas_psls_wrapper/
-RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/python3 setup.py develop
-WORKDIR /plato-wp36-v2/docker_containers/eas_base/python_modules/eas_batman_wrapper/
-RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/python3 setup.py develop
+RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install --editable \
+    /plato-wp36-v2/docker_containers/eas_base/python_modules/plato_wp36 --no-binary :all:
+RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install --editable \
+    /plato-wp36-v2/docker_containers/eas_base/python_modules/eas_psls_wrapper --no-binary :all:
+RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install --editable \
+    /plato-wp36-v2/docker_containers/eas_base/python_modules/eas_batman_wrapper --no-binary :all:
 
 # *** Write name of the Docker container into its root
 RUN echo 'eas_base' > /plato-wp36-v2/container_name.txt

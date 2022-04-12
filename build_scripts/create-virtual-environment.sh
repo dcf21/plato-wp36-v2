@@ -18,13 +18,13 @@ ${venv_dir}/bin/pip install numpy
 ${venv_dir}/bin/pip install -r ${cwd}/../docker_containers/eas_base/requirements.txt
 
 # Install plato_wp36 package
-cd ${cwd}/../docker_containers/eas_base/python_modules/plato_wp36/
-${venv_dir}/bin/python setup.py develop
+${venv_dir}/bin/pip install --editable \
+    ${cwd}/../docker_containers/eas_base/python_modules/plato_wp36 --no-binary :all:
 
 # Install the PSLS wrapper
-cd ${cwd}/../docker_containers/eas_base/python_modules/eas_psls_wrapper/
-${venv_dir}/bin/python setup.py develop
+${venv_dir}/bin/pip install --editable \
+    ${cwd}/../docker_containers/eas_base/python_modules/eas_psls_wrapper --no-binary :all:
 
 # Install the batman wrapper
-cd ${cwd}/../docker_containers/eas_base/python_modules/eas_batman_wrapper/
-${venv_dir}/bin/python setup.py develop
+${venv_dir}/bin/pip install --editable \
+    ${cwd}/../docker_containers/eas_base/python_modules/eas_batman_wrapper --no-binary :all:
