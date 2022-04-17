@@ -49,19 +49,27 @@
             <container>all</container>
         </task>
         <task>
-            <name>iteration</name>
+            <name>execution_conditional</name>
             <container>all</container>
         </task>
         <task>
-            <name>batman_synthesise</name>
+            <name>execution_for_loop</name>
+            <container>all</container>
+        </task>
+        <task>
+            <name>execution_while_loop</name>
+            <container>all</container>
+        </task>
+        <task>
+            <name>synthesise_batman</name>
             <container>worker_synthesis_psls_batman</container>
         </task>
         <task>
-            <name>psls_synthesise</name>
+            <name>synthesise_psls</name>
             <container>worker_synthesis_psls_batman</container>
         </task>
         <task>
-            <name>platosim_synthesise</name>
+            <name>synthesise_platosim</name>
             <container>worker_synthesis_platosim</container>
         </task>
         <task>

@@ -1,8 +1,8 @@
-# initschema.sql
+-- initschema.sql
 
 BEGIN;
 
-# Table of types of named tasks the testbench can run (e.g. synthesis_psls)
+-- Table of types of named tasks the testbench can run (e.g. synthesis_psls)
 CREATE TABLE eas_task_types
 (
     taskTypeId       INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -10,27 +10,29 @@ CREATE TABLE eas_task_types
     workerContainers JSON               NOT NULL
 );
 
-# Table of specific tasks EAS is scheduled to run (e.g. run tool X on lightcurve Y)
+-- Table of specific tasks EAS is scheduled to run (e.g. run tool X on lightcurve Y)
 CREATE TABLE eas_task
 (
-    taskId            INTEGER PRIMARY KEY AUTO_INCREMENT,
-    parentTask        INTEGER,
-    createdTime       REAL,
-    taskTypeId        INTEGER       NOT NULL,
-    jobName           VARCHAR(256),
-    working_directory VARCHAR(1024) NOT NULL,
+    taskId           INTEGER PRIMARY KEY AUTO_INCREMENT,
+    parentTask       INTEGER,
+    createdTime      REAL,
+    taskTypeId       INTEGER       NOT NULL,
+    jobName          VARCHAR(256),
+    workingDirectory VARCHAR(1024) NOT NULL,
     FOREIGN KEY (parentTask) REFERENCES eas_task (taskId) ON DELETE CASCADE,
     FOREIGN KEY (taskTypeId) REFERENCES eas_task_types (taskTypeId) ON DELETE CASCADE,
     INDEX (parentTask),
     INDEX (jobName)
 );
 
-# Table of each time a task is scheduled on the cluster (a task may execute more than once if it fails)
+-- Table of each time a task is scheduled on the cluster (a task may execute more than once if it fails)
 CREATE TABLE eas_scheduling_attempt
 (
     schedulingAttemptId   INTEGER PRIMARY KEY AUTO_INCREMENT,
     taskId                INTEGER NOT NULL,
+    queuedTime            REAL             DEFAULT NULL,
     startTime             REAL             DEFAULT NULL,
+    latestHeartbeat       REAL             DEFAULT NULL,
     endTime               REAL             DEFAULT NULL,
     allProductsPassedQc   BOOLEAN          DEFAULT NULL,
     errorFail             BOOLEAN NOT NULL DEFAULT FALSE,
@@ -41,7 +43,17 @@ CREATE TABLE eas_scheduling_attempt
     FOREIGN KEY (taskId) REFERENCES eas_task (taskId) ON DELETE CASCADE
 );
 
-# Table of semantic types of intermediate file products (e.g. lightcurve, periodogram, etc)
+-- Log messages associated with each attempt to run a task
+CREATE TABLE eas_log_messages
+(
+    generatedByTaskExecution INTEGER,
+    timestamp                REAL    NOT NULL,
+    severity                 INTEGER NOT NULL,
+    message                  VARCHAR(1024),
+    FOREIGN KEY (generatedByTaskExecution) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE
+);
+
+-- Table of semantic types of intermediate file products (e.g. lightcurve, periodogram, etc)
 CREATE TABLE eas_semantic_type
 (
     semanticTypeId INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -49,8 +61,8 @@ CREATE TABLE eas_semantic_type
     INDEX (name)
 );
 
-# Table of all intermediate file products, each associated with the task which generated / will generate them.
-# Note that multiple versions of the same file product may exist on disk, if a task runs multiple times.
+-- Table of all intermediate file products, each associated with the task which generated / will generate them.
+-- Note that multiple versions of the same file product may exist on disk, if a task runs multiple times.
 CREATE TABLE eas_product
 (
     productId     INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -62,11 +74,12 @@ CREATE TABLE eas_product
     mimeType      VARCHAR(64),
     FOREIGN KEY (generatorTask) REFERENCES eas_task (taskId) ON DELETE CASCADE,
     FOREIGN KEY (semanticType) REFERENCES eas_semantic_type (semanticTypeId) ON DELETE CASCADE,
-    UNIQUE (directoryName, filename)
+    UNIQUE (directoryName, filename),
+    UNIQUE (generatorTask, semanticType)
 );
 
-# Table of all intermediate file product versions stored on disk.
-# Note that multiple versions of the same file product may exist on disk, if a task runs multiple times
+-- Table of all intermediate file product versions stored on disk.
+-- Note that multiple versions of the same file product may exist on disk, if a task runs multiple times.
 CREATE TABLE eas_product_version
 (
     productVersionId         INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -79,10 +92,11 @@ CREATE TABLE eas_product_version
     fileSize                 INTEGER,
     passedQc                 BOOLEAN,
     FOREIGN KEY (productId) REFERENCES eas_product (productId) ON DELETE CASCADE,
-    FOREIGN KEY (generatedByTaskExecution) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE
+    FOREIGN KEY (generatedByTaskExecution) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE,
+    UNIQUE (productId, generatedByTaskExecution)
 );
 
-# Table of metadata association with tasks or scheduling attempts, or file products
+-- Table of metadata association with tasks or scheduling attempts, or file products
 CREATE TABLE eas_metadata_keys
 (
     keyId INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -111,17 +125,19 @@ CREATE TABLE eas_metadata_item
     UNIQUE (productVersionId, metadataKey)
 );
 
-
-# Table of intermediate products required by each task
+-- Table of intermediate products required by each task
 CREATE TABLE eas_task_input
 (
-    taskId  INTEGER NOT NULL,
-    inputId INTEGER NOT NULL,
+    taskId       INTEGER NOT NULL,
+    inputId      INTEGER NOT NULL,
+    semanticType INTEGER NOT NULL,
     FOREIGN KEY (taskId) REFERENCES eas_task (taskId) ON DELETE CASCADE,
-    FOREIGN KEY (inputId) REFERENCES eas_product (productId) ON DELETE CASCADE
+    FOREIGN KEY (inputId) REFERENCES eas_product (productId) ON DELETE CASCADE,
+    FOREIGN KEY (semanticType) REFERENCES eas_semantic_type (semanticTypeId) ON DELETE CASCADE,
+    UNIQUE (taskId, semanticType)
 );
 
-# Trigger to propagate QC from individual file products to the tasks that created them
+-- Trigger to propagate QC from individual file products to the tasks that created them
 DELIMITER //
 CREATE TRIGGER qc_propagation
     AFTER UPDATE

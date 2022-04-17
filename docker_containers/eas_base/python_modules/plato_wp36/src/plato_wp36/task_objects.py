@@ -7,7 +7,7 @@ Pythonic objects to represent pipeline task entries in the database
 
 import time
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 
 class MetadataItem:
@@ -78,6 +78,27 @@ class FileProduct:
                   directory: Optional[str] = None, filename: Optional[str] = None,
                   semantic_type: Optional[str] = None, mime_type: Optional[str] = None,
                   metadata: Dict[str, MetadataItem] = None):
+        """
+        :param product_id:
+            The ID integer for this file product in the database.
+        :param generator_task:
+            The ID integer of the pipeline task which generates this file product.
+        :param directory:
+            The directory in the file repository to place this file product into
+        :param filename:
+            The filename of this file product
+        :param semantic_type:
+            The name used to identify the type of data in this file, e.g. "lightcurve" or "periodogram".
+            Each file output from any given pipeline step must have a unique semantic type.
+        :param planned_time:
+            The time when the pipeline scheduler created a database entry for this file product
+        :param mime_type:
+            The mime type of this file, used so a web interface can serve it if needed
+        :param metadata:
+            Dictionary of metadata associated with this file product
+        :return:
+            None
+        """
         if product_id is not None:
             self.product_id = product_id
         if generator_task is not None:
@@ -175,6 +196,30 @@ class FileProductVersion:
                   file_md5: Optional[str] = None, file_size: Optional[int] = None,
                   passed_qc: Optional[bool] = None,
                   metadata: Dict[str, MetadataItem] = None):
+        """
+        :param product_version_id:
+            The integer ID of this version of a file product
+        :param product_id:
+            The integer ID of the intermediate file product of which this file is a version.
+        :param generated_by_task_execution:
+            The integer ID of the task execution attempt which generated this file.
+        :param created_time:
+            The time when this file product was created by the pipeline
+        :param modified_time:
+            The time when this file product was modified by the pipeline
+        :param passed_qc:
+            Boolean indicating whether QC checks have taken place on this file, and whether they passed
+        :param metadata:
+            Dictionary of metadata associated with this file product
+        :param repository_id:
+            The string filename used to store this file in the file store.
+        :param file_md5:
+            The MD5 hash of the file
+        :param file_size:
+            The number of bytes in the file
+        :return:
+            None
+        """
         if product_version_id is not None:
             self.product_version_id = product_version_id
         if product_id is not None:
@@ -258,7 +303,9 @@ class TaskExecutionAttempt:
         # Initialise null task execution attempt
         self.attempt_id: Optional[int] = None
         self.task_id: Optional[int] = None
+        self.queued_time: Optional[float] = None
         self.start_time: Optional[float] = None
+        self.latest_heartbeat_time: Optional[float] = None
         self.end_time: Optional[float] = None
         self.all_products_passed_qc: Optional[bool] = None
         self.error_fail: Optional[bool] = None
@@ -267,26 +314,67 @@ class TaskExecutionAttempt:
         self.run_time_cpu: Optional[float] = None
         self.run_time_cpu_inc_children: Optional[float] = None
         self.metadata: Dict[str, MetadataItem] = {}
-        self.output_files: Set[int] = set()
+        self.output_files: Dict[str, FileProductVersion] = {}
 
         # Configure task execution attempt
         self.configure(**kwargs)
 
     def configure(self, attempt_id: Optional[int] = None, task_id: Optional[int] = None,
-                  start_time: Optional[float] = None, end_time: Optional[float] = None,
+                  queued_time: Optional[float] = None,
+                  start_time: Optional[float] = None,
+                  latest_heartbeat_time: Optional[float] = None,
+                  end_time: Optional[float] = None,
                   all_products_passed_qc: Optional[bool] = None,
                   error_fail: Optional[bool] = None, error_text: Optional[str] = None,
                   run_time_wall_clock: Optional[float] = None,
                   run_time_cpu: Optional[float] = None,
                   run_time_cpu_inc_children: Optional[float] = None,
                   metadata: Optional[Dict[str, MetadataItem]] = None,
-                  output_files: Optional[List[int]] = None):
+                  output_files: Optional[Dict[str, FileProductVersion]] = None):
+        """
+        :param attempt_id:
+            The integer ID of this task execution attempt.
+        :param task_id:
+            The integer ID of the task which is being run in the <eas_tasks> table
+        :param queued_time:
+            The unix timestamp when this execution attempt was put into the job queue
+        :param start_time:
+            The unix timestamp when this execution attempt began to be executed
+        :param latest_heartbeat_time:
+            The unix timestamp when this execution attempt last sent a heartbeat message
+        :param end_time:
+            The unix timestamp when this execution attempt signaled that it had completed
+        :param all_products_passed_qc:
+            A boolean flag indicating whether all the file products from this execution attempt passed
+            their QC inspection.
+        :param error_fail:
+            A boolean flag indicating whether this execution attempt signalled that an error occurred
+        :param error_text:
+            The error message text associated with any failure of this job
+        :param run_time_wall_clock:
+            The number of seconds the job took to execute, in wall clock time
+        :param run_time_cpu:
+            The number of seconds the job took to execute, in CPU time
+        :param run_time_cpu_inc_children:
+            The number of seconds the job took to execute, in CPU time, including child threads
+        :param metadata:
+            A dictionary of metadata associated with this execution attempt.
+        :param output_files:
+            A dictionary of the output file products from this execution attempt, represented by
+            FileProductVersion objects.
+        :return:
+            None
+        """
         if attempt_id is not None:
             self.attempt_id = attempt_id
         if task_id is not None:
             self.task_id = task_id
+        if queued_time is not None:
+            self.queued_time = queued_time
         if start_time is not None:
             self.start_time = start_time
+        if latest_heartbeat_time is not None:
+            self.latest_heartbeat_time = latest_heartbeat_time
         if end_time is not None:
             self.end_time = end_time
         if all_products_passed_qc is not None:
@@ -307,7 +395,8 @@ class TaskExecutionAttempt:
                 self.metadata[item.keyword] = item
         if output_files is not None:
             # Merge new output files with existing ones
-            self.output_files.union(output_files)
+            for semantic_type, item in output_files.items():
+                self.output_files[semantic_type] = item
 
     def as_dict(self):
         """
@@ -318,7 +407,9 @@ class TaskExecutionAttempt:
         return {
             "attempt_id": self.attempt_id,
             "task_id": self.task_id,
+            "queued_time": self.queued_time,
             "start_time": self.start_time,
+            "latest_heartbeat_time": self.latest_heartbeat_time,
             "end_time": self.end_time,
             "all_products_passed_qc": self.all_products_passed_qc,
             "error_fail": self.error_fail,
@@ -327,7 +418,7 @@ class TaskExecutionAttempt:
             "run_time_cpu": self.run_time_cpu,
             "run_time_cpu_inc_children": self.run_time_cpu_inc_children,
             "metadata": [item.as_dict() for item in self.metadata.values()],
-            "output_files": list(self.output_files)
+            "output_files": [(keyword, item.as_dict()) for keyword, item in self.output_files.items()]
         }
 
     @classmethod
@@ -344,21 +435,26 @@ class TaskExecutionAttempt:
         output = cls(
             attempt_id=d['attempt_id'],
             task_id=d['task_id'],
+            queued_time=d['queued_time'],
             start_time=d['start_time'],
+            latest_heartbeat_time=d['latest_heartbeat_time'],
             end_time=d['end_time'],
             all_products_passed_qc=d['all_products_passed_qc'],
             error_fail=d['error_fail'],
             error_text=d['error_text'],
             run_time_wall_clock=d['run_time_wall_clock'],
             run_time_cpu=d['run_time_cpu'],
-            run_time_cpu_inc_children=d['run_time_cpu_inc_children'],
-            output_files=set(d['output_files'])
+            run_time_cpu_inc_children=d['run_time_cpu_inc_children']
         )
 
         # Populate metadata
         for item in d['metadata']:
             item_object = MetadataItem.from_dict(item)
             output.configure(metadata={item_object.keyword: item_object})
+
+        # Populate output files
+        for item in d['output_files']:
+            output.configure(output_files={item[0]: FileProductVersion.from_dict(item[1])})
 
         # Return output
         return output
@@ -377,9 +473,11 @@ class Task:
         self.task_type: Optional[str] = None
         self.job_name: Optional[str] = None
         self.working_directory: Optional[str] = None
-        self.input_files: List[int] = []
-        self.execution_attempts: Dict[int, TaskExecutionAttempt] = {}
+        self.input_files: Dict[str, FileProduct] = {}
+        self.execution_attempts_passed: Dict[int, TaskExecutionAttempt] = {}
+        self.execution_attempts_incomplete: Dict[int, TaskExecutionAttempt] = {}
         self.metadata: Dict[str, MetadataItem] = {}
+        self.output_files: Dict[str, FileProduct] = {}
 
         # Configure task
         self.configure(**kwargs)
@@ -387,9 +485,40 @@ class Task:
     def configure(self, task_id: Optional[int] = None, parent_id: Optional[int] = None,
                   created_time: Optional[float] = None,
                   task_type: Optional[str] = None, job_name: Optional[str] = None,
-                  working_directory: Optional[str] = None, input_files: Optional[List[int]] = None,
-                  execution_attempts: List[TaskExecutionAttempt] = None,
-                  metadata: Dict[str, MetadataItem] = None):
+                  working_directory: Optional[str] = None,
+                  input_files: Optional[Dict[str, FileProduct]] = None,
+                  execution_attempts_passed: List[TaskExecutionAttempt] = None,
+                  execution_attempts_incomplete: List[TaskExecutionAttempt] = None,
+                  metadata: Dict[str, MetadataItem] = None,
+                  output_files: Optional[Dict[str, FileProduct]] = None):
+        """
+        :param task_id:
+            The integer ID of this task in the <eas_task> table
+        :param parent_id:
+            The integer ID of the parent task which may have spawned this sub-task
+            (e.g. a task execution chain)
+        :param created_time:
+            The unix timestamp when this task was created
+        :param task_type:
+            The string name of this type of task, as defined in <task_type_registry.xml>
+        :param job_name:
+            The human-readable name of the top-level job (requested by a user) that this task of part of
+        :param working_directory:
+            The directory in the file store where this job should write its output file products
+        :param input_files:
+            The list of file products that this task uses as inputs. This task cannot be executed
+            until all of these file products exist and have passed QC.
+        :param execution_attempts_passed:
+            A list of all the successfully completed attempts to execute this task
+        :param execution_attempts_incomplete:
+            A list of all the failed, or incomplete, attempts to execute this task
+        :param metadata:
+            A dictionary of metadata associated with this task
+        :param output_files:
+            A list of all the file products that this task will create, or has created
+        :return:
+            None
+        """
         if task_id is not None:
             self.task_id = task_id
         if parent_id is not None:
@@ -403,16 +532,25 @@ class Task:
         if working_directory is not None:
             self.working_directory = working_directory
         if input_files is not None:
-            # Replace existing list of input files with new list
-            self.input_files = input_files
-        if execution_attempts is not None:
+            # Merge new output files with existing ones
+            for semantic_type, item in input_files.items():
+                self.input_files[semantic_type] = item
+        if execution_attempts_passed is not None:
             # Merge new execution attempts with existing list
-            for item in execution_attempts:
-                self.execution_attempts[item.attempt_id] = item
+            for item in execution_attempts_passed:
+                self.execution_attempts_passed[item.attempt_id] = item
+        if execution_attempts_incomplete is not None:
+            # Merge new execution attempts with existing list
+            for item in execution_attempts_incomplete:
+                self.execution_attempts_incomplete[item.attempt_id] = item
         if metadata is not None:
             # Merge new metadata with existing metadata
             for item in metadata.values():
                 self.metadata[item.keyword] = item
+        if output_files is not None:
+            # Merge new output files with existing ones
+            for semantic_type, item in output_files.items():
+                self.output_files[semantic_type] = item
 
     def as_dict(self):
         """
@@ -427,9 +565,11 @@ class Task:
             "task_type": self.task_type,
             "job_name": self.job_name,
             "working_directory": self.working_directory,
-            "input_files": self.input_files,
-            "execution_attempts": [item.as_dict() for item in self.execution_attempts.values()],
-            "metadata": [item.as_dict() for item in self.metadata.values()]
+            "input_files": [(keyword, item.as_dict()) for keyword, item in self.input_files.items()],
+            "execution_attempts_passed": [item.as_dict() for item in self.execution_attempts_passed.values()],
+            "execution_attempts_incomplete": [item.as_dict() for item in self.execution_attempts_incomplete.values()],
+            "metadata": [item.as_dict() for item in self.metadata.values()],
+            "output_files": [(keyword, item.as_dict()) for keyword, item in self.output_files.items()]
         }
 
     @classmethod
@@ -449,13 +589,22 @@ class Task:
             created_time=d['created_time'],
             task_type=d['task_type'],
             job_name=d['job_name'],
-            working_directory=d['working_directory'],
-            input_files=d['input_files']
+            working_directory=d['working_directory']
         )
 
         # Populate execution attempts
-        for item in d['execution_attempts']:
-            output.configure(execution_attempts=[TaskExecutionAttempt.from_dict(item)])
+        for item in d['execution_attempts_passed']:
+            output.configure(execution_attempts_passed=[TaskExecutionAttempt.from_dict(item)])
+        for item in d['execution_attempts_incomplete']:
+            output.configure(execution_attempts_incomplete=[TaskExecutionAttempt.from_dict(item)])
+
+        # Populate input files
+        for item in d['input_files']:
+            output.configure(input_files={item[0]: FileProduct.from_dict(item[1])})
+
+        # Populate output files
+        for item in d['output_files']:
+            output.configure(output_files={item[0]: FileProduct.from_dict(item[1])})
 
         # Populate metadata
         for item in d['metadata']:

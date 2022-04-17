@@ -13,7 +13,7 @@ import shutil
 import time
 import json
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 from .connect_db import DatabaseConnector
 from .settings import Settings
@@ -105,6 +105,24 @@ FROM eas_task_types;""")
 REPLACE INTO eas_task_types (taskName, workerContainers) VALUES (%s, %s);
 """, (name, json.dumps(list(containers))))
 
+    def task_list_fetch_id(self, task_name: str):
+        """
+        Fetch the integer ID associated with a type of pipeline task.
+
+        :param task_name:
+            The name of the pipeline task type.
+        :return:
+            Integer ID
+        """
+        self.conn.execute("SELECT taskTypeId FROM eas_task_types WHERE taskName=%s;", (task_name,))
+        results = self.conn.fetchall()
+
+        # Check that task is recognised
+        assert len(results) == 1, "Unrecognised task type <{}>".format(task_name)
+
+        # Return ID
+        return results[0]['taskTypeId']
+
     # *** Functions relating to metadata items
     def metadata_keyword_id(self, keyword: str):
         """
@@ -186,7 +204,7 @@ WHERE {};""".format(" AND ".join(constraints)))
                             task_id: Optional[int] = None,
                             scheduling_attempt_id: Optional[int] = None,
                             product_id: Optional[int] = None,
-                           product_version_id: Optional[int] = None):
+                            product_version_id: Optional[int] = None):
         """
         Fetch dictionary of metadata objects associated with an entity in the database. Specify *either* a task,
         *or* an execution attempt, *or* an intermediate file product, *or* a file version.
@@ -247,7 +265,7 @@ WHERE {};""".format(" AND ".join(constraints)))
                           task_id: Optional[int] = None,
                           scheduling_attempt_id: Optional[int] = None,
                           product_id: Optional[int] = None,
-                           product_version_id: Optional[int] = None):
+                          product_version_id: Optional[int] = None):
         """
         Write a dictionary of metadata objects associated with an entity in the database. Specify *either* a task,
         *or* an execution attempt, *or* an intermediate file product, *or* a file version.
@@ -384,7 +402,7 @@ WHERE v.productVersionId = %s;
             A :class:`FileProduct` instance, or None if not found
         """
 
-        # Look up file repository filename
+        # Look up file version properties
         self.conn.execute("""
 SELECT productVersionId, productId, generatedByTaskExecution, repositoryId,
        createdTime, modifiedTime, fileMD5, fileSize, passedQc
@@ -490,7 +508,7 @@ WHERE productVersionId = %s;
         :return:
             Integer ID for this file product
         """
-        
+
         # Look up information about file product
         file_product_obj = self.file_product_lookup(product_id=product_id)
 
@@ -569,7 +587,7 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
         :return:
             None
         """
-        
+
         # Look up information about existing file
         target_file_path = self.file_version_path_for_id(product_version_id=product_version_id,
                                                          full_path=True, must_exist=False)
@@ -670,10 +688,10 @@ UPDATE eas_product_version SET passedQc=%s WHERE productVersionId=%s;
         """
         self.conn.execute('SELECT productVersionId FROM eas_product_version WHERE productId = %s;', (product_id,))
         file_product_versions = self.conn.fetchall()
-        
+
         for item in file_product_versions:
             self.file_version_delete(product_version_id=item['productVersionId'])
-            
+
         self.conn.execute('DELETE FROM eas_product WHERE productId = %s', (product_id,))
 
     def file_product_lookup(self, product_id: int):
@@ -686,7 +704,7 @@ UPDATE eas_product_version SET passedQc=%s WHERE productVersionId=%s;
             A :class:`FileProduct` instance, or None if not found
         """
 
-        # Look up file repository filename
+        # Look up file product properties
         self.conn.execute("""
 SELECT productId, generatorTask, plannedTime, directoryName, filename, mimeType,
        s.name AS semanticType
@@ -751,7 +769,8 @@ WHERE productId = %s;
         :param filename:
             The filename of this file product
         :param semantic_type:
-            The name used to identify the type of data in this file, e.g. "lightcurve" or "periodogram"
+            The name used to identify the type of data in this file, e.g. "lightcurve" or "periodogram".
+            Each file output from any given pipeline step must have a unique semantic type.
         :param planned_time:
             The time when the pipeline scheduler created a database entry for this file product
         :param mime_type:
@@ -812,3 +831,483 @@ VALUES (%s, %s, %s, %s, %s, %s);
         # Register file metadata
         if metadata is not None:
             self.metadata_register(product_id=product_id, metadata=metadata)
+
+    # *** Functions relating to execution attempts
+    def execution_attempt_exists_in_db(self, attempt_id: int):
+        """
+        Check for the presence of the given task execution attempt.
+
+        :param int attempt_id:
+            The attempt ID
+        :return:
+            True if we have a record with this ID, False otherwise
+        """
+        self.conn.execute('SELECT 1 FROM eas_scheduling_attempt WHERE schedulingAttemptId = %s;', (attempt_id,))
+        return len(self.conn.fetchall()) > 0
+
+    def execution_attempt_delete(self, attempt_id: int):
+        """
+        Delete a scheduling attempt.
+
+        :param int attempt_id:
+            The execution attempt ID
+        :return:
+            None
+        """
+
+        # Delete file products
+        self.conn.execute('SELECT productVersionId FROM eas_product_version WHERE generatedByTaskExecution = %s;',
+                          (attempt_id,))
+        file_product_versions = self.conn.fetchall()
+
+        for item in file_product_versions:
+            self.file_version_delete(product_version_id=item['productVersionId'])
+
+        # Delete execution attempt
+        self.conn.execute('DELETE FROM eas_scheduling_attempt WHERE schedulingAttemptId = %s', (attempt_id,))
+
+    def execution_attempt_fetch_output_files(self, attempt_id: int):
+        """
+        Retrieve a dictionary of all the files generated by a task execution attempt, indexed by their
+        semantic types.
+
+        :param attempt_id:
+            The ID of the task execution attempt.
+        :return:
+            Dictionary of :class:`FileProductVersion`, indexed by semantic type string.
+        """
+
+        output: Dict[str, FileProductVersion] = {}
+
+        # Look up all the file products generated by this task execution attempt
+        self.conn.execute("""
+SELECT v.productVersionId, s.name AS semanticType
+FROM eas_product_version v
+INNER JOIN eas_product p ON p.productId = v.productId
+INNER JOIN eas_semantic_type s ON s.semanticTypeId = p.semanticType
+WHERE generatedByTaskExecution = %s;
+""", (attempt_id,))
+        file_product_versions = self.conn.fetchall()
+
+        for item in file_product_versions:
+            output[item['semanticType']] = self.file_version_lookup(product_version_id=item['productVersionId'])
+
+        return output
+
+    def execution_attempt_lookup(self, attempt_id: int):
+        """
+        Retrieve a TaskExecutionAttempt object representing a task execution attempt in the database
+
+        :param int attempt_id:
+            The execution attempt ID
+        :return:
+            A :class:`TaskExecutionAttempt` instance, or None if not found
+        """
+
+        # Look up execution attempt properties
+        self.conn.execute("""
+SELECT schedulingAttemptId, taskId, queuedTime, startTime, latestHeartbeat, endTime,
+       allProductsPassedQc, errorFail, errorText,
+       runTimeWallClock, runTimeCpu, runTimeCpuIncChildren
+FROM eas_scheduling_attempt a
+WHERE schedulingAttemptId = %s;
+""", (attempt_id,))
+        result = self.conn.fetchall()
+
+        # Return None if no match
+        if len(result) != 1:
+            return None
+
+        # List output file products
+        output_files = self.execution_attempt_fetch_output_files(
+            attempt_id=result[0]['schedulingAttemptId']
+        )
+
+        # Read scheduling attempt metadata
+        metadata = self.metadata_fetch_all(scheduling_attempt_id=result[0]['schedulingAttemptId'])
+
+        # Build TaskExecutionAttempt instance
+        return TaskExecutionAttempt(
+            attempt_id=result[0]['schedulingAttemptId'],
+            task_id=result[0]['taskId'],
+            queued_time=result[0]['queuedTime'],
+            start_time=result[0]['startTime'],
+            latest_heartbeat_time=result[0]['latestHeartbeat'],
+            end_time=result[0]['endTime'],
+            all_products_passed_qc=result[0]['allProductsPassedQc'],
+            error_fail=result[0]['errorFail'],
+            error_text=result[0]['errorText'],
+            run_time_wall_clock=result[0]['runTimeWallClock'],
+            run_time_cpu=result[0]['runTimeCpu'],
+            run_time_cpu_inc_children=result[0]['runTimeCpuIncChildren'],
+            metadata=metadata,
+            output_files=output_files
+        )
+
+    def execution_attempt_register(self, task_id: Optional[int] = None,
+                                   queued_time: Optional[float] = None,
+                                   metadata: Optional[Dict[str, MetadataItem]] = None):
+        """
+        Register an attempt to execute a task in the database
+
+        :param task_id:
+            The integer ID of the task which is being run in the <eas_tasks> table
+        :param queued_time:
+            The unix timestamp when this execution attempt was put into the job queue
+        :return:
+            Integer ID for this execution attempt
+        """
+        if queued_time is None:
+            queued_time = time.time()
+
+        # Insert record into the database
+        self.conn.execute("""
+INSERT INTO eas_scheduling_attempt (taskId, queuedTime)
+VALUES (%s, %s);
+""", (task_id, queued_time))
+        output_id = self.conn.lastrowid
+
+        # Register execution attempt metadata
+        if metadata is not None:
+            self.metadata_register(scheduling_attempt_id=output_id, metadata=metadata)
+
+        # Return integer id
+        return output_id
+
+    def execution_attempt_update(self, attempt_id: Optional[int] = None,
+                                 queued_time: Optional[float] = None,
+                                 start_time: Optional[float] = None,
+                                 latest_heartbeat_time: Optional[float] = None,
+                                 end_time: Optional[float] = None,
+                                 all_products_passed_qc: Optional[bool] = None,
+                                 error_fail: Optional[bool] = None, error_text: Optional[str] = None,
+                                 run_time_wall_clock: Optional[float] = None,
+                                 run_time_cpu: Optional[float] = None,
+                                 run_time_cpu_inc_children: Optional[float] = None,
+                                 metadata: Optional[Dict[str, MetadataItem]] = None):
+        """
+        Update information about a task execution attempt in the database
+
+        :param attempt_id:
+            The integer ID of this task execution attempt.
+        :param queued_time:
+            The unix timestamp when this execution attempt was put into the job queue
+        :param start_time:
+            The unix timestamp when this execution attempt began to be executed
+        :param latest_heartbeat_time:
+            The unix timestamp when this execution attempt last sent a heartbeat message
+        :param end_time:
+            The unix timestamp when this execution attempt signaled that it had completed
+        :param all_products_passed_qc:
+            A boolean flag indicating whether all the file products from this execution attempt passed
+            their QC inspection.
+        :param error_fail:
+            A boolean flag indicating whether this execution attempt signalled that an error occurred
+        :param error_text:
+            The error message text associated with any failure of this job
+        :param run_time_wall_clock:
+            The number of seconds the job took to execute, in wall clock time
+        :param run_time_cpu:
+            The number of seconds the job took to execute, in CPU time
+        :param run_time_cpu_inc_children:
+            The number of seconds the job took to execute, in CPU time, including child threads
+        :param metadata:
+            A dictionary of metadata associated with this execution attempt.
+        :return:
+            None
+        """
+
+        # Update timestamps
+        if queued_time is not None:
+            self.conn.execute("UPDATE eas_scheduling_attempt SET queuedTime=%s WHERE schedulingAttemptId=%s",
+                              (queued_time, attempt_id))
+        if start_time is not None:
+            self.conn.execute("UPDATE eas_scheduling_attempt SET startTime=%s WHERE schedulingAttemptId=%s",
+                              (start_time, attempt_id))
+        if latest_heartbeat_time is not None:
+            self.conn.execute("UPDATE eas_scheduling_attempt SET latestHeartbeat=%s WHERE schedulingAttemptId=%s",
+                              (latest_heartbeat_time, attempt_id))
+        if end_time is not None:
+            self.conn.execute("UPDATE eas_scheduling_attempt SET endTime=%s WHERE schedulingAttemptId=%s",
+                              (end_time, attempt_id))
+
+        # Update remaining fields
+        if all_products_passed_qc is not None:
+            self.conn.execute("UPDATE eas_scheduling_attempt SET allProductsPassedQc=%s WHERE schedulingAttemptId=%s",
+                              (all_products_passed_qc, attempt_id))
+        if error_fail is not None:
+            self.conn.execute("UPDATE eas_scheduling_attempt SET errorFail=%s WHERE schedulingAttemptId=%s",
+                              (error_fail, attempt_id))
+        if error_text is not None:
+            self.conn.execute("UPDATE eas_scheduling_attempt SET errorText=%s WHERE schedulingAttemptId=%s",
+                              (error_text, attempt_id))
+        if run_time_wall_clock is not None:
+            self.conn.execute("UPDATE eas_scheduling_attempt SET runTimeWallClock=%s WHERE schedulingAttemptId=%s",
+                              (run_time_wall_clock, attempt_id))
+        if run_time_cpu is not None:
+            self.conn.execute("UPDATE eas_scheduling_attempt SET runTimeCpu=%s WHERE schedulingAttemptId=%s",
+                              (run_time_cpu, attempt_id))
+        if run_time_cpu_inc_children is not None:
+            self.conn.execute("UPDATE eas_scheduling_attempt SET runTimeCpuIncChildren=%s WHERE schedulingAttemptId=%s",
+                              (run_time_cpu_inc_children, attempt_id))
+
+        # Register execution attempt metadata
+        if metadata is not None:
+            self.metadata_register(scheduling_attempt_id=attempt_id, metadata=metadata)
+
+    # *** Functions relating to tasks
+    def task_exists_in_db(self, task_id: int):
+        """
+        Check for the presence of the given task.
+
+        :param int task_id:
+            The task ID
+        :return:
+            True if we have a record with this ID, False otherwise
+        """
+        self.conn.execute('SELECT 1 FROM eas_task WHERE taskId = %s;', (task_id,))
+        return len(self.conn.fetchall()) > 0
+
+    def task_delete(self, task_id: int):
+        """
+        Delete a task.
+
+        :param int task_id:
+            The task ID
+        :return:
+            None
+        """
+
+        # Delete any execution attempts
+        self.conn.execute('SELECT schedulingAttemptId FROM eas_scheduling_attempt WHERE taskId = %s;',
+                          (task_id,))
+        execution_attempts = self.conn.fetchall()
+
+        for item in execution_attempts:
+            self.execution_attempt_delete(attempt_id=item['schedulingAttemptId'])
+
+        # Delete task
+        self.conn.execute('DELETE FROM eas_task WHERE taskId = %s', (task_id,))
+
+    def task_fetch_file_products(self, task_id: int):
+        """
+        Retrieve a dictionary of all the file products generated by a task, indexed by their
+        semantic types.
+
+        :param task_id:
+            The ID of the task.
+        :return:
+            Dictionary of :class:`FileProduct`, indexed by semantic type string.
+        """
+
+        output: Dict[str, FileProduct] = {}
+
+        # Look up all the file products generated by this task execution attempt
+        self.conn.execute("""
+SELECT p.productId, s.name AS semanticType
+FROM eas_product p
+INNER JOIN eas_semantic_type s ON s.semanticTypeId = p.semanticType
+WHERE generatorTask = %s;
+""", (task_id,))
+        file_products = self.conn.fetchall()
+
+        for item in file_products:
+            output[item['semanticType']] = self.file_product_lookup(product_id=item['productId'])
+
+        return output
+
+    def task_fetch_file_inputs(self, task_id: int):
+        """
+        Retrieve a dictionary of all the file inputs to a task, indexed by their
+        semantic types.
+
+        :param task_id:
+            The ID of the task.
+        :return:
+            Dictionary of :class:`FileProduct`, indexed by semantic type string.
+        """
+
+        output: Dict[str, FileProduct] = {}
+
+        # Look up all the file products generated by this task execution attempt
+        self.conn.execute("""
+SELECT p.inputId, s.name AS semanticType
+FROM eas_task_input p
+INNER JOIN eas_semantic_type s ON s.semanticTypeId = p.semanticType
+WHERE generatorTask = %s;
+""", (task_id,))
+        file_products = self.conn.fetchall()
+
+        for item in file_products:
+            output[item['semanticType']] = self.file_product_lookup(product_id=item['inputId'])
+
+        return output
+
+    def task_fetch_execution_attempts(self, task_id: int, successful: Optional[bool] = None):
+        """
+        Retrieve a dictionary of all the attempts to execute a task, indexed by their integer UIDs
+
+        :param task_id:
+            The ID of the task.
+        :param successful:
+            Boolean indicating whether we're searching for successful executions, incomplete executions, or both
+        :return:
+            Dictionary of :class:`TaskExecutionAttempt`, indexed by unique ID.
+        """
+
+        output: Dict[str, TaskExecutionAttempt] = {}
+
+        # Compile constraints
+        constraint = "1"
+        if type(successful) == bool:
+            if successful:
+                constraint = "allProductsPassedQc"
+            else:
+                constraint = "NOT allProductsPassedQc"
+
+        # Look up all the file products generated by this task execution attempt
+        self.conn.execute("""
+SELECT s.schedulingAttemptId
+FROM eas_scheduling_attempt s
+WHERE taskId = %s AND {};
+""".format(constraint), (task_id,))
+        execution_attempts = self.conn.fetchall()
+
+        for item in execution_attempts:
+            output[item['schedulingAttemptId']] = self.execution_attempt_lookup(
+                attempt_id=item['schedulingAttemptId']
+            )
+
+        return output
+
+    def task_lookup(self, task_id: int):
+        """
+        Retrieve a Task object representing a task in the database
+
+        :param int task_id:
+            The task ID
+        :return:
+            A :class:`Task` instance, or None if not found
+        """
+
+        # Look up task properties
+        self.conn.execute("""
+SELECT taskId, parentTask, createdTime, t.taskName AS taskTypeName, jobName, workingDirectory
+FROM eas_task j
+INNER JOIN eas_task_types t ON t.taskTypeId = j.taskTypeId
+WHERE taskId = %s;
+""", (task_id,))
+        result = self.conn.fetchall()
+
+        # Return None if no match
+        if len(result) != 1:
+            return None
+
+        # List input file products
+        input_products = self.task_fetch_file_inputs(
+            task_id=result[0]['taskId']
+        )
+
+        # List output file products
+        output_products = self.task_fetch_file_products(
+            task_id=result[0]['taskId']
+        )
+
+        # Read scheduling attempt metadata
+        metadata = self.metadata_fetch_all(task_id=result[0]['taskId'])
+
+        # List successfully completed execution attempts
+        execution_attempts_passed = self.task_fetch_execution_attempts(
+            task_id=result[0]['taskId'], successful=True)
+
+        # List incomplete execution attempts
+        execution_attempts_incomplete = self.task_fetch_execution_attempts(
+            task_id=result[0]['taskId'], successful=False)
+
+        # Build Task instance
+        return Task(
+            task_id=result[0]['taskId'],
+            parent_id=result[0]['parentTask'],
+            created_time=result[0]['createdTime'],
+            task_type=result[0]['taskTypeName'],
+            job_name=result[0]['jobName'],
+            working_directory=result[0]['workingDirectory'],
+            input_files=input_products,
+            execution_attempts_passed=execution_attempts_passed,
+            execution_attempts_incomplete=execution_attempts_incomplete,
+            metadata=metadata,
+            output_products=output_products
+        )
+
+    def task_register(self, parent_id: Optional[int] = None,
+                      created_time: Optional[float] = None,
+                      task_type: Optional[str] = None, job_name: Optional[str] = None,
+                      working_directory: Optional[str] = None,
+                      input_files: Optional[Dict[str, FileProduct]] = None,
+                      metadata: Dict[str, MetadataItem] = None):
+        """
+        Register a new task in the database
+
+        :param parent_id:
+            The integer ID of the parent task which may have spawned this sub-task
+            (e.g. a task execution chain)
+        :param created_time:
+            The unix timestamp when this task was created
+        :param task_type:
+            The string name of this type of task, as defined in <task_type_registry.xml>
+        :param job_name:
+            The human-readable name of the top-level job (requested by a user) that this task of part of
+        :param working_directory:
+            The directory in the file store where this job should write its output file products
+        :param input_files:
+            The list of file products that this task uses as inputs. This task cannot be executed
+            until all of these file products exist and have passed QC.
+        :param metadata:
+            A dictionary of metadata associated with this task
+        :return:
+            Integer ID for this task
+        """
+        if created_time is None:
+            created_time = time.time()
+
+        # Fetch task type integer id
+        task_type_id = self.task_list_fetch_id(task_name=task_type)
+
+        # Insert record into the database
+        self.conn.execute("""
+INSERT INTO eas_task (parentTask, createdTime, taskTypeId, jobName, working_directory)
+VALUES (%s, %s, %s, %s, %s);
+""", (parent_id, created_time, task_type_id, job_name, working_directory))
+        output_id = self.conn.lastrowid
+
+        # Register task metadata
+        if metadata is not None:
+            self.metadata_register(task_id=output_id, metadata=metadata)
+
+        # Register task input files
+        if input_files is not None:
+            for semantic_type, input_file in input_files.items():
+                semantic_type_id = self.semantic_type_get_id(name=semantic_type)
+                self.conn.execute("""
+REPLACE INTO eas_task_input (taskId, inputId, semanticType) VALUES (%s, %s, %s);
+""", (output_id, input_file.product_id, semantic_type_id))
+
+        # Return integer id
+        return output_id
+
+    def task_update(self, task_id: Optional[int] = None,
+                    metadata: Dict[str, MetadataItem] = None):
+        """
+        Update information about a task in the database
+
+        :param task_id:
+            The integer ID of this task.
+        :param metadata:
+            A dictionary of metadata associated with this task.
+        :return:
+            None
+        """
+
+        # Register task metadata
+        if metadata is not None:
+            self.metadata_register(task_id=task_id, metadata=metadata)
