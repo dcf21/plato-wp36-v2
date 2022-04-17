@@ -1,12 +1,11 @@
 #!../../data/datadir_local/virtualenv/bin/python3
 # -*- coding: utf-8 -*-
-# display_message_queue.py
+# empty_queue.py
 
 """
-Display the contents of the RabbitMQ message queues
+Flush all messages out of the RabbitMQ message queues
 """
 
-import json
 import logging
 import os
 
@@ -15,9 +14,9 @@ import argparse
 from plato_wp36 import settings, task_database, task_queues
 
 
-def print_queues():
+def flush_queues():
     """
-    Print the status of all the job queues in RabbitMQ in turn
+    Flush all messages out of the RabbitMQ message queues
     :return:
         None
     """
@@ -31,11 +30,6 @@ def print_queues():
 
     # Query each queue in turn
     for queue_name in tasks.task_names():
-        message_count = message_bus.queue_length(queue_name=queue_name)
-        logging.info("{:s} ({:d} messages waiting)".format(queue_name, message_count))
-
-        message_list = []
-
         # Fetch messages from queue, one by one, until no more messages are found
         while True:
             method_frame, header_frame, body = message_bus.queue_fetch(queue_name=queue_name)
@@ -45,11 +39,7 @@ def print_queues():
                 break
             else:
                 # Received a message
-                message_list.append(json.loads(body))
-
-        # Display list of all the messages
-        if len(message_list) > 0:
-            logging.info(str(message_list))
+                message_bus.message_ack(method_frame=method_frame)
 
     # Close connection
     message_bus.close()
@@ -79,5 +69,5 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logger.info(__doc__.strip())
 
-    # Display the contents of the message queues
-    print_queues()
+    # Flush the contents of the message queues
+    flush_queues()

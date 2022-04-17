@@ -46,15 +46,15 @@ def display_job_tree(job_name: Optional[str] = None, status: str = 'any'):
         # Search for all tasks with a given parent
         task_db.conn.execute("""
 SELECT t.taskId, t.jobName, ett.taskName,
-   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND NOT x.startTime) AS runs_waiting,
-   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime AND
+   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NULL) AS runs_waiting,
+   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NOT NULL AND
                     NOT x.allProductsPassedQc AND x.latestHeartbeat < {min_heartbeat:f}) AS runs_stalled,
-   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime AND
+   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NOT NULL AND
                     NOT x.allProductsPassedQc AND x.latestHeartbeat > {min_heartbeat:f}) AS runs_running,
    (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.allProductsPassedQc) AS runs_done
 FROM eas_task t
 INNER JOIN eas_task_types ett on t.taskTypeId = ett.taskTypeId
-WHERE {constraint} ORDER BY taskId
+WHERE {constraint} ORDER BY taskId;
 """.format(constraint=constraint, min_heartbeat=threshold_heartbeat_time))
 
         task_list = task_db.conn.fetchall()
@@ -66,17 +66,18 @@ WHERE {constraint} ORDER BY taskId
             if job_name is not None:
                 if item['jobName'] != job_name:
                     display_now = False
-                if (item['status'] == 'waiting') and (item['runs_waiting'] == 0):
+                if (status == 'waiting') and (item['runs_waiting'] == 0):
                     display_now = False
-                if (item['status'] == 'running') and (item['runs_running'] == 0):
+                if (status == 'running') and (item['runs_running'] == 0):
                     display_now = False
-                if (item['status'] == 'stalled') and (item['runs_stalled'] == 0):
+                if (status == 'stalled') and (item['runs_stalled'] == 0):
                     display_now = False
-                if (item['status'] == 'done') and (item['runs_done'] == 0):
+                if (status == 'done') and (item['runs_done'] == 0):
                     display_now = False
 
             # Add this task to the hierarchy if parents
             parents.append({
+                'job_name': item['jobName'] if item['jobName'] is not None else "<untitled>",
                 'task': item,
                 'shown': False
             })
@@ -88,7 +89,7 @@ WHERE {constraint} ORDER BY taskId
                         parent['shown'] = True
                         print('{indent}{job_name}/{task_name} ({id} - {w}/{r}/{s}/{d})'.format(
                             indent="  " * level,
-                            job_name=parent['task']['jobName'],
+                            job_name=parent['job_name'],
                             task_name=parent['task']['taskName'],
                             id=parent['task']['taskId'],
                             w=parent['task']['runs_waiting'],

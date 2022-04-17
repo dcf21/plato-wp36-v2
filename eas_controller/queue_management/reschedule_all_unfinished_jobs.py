@@ -1,55 +1,49 @@
 #!../../data/datadir_local/virtualenv/bin/python3
 # -*- coding: utf-8 -*-
-# display_message_queue.py
+# reschedule_all_unfinished_jobs.py
 
 """
-Display the contents of the RabbitMQ message queues
+(Re)schedule all unfinished tasks to be (re)-run.
 """
-
-import json
-import logging
-import os
 
 import argparse
+import logging
+import os
 
 from plato_wp36 import settings, task_database, task_queues
 
 
-def print_queues():
+def schedule_jobs():
     """
-    Print the status of all the job queues in RabbitMQ in turn
+    (Re)schedule all unfinished tasks to be (re)-run.
+
     :return:
         None
     """
 
     # Read list of task types from the database
     task_db = task_database.TaskDatabaseConnection()
-    tasks = task_db.task_list_from_db()
 
     # Open connection to the message queue
     message_bus = task_queues.TaskQueue()
 
-    # Query each queue in turn
-    for queue_name in tasks.task_names():
-        message_count = message_bus.queue_length(queue_name=queue_name)
-        logging.info("{:s} ({:d} messages waiting)".format(queue_name, message_count))
+    # Fetch list of all the tasks to schedule
+    task_db.conn.execute("""
+SELECT t.taskId, ett.taskName
+FROM eas_task t
+INNER JOIN eas_task_types ett on t.taskTypeId = ett.taskTypeId
+WHERE NOT EXISTS (SELECT 1 FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND allProductsPassedQc)
+ORDER BY t.taskId;
+""")
+    tasks = task_db.conn.fetchall()
 
-        message_list = []
-
-        # Fetch messages from queue, one by one, until no more messages are found
-        while True:
-            method_frame, header_frame, body = message_bus.queue_fetch(queue_name=queue_name)
-
-            if method_frame is None or method_frame.NAME == 'Basic.GetEmpty':
-                # Message queue was empty
-                break
-            else:
-                # Received a message
-                message_list.append(json.loads(body))
-
-        # Display list of all the messages
-        if len(message_list) > 0:
-            logging.info(str(message_list))
+    # Schedule each job in turn
+    for item in tasks:
+        queue_name = item['taskName']
+        task_id = item['taskId']
+        logging.info("Scheduling {:6d} - {:s}".format(task_id, queue_name))
+        attempt_id = task_db.execution_attempt_register(task_id=task_id)
+        message_bus.queue_publish(queue_name=queue_name, message=attempt_id)
 
     # Close connection
     message_bus.close()
@@ -79,5 +73,5 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logger.info(__doc__.strip())
 
-    # Display the contents of the message queues
-    print_queues()
+    # Reschedule tasks
+    schedule_jobs()
