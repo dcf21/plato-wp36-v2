@@ -77,6 +77,7 @@ The prerequisites to deploy the test-bench via minikube are as follows:
 
    ```
    minikube service --url mysql
+   minikube service --url rabbitmq-service
    ```
    
    Then initialise the databases:
@@ -84,6 +85,8 @@ The prerequisites to deploy the test-bench via minikube are as follows:
    ```
    cd eas_controller/database_initialisation
    ./init_schema.py --db_port 30036 --db_host 192.168.59.100
+   ./init_queues.py --mq_port 30672 --mq_host 192.168.59.100
+
    ```
 
 8. **Restart**

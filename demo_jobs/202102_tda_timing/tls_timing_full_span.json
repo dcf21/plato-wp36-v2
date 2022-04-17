@@ -1,50 +1,58 @@
 {
   "job_name": "tls_timing_full_span",
-  "iterations": [
-    {
-      "name": "cadence",
-      "values": [25, 50, 600]
-    },
-    {
-      "name": "lc_length",
-      "values": [
-        "7 * day",
-        "10 * day",
-        "14 * day",
-        "21 * day",
-        "28 * day",
-        "1.5 * month",
-        "2 * month",
-        "2.5 * month",
-        "3 * month",
-        "4 * month",
-        "6 * month",
-        "9 * month",
-        "year",
-        "1.5 * year",
-        "2 * year"
-      ]
-    }
-  ],
   "task_list": [
     {
-      "task": "psls_synthesise",
-      "target": {
-        "filename": "ttfs_${index}.gz"
-      },
-      "specs": {
-        "duration": "${lc_length}",
-        "enable_transits": 0,
-        "sampling_cadence": "${cadence}"
-      }
-    },
-    {
-      "task": "transit_search",
-      "source": {
-        "filename": "ttfs_${index}.gz"
-      },
-      "lc_duration": "${lc_length}",
-      "tda_name": "tls"
+      "task": "execution_for_loop",
+      "name": "cadence",
+      "values": [
+        25,
+        50,
+        600
+      ],
+      "task_list": [
+        {
+          "task": "execution_for_loop",
+          "name": "lc_length",
+          "values": [
+            "7 * day",
+            "10 * day",
+            "14 * day",
+            "21 * day",
+            "28 * day",
+            "1.5 * month",
+            "2 * month",
+            "2.5 * month",
+            "3 * month",
+            "4 * month",
+            "6 * month",
+            "9 * month",
+            "year",
+            "1.5 * year",
+            "2 * year"
+          ],
+          "task_list": [
+            {
+              "task": "psls_synthesise",
+              "target": {
+                "filename": "ttfs_${cadence_index}_${lc_length_index}.gz"
+              },
+              "specs": {
+                "duration": "${lc_length}",
+                "enable_transits": 0,
+                "sampling_cadence": "${cadence}"
+              }
+            },
+            {
+              "task": "transit_search",
+              "source": {
+                "filename": "ttfs_${cadence_index}_${lc_length_index}.gz"
+              },
+              "lc_duration": "${lc_length}",
+              "tda_name": "tls"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

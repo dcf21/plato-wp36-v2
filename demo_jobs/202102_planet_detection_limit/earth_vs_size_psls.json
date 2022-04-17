@@ -1,47 +1,64 @@
 {
   "job_name": "earth_vs_size_psls",
-  "iterations": [
-    {
-      "name": "cadence",
-      "values": [900, 25]
-    },
-    {
-      "name": "size",
-      "log_range": [
-        "Rearth/4",
-        "Rearth*4",
-        "10"
-      ]
-    }
-  ],
   "task_list": [
     {
-      "task": "psls_synthesise",
-      "target": {
-        "filename": "evsize_psls_${index}.gz"
-      },
-      "specs": {
-        "duration": 730,
-        "planet_radius": "${size}",
-        "orbital_period": 240,
-        "semi_major_axis": 1,
-        "orbital_angle": 0,
-        "sampling_cadence": "${cadence}"
-      }
-    },
-    {
-      "task": "verify",
-      "source": {
-        "filename": "evsize_psls_${index}.gz"
-      }
-    },
-    {
-      "task": "transit_search",
-      "source": {
-        "filename": "evsize_psls_${index}.gz"
-      },
-      "lc_duration": 730,
-      "tda_name": "tls"
+      "task": "execution_for_loop",
+      "name": "tda",
+      "values": [
+        "tls",
+        "bls_reference"
+      ],
+      "task_list": [
+        {
+          "task": "execution_for_loop",
+          "name": "cadence",
+          "values": [
+            900,
+            25
+          ],
+          "task_list": [
+            {
+              "task": "execution_for_loop",
+              "name": "size",
+              "log_range": [
+                "Rearth/4",
+                "Rearth*4",
+                "10"
+              ],
+              "task_list": [
+                {
+                  "task": "psls_synthesise",
+                  "target": {
+                    "filename": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
+                  },
+                  "specs": {
+                    "duration": 730,
+                    "planet_radius": "${size}",
+                    "orbital_period": 240,
+                    "semi_major_axis": 1,
+                    "orbital_angle": 0,
+                    "sampling_cadence": "${cadence}"
+                  }
+                },
+                {
+                  "task": "verify",
+                  "source": {
+                    "filename": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
+                  }
+                },
+                {
+                  "task": "transit_search",
+                  "source": {
+                    "filename": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
+                  },
+                  "lc_duration": 730,
+                  "tda_name": "${tda}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }

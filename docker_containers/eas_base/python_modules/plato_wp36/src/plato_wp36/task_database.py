@@ -240,7 +240,7 @@ WHERE {};""".format(" AND ".join(constraints)))
 
         # Fetch metadata from database
         self.conn.execute("""
-SELECT k.name AS keyword, m.valueFloat, m.valueString, m.setAtTime, 
+SELECT k.name AS keyword, m.valueFloat, m.valueString, m.setAtTime
 FROM eas_metadata_item m
 INNER JOIN eas_metadata_keys k ON k.keyId=m.metadataKey
 WHERE {};""".format(" AND ".join(constraints)))
@@ -1269,13 +1269,15 @@ WHERE taskId = %s;
         """
         if created_time is None:
             created_time = time.time()
+        if working_directory is None:
+            working_directory = ""
 
         # Fetch task type integer id
         task_type_id = self.task_list_fetch_id(task_name=task_type)
 
         # Insert record into the database
         self.conn.execute("""
-INSERT INTO eas_task (parentTask, createdTime, taskTypeId, jobName, working_directory)
+INSERT INTO eas_task (parentTask, createdTime, taskTypeId, jobName, workingDirectory)
 VALUES (%s, %s, %s, %s, %s);
 """, (parent_id, created_time, task_type_id, job_name, working_directory))
         output_id = self.conn.lastrowid

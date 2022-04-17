@@ -7,6 +7,7 @@ setting below with local overrides which can be placed in the YAML file
 <configuration/installation_settings.conf>.
 """
 
+import glob
 import logging
 import os
 import re
@@ -33,9 +34,14 @@ class Settings:
 
         # Sources containing local settings. Later entries override settings in earlier files.
         local_settings_files = [
-            ("configuration/installation_settings.conf", True),
-            ("../../data/datadir_local/local_settings.conf", False)
+            ("configuration/installation_settings.conf", True)
         ]
+
+        # Add all local configuration files
+        for item in glob.glob("../../data/datadir_local/local_settings*.conf"):
+            local_settings_files.append(
+                (item, False)
+            )
 
         # Read each settings file in turn
         for file_path, must_exist in local_settings_files:

@@ -1,48 +1,55 @@
 {
   "job_name": "hot_jupiter_vs_size_batman",
-  "iterations": [
-    {
-      "name": "cadence",
-      "values": [900, 25]
-    },
-    {
-      "name": "size",
-      "log_range": [
-        "0.01",
-        "0.2",
-        "30"
-      ]
-    }
-  ],
   "task_list": [
     {
-      "task": "batman_synthesise",
-      "target": {
-        "filename": "hjvsize_batman_${index}.gz"
-      },
-      "specs": {
-        "duration": 90,
-        "planet_radius": "${size}",
-        "orbital_period": 4,
-        "semi_major_axis": 0.05,
-        "orbital_angle": 0,
-        "noise": "plato_noise",
-        "sampling_cadence": "${cadence}"
-      }
-    },
-    {
-      "task": "verify",
-      "source": {
-        "filename": "hjvsize_batman_${index}.gz"
-      }
-    },
-    {
-      "task": "transit_search",
-      "source": {
-        "filename": "hjvsize_batman_${index}.gz"
-      },
-      "lc_duration": 90,
-      "tda_name": "tls"
+      "task": "execution_for_loop",
+      "name": "cadence",
+      "values": [
+        900,
+        25
+      ],
+      "task_list": [
+        {
+          "task": "execution_for_loop",
+          "name": "size",
+          "log_range": [
+            "0.01",
+            "0.2",
+            "30"
+          ],
+          "task_list": [
+            {
+              "task": "batman_synthesise",
+              "target": {
+                "filename": "hjvsize_batman_${cadence_index}_${size_index}.gz"
+              },
+              "specs": {
+                "duration": 90,
+                "planet_radius": "${size}",
+                "orbital_period": 4,
+                "semi_major_axis": 0.05,
+                "orbital_angle": 0,
+                "noise": "plato_noise",
+                "sampling_cadence": "${cadence}"
+              }
+            },
+            {
+              "task": "verify",
+              "source": {
+                "filename": "hjvsize_batman_${cadence_index}_${size_index}.gz"
+              }
+            },
+            {
+              "task": "transit_search",
+              "source": {
+                "filename": "hjvsize_batman_${cadence_index}_${size_index}.gz"
+              },
+              "lc_duration": 90,
+              "tda_name": "tls"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
