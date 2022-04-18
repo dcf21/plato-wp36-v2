@@ -3,20 +3,19 @@
 # deploy.py
 
 """
-Creates a deployment of the test-bench using AppsV1Api.
+Creates a Kubernetes deployment of the test-bench. Currently fork the kubectl commandline tool rather than using the
+Python API because it's massively less verbose.
 """
 
 import os
 import logging
 import sys
-import yaml
-from kubernetes import client, config
+from kubernetes import config
 
 
 def deploy_all():
     components = ["input-pv", "input-pvc", "output-pv", "output-pvc", "mysql-pv-minikube", "mysql-pvc-minikube",
-                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service"]
-    # "eas-debugging"
+                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service", "eas-debugging"]
 
     for item in components:
         deploy_item(name=item)

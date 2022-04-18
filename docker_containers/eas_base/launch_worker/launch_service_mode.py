@@ -9,10 +9,12 @@ Start working on tasks in service mode.
 import argparse
 import json
 import logging
-import os
 import time
+import traceback
 
-from plato_wp36 import settings, task_database, task_queues, container_name
+from plato_wp36 import container_name, logging_database, task_database, task_queues, task_timer
+
+EasLoggingHandlerInstance = logging_database.EasLoggingHandler()
 
 
 def enter_service_mode():
@@ -59,9 +61,22 @@ def enter_service_mode():
 
                     # Extract task execution attempt id
                     attempt_id = json.loads(body)
+                    EasLoggingHandlerInstance.set_task_attempt_id(attempt_id=attempt_id)
 
-                    # Announce that we're running a task
-                    logging.info("Starting task execution attempt <{}>".format(attempt_id))
+                    # Start task timer
+                    with task_timer.TaskTimer(task_attempt_id=attempt_id):
+                        # Catch all exceptions, and record them in the logging database
+                        try:
+                            # Announce that we're running a task
+                            logging.info("Starting task execution attempt <{}>".format(attempt_id))
+
+                            # Launch task handler
+                        except Exception:
+                            error_message = traceback.format_exc()
+                            logging.error(error_message)
+
+                    # Finished task
+                    EasLoggingHandlerInstance.set_task_attempt_id()
 
                     # Reopen new connection to the message queue
                     message_bus = task_queues.TaskQueue()
@@ -75,18 +90,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     args = parser.parse_args()
 
-    # Fetch testbench settings
-    settings = settings.Settings()
-
     # Set up logging
-    log_file_path = os.path.join(settings.settings['dataPath'], 'plato_wp36.log')
     logging.basicConfig(level=logging.INFO,
                         format='[%(asctime)s] %(levelname)s:%(filename)s:%(message)s',
                         datefmt='%d/%m/%Y %H:%M:%S',
-                        handlers=[
-                            logging.FileHandler(log_file_path),
-                            logging.StreamHandler()
-                        ])
+                        handlers=[EasLoggingHandlerInstance, logging.StreamHandler()]
+                        )
     logger = logging.getLogger(__name__)
     logger.info(__doc__.strip())
 

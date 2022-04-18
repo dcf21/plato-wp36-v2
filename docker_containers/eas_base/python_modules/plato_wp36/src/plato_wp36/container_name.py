@@ -34,6 +34,6 @@ def get_container_name(container_name_filename: Optional[str] = None):
         container_name_filename = os.path.join(settings['pythonPath'], '../../container_name.txt')
 
     with open(container_name_filename) as in_stream:
-        container_name = in_stream.read()
+        container_name = in_stream.read().strip()
 
     return container_name

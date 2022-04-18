@@ -49,8 +49,11 @@ CREATE TABLE eas_log_messages
     generatedByTaskExecution INTEGER,
     timestamp                REAL    NOT NULL,
     severity                 INTEGER NOT NULL,
-    message                  VARCHAR(1024),
-    FOREIGN KEY (generatedByTaskExecution) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE
+    message                  VARCHAR(4096),
+    FOREIGN KEY (generatedByTaskExecution) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE,
+    INDEX (severity, generatedByTaskExecution, timestamp),
+    INDEX (generatedByTaskExecution, severity, timestamp),
+    INDEX (generatedByTaskExecution, timestamp)
 );
 
 -- Table of semantic types of intermediate file products (e.g. lightcurve, periodogram, etc)

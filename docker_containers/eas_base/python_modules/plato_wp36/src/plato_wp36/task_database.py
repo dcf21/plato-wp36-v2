@@ -86,7 +86,16 @@ SELECT taskTypeId, taskName, workerContainers
 FROM eas_task_types;""")
 
         for item in self.conn.fetchall():
-            output.task_list[item['taskName']] = json.loads(item['workerContainers'])
+            container_list = json.loads(item['workerContainers'])
+            output.task_list[item['taskName']] = container_list
+
+            for container_name in container_list:
+                output.container_names.add(container_name)
+
+                if container_name not in output.container_capabilities:
+                    output.container_capabilities[container_name] = set()
+
+                output.container_capabilities[container_name].add(item['taskName'])
 
         # Return list
         return output

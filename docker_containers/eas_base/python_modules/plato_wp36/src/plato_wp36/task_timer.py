@@ -13,7 +13,9 @@ with TaskTimer( <settings> ):
 import resource
 import time
 
-from .run_time_logger import RunTimesToRabbitMQ
+from typing import Optional
+
+from .connect_db import DatabaseConnector
 
 
 class TaskTimer:
@@ -22,45 +24,18 @@ class TaskTimer:
     and also CPU time.
     """
 
-    def __init__(self, job_name, tda_code="", target_name="", task_name="null", parameters={},
-                 time_logger=RunTimesToRabbitMQ()):
+    def __init__(self, task_attempt_id: Optional[int] = None):
         """
         Create a new timer.
 
-        :param job_name:
-            Specify the name of the job that these tasks is part of.
-        :type job_name:
-            str
-        :param tda_code:
-            The name of the Transit-detection Algorithm being used.
-        :type tda_code:
-            str
-        :param target_name:
-            The name of the target / lightcurve being analysed.
-        :type target_name:
-            str
-        :param task_name:
-            The name of the processing step being performed on the lightcurve.
-        :type task_name:
-            str
-        :param parameters:
-            A dictionary of parameter values associated with this task.
-        :type parameters:
-            dict
-        :param time_logger:
-            The handle to the message queue where this time measurement is to be recorded.
+        :param task_attempt_id:
+            The integer ID of the task attempt that is being timed, in the <eas_scheduling_attempt> table.
+        :type task_attempt_id:
+            int
         """
 
-        # Ensure that time_logger is a genuine <RunTimesToRabbitMQ> object
-        assert isinstance(time_logger, RunTimesToRabbitMQ)
-
         # Store the state of this timer
-        self.job_name = job_name
-        self.tda_code = tda_code
-        self.target_name = target_name
-        self.task_name = task_name
-        self.parameters = parameters
-        self.time_logger = time_logger
+        self.task_attempt_id = task_attempt_id
 
     @staticmethod
     def measure_time():
@@ -79,9 +54,9 @@ class TaskTimer:
 
             # CPU core seconds as reported by <resource> package, including child processes
             'cpu_inc_children': resource.getrusage(resource.RUSAGE_SELF).ru_utime +
-                            resource.getrusage(resource.RUSAGE_SELF).ru_stime +
-                            resource.getrusage(resource.RUSAGE_CHILDREN).ru_utime +
-                            resource.getrusage(resource.RUSAGE_CHILDREN).ru_stime
+                                resource.getrusage(resource.RUSAGE_SELF).ru_stime +
+                                resource.getrusage(resource.RUSAGE_CHILDREN).ru_utime +
+                                resource.getrusage(resource.RUSAGE_CHILDREN).ru_stime
         }
 
     def __enter__(self):
@@ -91,6 +66,23 @@ class TaskTimer:
 
         # Record the start time of the task
         self.start_time = self.measure_time()
+
+        # Open connection to the database
+        db_connector = DatabaseConnector()
+        db, conn = db_connector.connect_db()
+
+        # File task execution time in the database
+        conn.execute("""
+UPDATE eas_scheduling_attempt
+SET startTime=%s, latestHeartbeat=%s
+WHERE schedulingAttemptId=%s;
+""", (self.start_time['wall_clock'], self.start_time['wall_clock'], self.task_attempt_id))
+
+        # Commit changes to the database
+        db.commit()
+        db.close()
+
+        # Finished
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -114,15 +106,20 @@ class TaskTimer:
         for key in self.end_time:
             run_times[key] = self.end_time[key] - self.start_time[key]
 
-        # Record run time
-        self.time_logger.record_timing(
-            job_name=self.job_name,
-            tda_code=self.tda_code,
-            target_name=self.target_name,
-            task_name=self.task_name,
-            parameters=self.parameters,
-            timestamp=self.start_time['wall_clock'],
-            run_time_wall_clock=run_times['wall_clock'],
-            run_time_cpu=run_times['cpu'],
-            run_time_cpu_inc_children=run_times['cpu_inc_children']
-        )
+        # Open connection to the database
+        db_connector = DatabaseConnector()
+        db, conn = db_connector.connect_db()
+
+        # File task execution time in the database
+        conn.execute("""
+UPDATE eas_scheduling_attempt
+SET endTime=%s, runTimeWallClock=%s, runTimeCpu=%s, runTimeCpuIncChildren=%s
+WHERE schedulingAttemptId=%s;
+""",
+                     (time.time(),
+                      run_times['wall_clock'], run_times['cpu'], run_times['cpu_inc_children'],
+                      self.task_attempt_id))
+
+        # Commit changes to the database
+        db.commit()
+        db.close()
