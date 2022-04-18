@@ -2,6 +2,7 @@ astropy
 pytest
 cython
 flask
+psutil
 numpy
 scipy
 pyyaml

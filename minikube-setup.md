@@ -34,9 +34,15 @@ The prerequisites to deploy the test-bench via minikube are as follows:
     minikube start --cpus=12 --memory='9g' --mount=true
     ```
 
-   You may wish to tweak the number of CPU cores and the amount of RAM made available to the Kubernetes cluster.
+   You may wish to tweak the number of CPU cores and the amount of RAM made available to the Kubernetes cluster. Under MacOS, you should also specify:
 
-3. **Mount data directories**
+   ```
+   --driver=virtualbox
+   ```
+
+   (because services aren't accessible from the host machine if it uses the Docker driver)
+
+4. **Mount data directories**
 
    The Kubernetes cluster needs access to the directories on the host machine containing the input lightcurves and where it should write the
    output from the transit-detection codes. These two commands to mount these directories into the Kubernets cluster each need keep running, so execute them in two separate `screen` sessions:
@@ -46,7 +52,7 @@ The prerequisites to deploy the test-bench via minikube are as follows:
     minikube mount --uid 999 ../data/datadir_input/:/mnt/datadir_input/
     ```
    
-4. **Build the Docker containers**
+5. **Build the Docker containers**
 
    The Docker containers that comprise the EAS pipeline need to be built within the minikube Docker environment (which is a virtual machine):
 
@@ -55,14 +61,14 @@ The prerequisites to deploy the test-bench via minikube are as follows:
    ./build-docker-containers.sh
    ```
 
-5. **Deploy the test-bench Docker containers within Kubernetes**
+6. **Deploy the test-bench Docker containers within Kubernetes**
 
     ```
     cd ../eas_controller/worker_orchestration
     ./deploy.py
     ```
 
-6. **Watch the pods start up**
+7. **Watch the pods start up**
 
     ```
     watch kubectl get pods
@@ -71,25 +77,24 @@ The prerequisites to deploy the test-bench via minikube are as follows:
    This will show a live list of the containers running within Kubernetes. It often takes a minute or two for them to
    reach the `Running` state.
 
-7. **Initialise the databases**
+8. **Initialise the databases**
 
    First you need to find out the port and host on which minikube is exposing the MySQL and RabbitMQ services on the host machine:
 
    ```
-   minikube service --url mysql
-   minikube service --url rabbitmq-service
+   minikube service --url mysql -n=plato
+   minikube service --url rabbitmq-service -n=plato
    ```
    
    Then initialise the databases:
 
    ```
    cd eas_controller/database_initialisation
-   ./init_schema.py --db_port 30036 --db_host 192.168.59.100
-   ./init_queues.py --mq_port 30672 --mq_host 192.168.59.100
-
+   ./init_schema.py --db_port 30036 --db_host 192.168.59.101
+   ./init_queues.py --mq_port 30672 --mq_host 192.168.59.101
    ```
 
-8. **Restart**
+9. **Restart**
 
    To restart the test-bench, for example after changing the code:
 
@@ -97,15 +102,15 @@ The prerequisites to deploy the test-bench via minikube are as follows:
     ./restart.sh
     ```
 
-9. **Stop the test-bench**
+10. **Stop the test-bench**
 
-   To close the test-bench down:
+    To close the test-bench down:
 
-    ```
-    ./stop.sh
-    ```
+     ```
+     ./stop.sh
+     ```
 
-10. **Stop minikube**
+11. **Stop minikube**
 
     To close minikube down:
 
@@ -114,7 +119,7 @@ The prerequisites to deploy the test-bench via minikube are as follows:
      minikube delete
      ```
 
-11. **Clear out results**
+12. **Clear out results**
 
     To clear out the output results and start again afresh:
 

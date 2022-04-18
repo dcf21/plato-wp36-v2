@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Open a shell terminal in the Docker image containing an installation of the
-# WP36 pipeline code in a standardised Python environment.
+# WP36 pipeline code.
 
 # Make sure we're running in the right directory
 cd "$(dirname "$0")"
 cwd=`pwd`
 
-# Build containers within minikube environment
+# Run Docker within the minikube environment (a VM), not locally on the host
 eval $(minikube -p minikube docker-env)
 
 # Launch interactive shell using Docker

@@ -126,7 +126,7 @@ class TaskTypeList:
 
                     # Add container to list of those that can run this task
                     docker_containers.add(container_item)
-                    output.container_capabilities.add(task_name)
+                    output.container_capabilities[container_item].add(task_name)
 
             output.task_list[task_name] = docker_containers
 

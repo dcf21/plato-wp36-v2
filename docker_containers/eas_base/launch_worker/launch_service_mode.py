@@ -12,7 +12,7 @@ import logging
 import time
 import traceback
 
-from plato_wp36 import container_name, logging_database, task_database, task_queues, task_timer
+from plato_wp36 import container_name, logging_database, task_database, task_heartbeat, task_queues, task_timer
 
 EasLoggingHandlerInstance = logging_database.EasLoggingHandler()
 
@@ -63,17 +63,21 @@ def enter_service_mode():
                     attempt_id = json.loads(body)
                     EasLoggingHandlerInstance.set_task_attempt_id(attempt_id=attempt_id)
 
-                    # Start task timer
-                    with task_timer.TaskTimer(task_attempt_id=attempt_id):
-                        # Catch all exceptions, and record them in the logging database
-                        try:
+                    # Catch all exceptions, and record them in the logging database
+                    try:
+                        # Start task timer
+                        with task_timer.TaskTimer(task_attempt_id=attempt_id):
                             # Announce that we're running a task
                             logging.info("Starting task execution attempt <{}>".format(attempt_id))
 
-                            # Launch task handler
-                        except Exception:
-                            error_message = traceback.format_exc()
-                            logging.error(error_message)
+                            # Launch a child process to send heartbeat updates to show this job is still running
+                            with task_heartbeat.TaskHeartbeat(task_attempt_id=attempt_id):
+
+                                # Launch task handler
+                                time.sleep(600)
+                    except Exception:
+                        error_message = traceback.format_exc()
+                        logging.error(error_message)
 
                     # Finished task
                     EasLoggingHandlerInstance.set_task_attempt_id()

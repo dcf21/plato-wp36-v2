@@ -28,6 +28,8 @@ ADD configuration configuration
 
 # Copy PLATO EAS Python modules into Docker container
 ADD python_modules python_modules
+ADD python_components python_components
+ADD worker_diagnostics worker_diagnostics
 ADD launch_worker launch_worker
 
 # Build and install plato_wp36 modules
