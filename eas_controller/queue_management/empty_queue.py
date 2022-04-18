@@ -3,20 +3,20 @@
 # empty_queue.py
 
 """
-Flush all messages out of the RabbitMQ message queues
+Flush all messages out of the RabbitMQ message queues.
 """
 
+import argparse
 import logging
 import os
-
-import argparse
 
 from plato_wp36 import settings, task_database, task_queues
 
 
 def flush_queues():
     """
-    Flush all messages out of the RabbitMQ message queues
+    Flush all messages out of the RabbitMQ message queues.
+
     :return:
         None
     """

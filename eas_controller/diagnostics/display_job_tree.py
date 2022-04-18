@@ -18,7 +18,7 @@ from plato_wp36 import settings, task_database
 
 def display_job_tree(job_name: Optional[str] = None, status: str = 'any'):
     """
-    Display the hierarchy of jobs in the database
+    Display the hierarchy of jobs in the database.
 
     :return:
         None

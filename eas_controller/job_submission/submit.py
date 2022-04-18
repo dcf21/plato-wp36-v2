@@ -6,10 +6,10 @@
 Populate message queue with a group of tasks defined in a JSON file, which may include iterations.
 """
 
+import argparse
 import logging
 import os
 
-import argparse
 from plato_wp36 import settings, task_database, task_objects
 
 

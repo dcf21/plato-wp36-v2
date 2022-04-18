@@ -28,8 +28,11 @@ class TaskTypeList:
         # List of all known Docker containers
         self.container_names: Set[str] = set()
 
-        # List of all known pipeline tasks, and the Docker containers capable of running them
+        # List of all known pipeline tasks, mapped to the set of Docker containers capable of running them
         self.task_list: Dict[str, Set[str]] = {}
+
+        # List of all known Docker containers, mapped to the set of tasks they can perform
+        self.container_capabilities: Dict[str, Set[str]] = {}
 
     def task_names(self):
         """
@@ -53,6 +56,20 @@ class TaskTypeList:
         """
 
         return self.task_list[task_name]
+
+    def tasks_for_container(self, container_name: str):
+        """
+        Return a list of the names of the task types that a named type of Docker container can run.
+
+        :param container_name:
+            The name of the Docker container
+        :type container_name:
+            str
+        :return:
+            List of string names of tasks the Docker container can run
+        """
+
+        return self.container_capabilities[container_name]
 
     @classmethod
     def read_from_xml(cls, xml_filename: Optional[str] = None):
@@ -85,6 +102,7 @@ class TaskTypeList:
         for container_item in xml_structure['containers']['container']:
             container_name = container_item['name']
             output.container_names.add(container_name)
+            output.container_capabilities[container_name] = set()
 
         # Parse list of known pipeline tasks
         for task_item in xml_structure['tasks']['task']:
@@ -108,6 +126,7 @@ class TaskTypeList:
 
                     # Add container to list of those that can run this task
                     docker_containers.add(container_item)
+                    output.container_capabilities.add(task_name)
 
             output.task_list[task_name] = docker_containers
 

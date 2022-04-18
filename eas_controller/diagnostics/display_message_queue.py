@@ -3,7 +3,7 @@
 # display_message_queue.py
 
 """
-Display the contents of the RabbitMQ message queues
+Display the contents of the RabbitMQ message queues.
 """
 
 import json
@@ -17,7 +17,8 @@ from plato_wp36 import settings, task_database, task_queues
 
 def print_queues():
     """
-    Print the status of all the job queues in RabbitMQ in turn
+    Print the status of all the job queues in RabbitMQ in turn.
+
     :return:
         None
     """

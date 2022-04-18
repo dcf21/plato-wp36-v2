@@ -115,8 +115,8 @@ class Settings:
             'debug': self.installation_info['debug'],
         }
 
-        # If the <datadir> directory isn't mounted properly, then things will be badly wrong, as the Docker container
-        # can't access persistent data volume.
+        # If the <datadir> directories aren't mounted properly, then things will be badly wrong, as the Docker container
+        # can't access persistent data volumes.
         assert os.path.exists(settings['dataPath']), """
                 You need to create a directories or symlinks <datadir_input> and <datadir_output> in the root of your working
                 copy of the pipeline, where we store all persistent data.

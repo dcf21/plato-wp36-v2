@@ -13,4 +13,4 @@ ADD src src
 RUN ./src/build.sh
 
 # *** Write name of the Docker container into its root
-RUN echo 'worker_dst_v29' > /plato-wp36-v2/container_name.txt
+RUN echo 'eas_worker_dst_v29' > /plato-wp36-v2/container_name.txt

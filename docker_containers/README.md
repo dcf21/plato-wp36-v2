@@ -6,5 +6,5 @@ The directory structure is as follows:
 
 * `eas_base` -- All the core code comprising the test-bench infrastructure, signalling and control.
 
-* `worker-xxx` -- Scripts for building each transit-detection code into a separate container.
+* `eas_worker-xxx` -- Scripts for building each transit-detection code into a separate container.
 
