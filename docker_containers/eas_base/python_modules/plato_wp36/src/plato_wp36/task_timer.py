@@ -10,6 +10,7 @@ with TaskTimer( <settings> ):
 
 """
 
+import platform
 import resource
 import time
 
@@ -74,9 +75,9 @@ class TaskTimer:
         # File task execution time in the database
         conn.execute("""
 UPDATE eas_scheduling_attempt
-SET startTime=%s, latestHeartbeat=%s
+SET startTime=%s, latestHeartbeat=%s, hostname=%s
 WHERE schedulingAttemptId=%s;
-""", (self.start_time['wall_clock'], self.start_time['wall_clock'], self.task_attempt_id))
+""", (self.start_time['wall_clock'], self.start_time['wall_clock'], platform.node(), self.task_attempt_id))
 
         # Commit changes to the database
         db.commit()

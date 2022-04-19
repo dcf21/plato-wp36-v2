@@ -5,8 +5,8 @@
       "task": "execution_for_loop",
       "name": "size",
       "linear_range": [
-        "Rearth*0.25",
-        "Rearth*2",
+        "constants.Rearth*0.25",
+        "constants.Rearth*2",
         "12"
       ],
       "task_list": [
@@ -30,8 +30,8 @@
               "task_list": [
                 {
                   "task": "psls_synthesise",
-                  "target": {
-                    "filename": "christiansen_A.gz"
+                  "outputs": {
+                    "lightcurve": "christiansen_A_${size_index}_${period_index}_${impact_index}.gz"
                   },
                   "specs": {
                     "duration": 730,
@@ -41,8 +41,8 @@
                 },
                 {
                   "task": "batman_synthesise",
-                  "target": {
-                    "filename": "christiansen_B.gz"
+                  "outputs": {
+                    "lightcurve": "christiansen_B_${size_index}_${period_index}_${impact_index}.gz"
                   },
                   "specs": {
                     "duration": 730,
@@ -58,26 +58,24 @@
                 },
                 {
                   "task": "multiplication",
-                  "input_1": {
-                    "filename": "christiansen_A.gz"
+                  "inputs": {
+                    "lightcurve_1": "christiansen_A_${size_index}_${period_index}_${impact_index}.gz",
+                    "lightcurve_2": "christiansen_B_${size_index}_${period_index}_${impact_index}.gz"
                   },
-                  "input_2": {
-                    "filename": "christiansen_B.gz"
-                  },
-                  "output": {
-                    "filename": "christiansen.gz"
+                  "outputs": {
+                    "lightcurve": "christiansen_${size_index}_${period_index}_${impact_index}.gz"
                   }
                 },
                 {
                   "task": "verify",
-                  "source": {
-                    "filename": "christiansen.gz"
+                  "inputs": {
+                    "lightcurve": "christiansen_${size_index}_${period_index}_${impact_index}.gz"
                   }
                 },
                 {
                   "task": "transit_search",
-                  "source": {
-                    "filename": "christiansen.gz"
+                  "inputs": {
+                    "lightcurve": "christiansen_${size_index}_${period_index}_${impact_index}.gz"
                   },
                   "lc_duration": 730,
                   "tda_name": "tls"

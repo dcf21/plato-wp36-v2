@@ -30,6 +30,8 @@ ADD configuration configuration
 ADD python_modules python_modules
 ADD python_components python_components
 ADD worker_diagnostics worker_diagnostics
+ADD task_implementations task_implementations
+ADD task_qc_implementations task_qc_implementations
 ADD launch_worker launch_worker
 
 # Build and install plato_wp36 modules

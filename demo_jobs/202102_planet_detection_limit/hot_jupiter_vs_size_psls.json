@@ -20,8 +20,8 @@
           "task_list": [
             {
               "task": "psls_synthesise",
-              "target": {
-                "filename": "hjvsize_psls_${cadence_index}_${size_index}.gz"
+              "outputs": {
+                "lightcurve": "hjvsize_psls_${cadence_index}_${size_index}.gz"
               },
               "specs": {
                 "duration": 90,
@@ -34,14 +34,14 @@
             },
             {
               "task": "verify",
-              "source": {
-                "filename": "hjvsize_psls_${cadence_index}_${size_index}.gz"
+              "inputs": {
+                "lightcurve": "hjvsize_psls_${cadence_index}_${size_index}.gz"
               }
             },
             {
               "task": "transit_search",
-              "source": {
-                "filename": "hjvsize_psls_${cadence_index}_${size_index}.gz"
+              "inputs": {
+                "lightcurve": "hjvsize_psls_${cadence_index}_${size_index}.gz"
               },
               "lc_duration": 90,
               "tda_name": "tls"

@@ -28,7 +28,7 @@ def create_task(from_file: str):
     task_db.task_register(
         task_type="execution_chain",
         metadata={
-            "chain": task_objects.MetadataItem(keyword="chain", value=open(from_file).read())
+            "task_description": task_objects.MetadataItem(keyword="task_description", value=open(from_file).read())
         }
     )
 

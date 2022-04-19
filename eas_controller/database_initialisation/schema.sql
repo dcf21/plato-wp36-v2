@@ -31,6 +31,7 @@ CREATE TABLE eas_scheduling_attempt
     schedulingAttemptId   INTEGER PRIMARY KEY AUTO_INCREMENT,
     taskId                INTEGER NOT NULL,
     queuedTime            REAL             DEFAULT NULL,
+    hostname              VARCHAR(256)     DEFAULT NULL,
     startTime             REAL             DEFAULT NULL,
     latestHeartbeat       REAL             DEFAULT NULL,
     endTime               REAL             DEFAULT NULL,

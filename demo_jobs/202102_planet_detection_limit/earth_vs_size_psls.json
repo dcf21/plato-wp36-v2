@@ -5,8 +5,8 @@
       "task": "execution_for_loop",
       "name": "tda",
       "values": [
-        "tls",
-        "bls_reference"
+        "str('tls')",
+        "str('bls_reference')"
       ],
       "task_list": [
         {
@@ -21,15 +21,15 @@
               "task": "execution_for_loop",
               "name": "size",
               "log_range": [
-                "Rearth/4",
-                "Rearth*4",
+                "constants.Rearth/4",
+                "constants.Rearth*4",
                 "10"
               ],
               "task_list": [
                 {
                   "task": "psls_synthesise",
-                  "target": {
-                    "filename": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
+                  "outputs": {
+                    "lightcurve": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
                   },
                   "specs": {
                     "duration": 730,
@@ -42,14 +42,14 @@
                 },
                 {
                   "task": "verify",
-                  "source": {
-                    "filename": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
+                  "inputs": {
+                    "lightcurve": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
                   }
                 },
                 {
                   "task": "transit_search",
-                  "source": {
-                    "filename": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
+                  "inputs": {
+                    "lightcurve": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
                   },
                   "lc_duration": 730,
                   "tda_name": "${tda}"

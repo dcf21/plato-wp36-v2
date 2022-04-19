@@ -5,8 +5,8 @@
       "task": "execution_for_loop",
       "name": "size",
       "linear_range": [
-        "Rearth*0.25",
-        "Rearth*7",
+        "constants.Rearth*0.25",
+        "constants.Rearth*7",
         "10"
       ],
       "task_list": [
@@ -30,8 +30,8 @@
               "task_list": [
                 {
                   "task": "psls_synthesise",
-                  "target": {
-                    "filename": "christiansen.gz"
+                  "outputs": {
+                    "lightcurve": "christiansen_${size_index}_${period_index}_${impact_index}.gz"
                   },
                   "specs": {
                     "duration": 730,
@@ -44,14 +44,14 @@
                 },
                 {
                   "task": "verify",
-                  "source": {
-                    "filename": "christiansen.gz"
+                  "inputs": {
+                    "lightcurve": "christiansen_${size_index}_${period_index}_${impact_index}.gz"
                   }
                 },
                 {
                   "task": "transit_search",
-                  "source": {
-                    "filename": "christiansen.gz"
+                  "inputs": {
+                    "lightcurve": "christiansen_${size_index}_${period_index}_${impact_index}.gz"
                   },
                   "lc_duration": 730,
                   "tda_name": "tls"

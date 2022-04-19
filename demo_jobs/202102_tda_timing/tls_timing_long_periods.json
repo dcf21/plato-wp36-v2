@@ -14,19 +14,19 @@
           "task": "execution_for_loop",
           "name": "lc_length",
           "values": [
-            "3 * month",
-            "4 * month",
-            "6 * month",
-            "9 * month",
-            "year",
-            "1.5 * year",
-            "2 * year"
+            "3 * constants.month",
+            "4 * constants.month",
+            "6 * constants.month",
+            "9 * constants.month",
+            "constants.year",
+            "1.5 * constants.year",
+            "2 * constants.year"
           ],
           "task_list": [
             {
               "task": "psls_synthesise",
-              "target": {
-                "filename": "ttlp_${cadence_index}_${lc_length_index}.gz"
+              "outputs": {
+                "lightcurve": "ttlp_${cadence_index}_${lc_length_index}.gz"
               },
               "specs": {
                 "duration": "${lc_length}",
@@ -36,8 +36,8 @@
             },
             {
               "task": "transit_search",
-              "source": {
-                "filename": "ttlp_${cadence_index}_${lc_length_index}.gz"
+              "inputs": {
+                "lightcurve": "ttlp_${cadence_index}_${lc_length_index}.gz"
               },
               "lc_duration": "${lc_length}",
               "tda_name": "tls",

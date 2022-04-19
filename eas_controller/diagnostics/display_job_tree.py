@@ -88,7 +88,7 @@ WHERE {constraint} ORDER BY taskId;
                     if not parent['shown']:
                         parent['shown'] = True
                         print('{indent}{job_name}/{task_name} ({id} - {w}/{r}/{s}/{d})'.format(
-                            indent="  " * level,
+                            indent=" | " * level,
                             job_name=parent['job_name'],
                             task_name=parent['task']['taskName'],
                             id=parent['task']['taskId'],

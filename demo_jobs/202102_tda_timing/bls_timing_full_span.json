@@ -14,27 +14,27 @@
           "task": "execution_for_loop",
           "name": "lc_length",
           "values": [
-            "7 * day",
-            "10 * day",
-            "14 * day",
-            "21 * day",
-            "28 * day",
-            "1.5 * month",
-            "2 * month",
-            "2.5 * month",
-            "3 * month",
-            "4 * month",
-            "6 * month",
-            "9 * month",
-            "year",
-            "1.5 * year",
-            "2 * year"
+            "7 * constants.day",
+            "10 * constants.day",
+            "14 * constants.day",
+            "21 * constants.day",
+            "28 * constants.day",
+            "1.5 * constants.month",
+            "2 * constants.month",
+            "2.5 * constants.month",
+            "3 * constants.month",
+            "4 * constants.month",
+            "6 * constants.month",
+            "9 * constants.month",
+            "constants.year",
+            "1.5 * constants.year",
+            "2 * constants.year"
           ],
           "task_list": [
             {
               "task": "psls_synthesise",
-              "target": {
-                "filename": "btfs_${cadence_index}_${lc_length_index}.gz"
+              "outputs": {
+                "lightcurve": "btfs_${cadence_index}_${lc_length_index}.gz"
               },
               "specs": {
                 "duration": "${lc_length}",
@@ -44,8 +44,8 @@
             },
             {
               "task": "transit_search",
-              "source": {
-                "filename": "btfs_${cadence_index}_${lc_length_index}.gz"
+              "inputs": {
+                "lightcurve": "btfs_${cadence_index}_${lc_length_index}.gz"
               },
               "lc_duration": "${lc_length}",
               "tda_name": "bls_reference"

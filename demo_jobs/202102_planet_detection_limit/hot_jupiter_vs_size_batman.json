@@ -20,8 +20,8 @@
           "task_list": [
             {
               "task": "batman_synthesise",
-              "target": {
-                "filename": "hjvsize_batman_${cadence_index}_${size_index}.gz"
+              "outputs": {
+                "lightcurve": "hjvsize_batman_${cadence_index}_${size_index}.gz"
               },
               "specs": {
                 "duration": 90,
@@ -29,20 +29,20 @@
                 "orbital_period": 4,
                 "semi_major_axis": 0.05,
                 "orbital_angle": 0,
-                "noise": "plato_noise",
+                "noise": "constants.plato_noise",
                 "sampling_cadence": "${cadence}"
               }
             },
             {
               "task": "verify",
-              "source": {
-                "filename": "hjvsize_batman_${cadence_index}_${size_index}.gz"
+              "inputs": {
+                "lightcurve": "hjvsize_batman_${cadence_index}_${size_index}.gz"
               }
             },
             {
               "task": "transit_search",
-              "source": {
-                "filename": "hjvsize_batman_${cadence_index}_${size_index}.gz"
+              "inputs": {
+                "lightcurve": "hjvsize_batman_${cadence_index}_${size_index}.gz"
               },
               "lc_duration": 90,
               "tda_name": "tls"
