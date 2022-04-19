@@ -13,7 +13,7 @@ import shutil
 import time
 import json
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from .connect_db import DatabaseConnector
 from .settings import Settings
@@ -270,7 +270,7 @@ WHERE {};""".format(" AND ".join(constraints)))
         return output
 
     def metadata_register(self,
-                          metadata: Dict[str, MetadataItem],
+                          metadata: Dict[str, Any],
                           task_id: Optional[int] = None,
                           scheduling_attempt_id: Optional[int] = None,
                           product_id: Optional[int] = None,
@@ -293,26 +293,31 @@ WHERE {};""".format(" AND ".join(constraints)))
             None
         """
 
-        for item in metadata.values():
-            key_id = self.metadata_keyword_id(item.keyword)
+        for keyword, value in metadata.items():
+            # If metadata values are not already wrapped as <MetadataItem>s, wrap them now
+            if not isinstance(value, MetadataItem):
+                value = MetadataItem(keyword=keyword, value=value)
+
+            # Look up the integer ID for this metadata keyword
+            key_id = self.metadata_keyword_id(value.keyword)
             value_float = None
             value_string = None
 
             # Fetch existing metadata value
-            existing_value = self.metadata_fetch_item(keyword=item.keyword,
+            existing_value = self.metadata_fetch_item(keyword=value.keyword,
                                                       task_id=task_id, product_id=product_id,
                                                       product_version_id=product_version_id,
                                                       scheduling_attempt_id=scheduling_attempt_id)
 
             # No action required if new value equals old value
-            if item.value == existing_value:
+            if value.value == existing_value:
                 continue
 
             # Work out whether metadata is float-like or string-like
             try:
-                value_float = float(item.value)
+                value_float = float(value.value)
             except ValueError:
-                value_string = str(item.value)
+                value_string = str(value.value)
 
             # Write metadata to the database
             self.conn.execute("""
@@ -493,7 +498,7 @@ WHERE productVersionId = %s;
                               created_time: Optional[float] = None,
                               modified_time: Optional[float] = None,
                               passed_qc: Optional[bool] = None,
-                              metadata: Dict[str, MetadataItem] = None):
+                              metadata: Dict[str, Any] = None):
         """
         Register a file product in the database, and move it into our file archive
 
@@ -576,7 +581,7 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
                             preserve: bool = False,
                             modified_time: Optional[float] = None,
                             passed_qc: Optional[bool] = None,
-                            metadata: Dict[str, MetadataItem] = None):
+                            metadata: Dict[str, Any] = None):
         """
         Update information about a file product in the database
 
@@ -789,7 +794,7 @@ WHERE productId = %s;
                               semantic_type: str,
                               planned_time: Optional[float] = None,
                               mime_type: Optional[str] = None,
-                              metadata: Dict[str, MetadataItem] = None):
+                              metadata: Dict[str, Any] = None):
         """
         Register a file product in the database, and move it into our file archive
 
@@ -835,7 +840,7 @@ VALUES (%s, %s, %s, %s, %s, %s);
     def file_product_update(self, product_id: int,
                             planned_time: Optional[float] = None,
                             mime_type: Optional[str] = None,
-                            metadata: Dict[str, MetadataItem] = None):
+                            metadata: Dict[str, Any] = None):
         """
         Update information about a file product in the database
 
@@ -977,7 +982,7 @@ WHERE schedulingAttemptId = %s;
 
     def execution_attempt_register(self, task_id: Optional[int] = None,
                                    queued_time: Optional[float] = None,
-                                   metadata: Optional[Dict[str, MetadataItem]] = None):
+                                   metadata: Optional[Dict[str, Any]] = None):
         """
         Register an attempt to execute a task in the database
 
@@ -1015,7 +1020,7 @@ VALUES (%s, %s);
                                  run_time_wall_clock: Optional[float] = None,
                                  run_time_cpu: Optional[float] = None,
                                  run_time_cpu_inc_children: Optional[float] = None,
-                                 metadata: Optional[Dict[str, MetadataItem]] = None):
+                                 metadata: Optional[Dict[str, Any]] = None):
         """
         Update information about a task execution attempt in the database
 
@@ -1275,7 +1280,7 @@ WHERE taskId = %s;
                       task_type: Optional[str] = None, job_name: Optional[str] = None,
                       working_directory: Optional[str] = None,
                       input_files: Optional[Dict[str, FileProduct]] = None,
-                      metadata: Dict[str, MetadataItem] = None):
+                      metadata: Dict[str, Any] = None):
         """
         Register a new task in the database
 
@@ -1329,7 +1334,7 @@ REPLACE INTO eas_task_input (taskId, inputId, semanticType) VALUES (%s, %s, %s);
         return output_id
 
     def task_update(self, task_id: Optional[int] = None,
-                    metadata: Dict[str, MetadataItem] = None):
+                    metadata: Dict[str, Any] = None):
         """
         Update information about a task in the database
 

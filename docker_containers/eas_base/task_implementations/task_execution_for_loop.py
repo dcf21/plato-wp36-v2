@@ -68,10 +68,9 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
 
         subtask_metadata = {
             **task_info.metadata,
-            parameter_name: task_objects.MetadataItem(keyword=parameter_name, value=parameter_value),
-            "{}_index".format(parameter_name): task_objects.MetadataItem(keyword="{}_index".format(parameter_name),
-                                                                         value=parameter_index),
-            "task_description": task_objects.MetadataItem(keyword="task_description", value=subtask_description_json)
+            parameter_name: parameter_value,
+            "{}_index".format(parameter_name): parameter_index,
+            "task_description": subtask_description_json
         }
 
         # Create entry for this task

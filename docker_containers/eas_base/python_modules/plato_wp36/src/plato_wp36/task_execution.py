@@ -71,8 +71,7 @@ def do_pipeline_task(job_id: int,
 
                 # If an explicit job name is specified in the task description, update the job name of this task
                 if 'job_name' in task_description:
-                    task_info.metadata['job_name'] = task_objects.MetadataItem(keyword='job_name',
-                                                                               value=task_description['job_name'])
+                    task_info.set_metadata(keyword='job_name', value=task_description['job_name'])
 
                 # If an explicit working directory is specified in the task description, update the task descriptor
                 if 'working_directory' in task_description:

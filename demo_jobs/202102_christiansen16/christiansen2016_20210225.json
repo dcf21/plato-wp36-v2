@@ -29,7 +29,7 @@
               ],
               "task_list": [
                 {
-                  "task": "psls_synthesise",
+                  "task": "synthesise_psls",
                   "outputs": {
                     "lightcurve": "christiansen_A_${size_index}_${period_index}_${impact_index}.gz"
                   },
@@ -40,7 +40,7 @@
                   }
                 },
                 {
-                  "task": "batman_synthesise",
+                  "task": "synthesise_batman",
                   "outputs": {
                     "lightcurve": "christiansen_B_${size_index}_${period_index}_${impact_index}.gz"
                   },
@@ -73,12 +73,11 @@
                   }
                 },
                 {
-                  "task": "transit_search",
+                  "task": "transit_search_tls",
                   "inputs": {
                     "lightcurve": "christiansen_${size_index}_${period_index}_${impact_index}.gz"
                   },
-                  "lc_duration": 730,
-                  "tda_name": "tls"
+                  "lc_duration": 730
                 }
               ]
             }

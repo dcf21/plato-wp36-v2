@@ -19,7 +19,7 @@
           ],
           "task_list": [
             {
-              "task": "psls_synthesise",
+              "task": "synthesise_psls",
               "outputs": {
                 "lightcurve": "hjvsize_psls_${cadence_index}_${size_index}.gz"
               },
@@ -39,12 +39,11 @@
               }
             },
             {
-              "task": "transit_search",
+              "task": "transit_search_tls",
               "inputs": {
                 "lightcurve": "hjvsize_psls_${cadence_index}_${size_index}.gz"
               },
-              "lc_duration": 90,
-              "tda_name": "tls"
+              "lc_duration": 90
             }
           ]
         }

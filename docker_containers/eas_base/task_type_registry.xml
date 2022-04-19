@@ -37,7 +37,7 @@
     </containers>
     <tasks>
         <task>
-            <name>null</name>
+            <name>binning</name>
             <container>all</container>
         </task>
         <task>
@@ -61,6 +61,14 @@
             <container>all</container>
         </task>
         <task>
+            <name>multiply</name>
+            <container>all</container>
+        </task>
+        <task>
+            <name>null</name>
+            <container>all</container>
+        </task>
+        <task>
             <name>synthesise_batman</name>
             <container>worker_synthesis_psls_batman</container>
         </task>
@@ -71,22 +79,6 @@
         <task>
             <name>synthesise_platosim</name>
             <container>worker_synthesis_platosim</container>
-        </task>
-        <task>
-            <name>multiply</name>
-            <container>all</container>
-        </task>
-        <task>
-            <name>verify</name>
-            <container>all</container>
-        </task>
-        <task>
-            <name>delete</name>
-            <container>all</container>
-        </task>
-        <task>
-            <name>binning</name>
-            <container>all</container>
         </task>
         <task>
             <name>transit_search_bls_kovacs</name>
@@ -115,6 +107,10 @@
         <task>
             <name>transit_search_tls</name>
             <container>worker_tls</container>
+        </task>
+        <task>
+            <name>verify</name>
+            <container>all</container>
         </task>
     </tasks>
 </task_type_registry>

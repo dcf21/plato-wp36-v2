@@ -11,7 +11,7 @@
       ],
       "task_list": [
         {
-          "task": "psls_synthesise",
+          "task": "synthesise_psls",
           "outputs": {
             "lightcurve": "evs_${nsr_index}.gz"
           },
@@ -31,12 +31,11 @@
           }
         },
         {
-          "task": "transit_search",
+          "task": "transit_search_tls",
           "inputs": {
             "lightcurve": "evs_${nsr_index}.gz"
           },
-          "lc_duration": 730,
-          "tda_name": "tls"
+          "lc_duration": 730
         }
       ]
     }

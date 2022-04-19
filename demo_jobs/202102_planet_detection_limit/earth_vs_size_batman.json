@@ -27,7 +27,7 @@
               ],
               "task_list": [
                 {
-                  "task": "batman_synthesise",
+                  "task": "synthesise_batman",
                   "outputs": {
                     "lightcurve": "evsize_batman_${tda_index}_${cadence_index}_${size_index}.gz"
                   },
@@ -48,12 +48,11 @@
                   }
                 },
                 {
-                  "task": "transit_search",
+                  "task": "transit_search_${tda}",
                   "inputs": {
                     "lightcurve": "evsize_batman_${tda_index}_${cadence_index}_${size_index}.gz"
                   },
-                  "lc_duration": 730,
-                  "tda_name": "${tda}"
+                  "lc_duration": 730
                 }
               ]
             }

@@ -32,7 +32,7 @@
           ],
           "task_list": [
             {
-              "task": "psls_synthesise",
+              "task": "synthesise_psls",
               "outputs": {
                 "lightcurve": "ttfs_${cadence_index}_${lc_length_index}.gz"
               },
@@ -43,12 +43,11 @@
               }
             },
             {
-              "task": "transit_search",
+              "task": "transit_search_tls",
               "inputs": {
                 "lightcurve": "ttfs_${cadence_index}_${lc_length_index}.gz"
               },
-              "lc_duration": "${lc_length}",
-              "tda_name": "tls"
+              "lc_duration": "${lc_length}"
             }
           ]
         }

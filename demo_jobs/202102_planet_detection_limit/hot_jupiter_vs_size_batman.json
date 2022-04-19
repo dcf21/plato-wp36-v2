@@ -19,7 +19,7 @@
           ],
           "task_list": [
             {
-              "task": "batman_synthesise",
+              "task": "synthesise_batman",
               "outputs": {
                 "lightcurve": "hjvsize_batman_${cadence_index}_${size_index}.gz"
               },
@@ -40,12 +40,11 @@
               }
             },
             {
-              "task": "transit_search",
+              "task": "transit_search_tls",
               "inputs": {
                 "lightcurve": "hjvsize_batman_${cadence_index}_${size_index}.gz"
               },
-              "lc_duration": 90,
-              "tda_name": "tls"
+              "lc_duration": 90
             }
           ]
         }

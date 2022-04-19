@@ -118,6 +118,23 @@ class FileProduct:
             for item in metadata.values():
                 self.metadata[item.keyword] = item
 
+    def set_metadata(self, keyword: str, value):
+        """
+        Set an item of metadata associated with this object.
+
+        :param keyword:
+            Metadata keyword
+        :param value:
+            Metadata value
+        :return:
+            None
+        """
+
+        if not isinstance(value, MetadataItem):
+            value = MetadataItem(keyword=keyword, value=value)
+        value.keyword = keyword
+        self.metadata[keyword] = value
+
     def as_dict(self):
         """
         Turn a class instance into a Python dictionary, allowing it to be transmitted in JSON format.
@@ -242,6 +259,23 @@ class FileProductVersion:
             # Merge new metadata with existing metadata
             for item in metadata.values():
                 self.metadata[item.keyword] = item
+
+    def set_metadata(self, keyword: str, value):
+        """
+        Set an item of metadata associated with this object.
+
+        :param keyword:
+            Metadata keyword
+        :param value:
+            Metadata value
+        :return:
+            None
+        """
+
+        if not isinstance(value, MetadataItem):
+            value = MetadataItem(keyword=keyword, value=value)
+        value.keyword = keyword
+        self.metadata[keyword] = value
 
     def as_dict(self):
         """
@@ -398,6 +432,23 @@ class TaskExecutionAttempt:
             for semantic_type, item in output_files.items():
                 self.output_files[semantic_type] = item
 
+    def set_metadata(self, keyword: str, value):
+        """
+        Set an item of metadata associated with this object.
+
+        :param keyword:
+            Metadata keyword
+        :param value:
+            Metadata value
+        :return:
+            None
+        """
+
+        if not isinstance(value, MetadataItem):
+            value = MetadataItem(keyword=keyword, value=value)
+        value.keyword = keyword
+        self.metadata[keyword] = value
+
     def as_dict(self):
         """
         Turn a class instance into a Python dictionary, allowing it to be transmitted in JSON format.
@@ -551,6 +602,23 @@ class Task:
             # Merge new output files with existing ones
             for semantic_type, item in output_files.items():
                 self.output_files[semantic_type] = item
+
+    def set_metadata(self, keyword: str, value):
+        """
+        Set an item of metadata associated with this object.
+
+        :param keyword:
+            Metadata keyword
+        :param value:
+            Metadata value
+        :return:
+            None
+        """
+
+        if not isinstance(value, MetadataItem):
+            value = MetadataItem(keyword=keyword, value=value)
+        value.keyword = keyword
+        self.metadata[keyword] = value
 
     def as_dict(self):
         """

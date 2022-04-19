@@ -41,7 +41,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
         subtask_file_inputs = []
         if 'inputs' in sub_task:
             assert isinstance(sub_task['inputs'], dict)
-            for semantic_type, filename in sub_task['inputs']:
+            for semantic_type, filename in sub_task['inputs'].items():
                 matching_file_products = task_db.file_product_by_filename(directory=task_info.working_directory,
                                                                           filename=filename)
 
@@ -51,13 +51,13 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
                                      format(subtask_type, task_info.working_directory, filename))
 
                 # Add this required file input to the list of dependencies
-                subtask_file_inputs.append([semantic_type, matching_file_products[0]['productId']])
+                subtask_file_inputs.append([semantic_type, matching_file_products[0]])
 
         # Identify all the file products that this task will create, and make sure they don't already exist
         subtask_file_outputs = []
         if 'outputs' in sub_task:
             assert isinstance(sub_task['outputs'], dict)
-            for semantic_type, filename in sub_task['outputs']:
+            for semantic_type, filename in sub_task['outputs'].items():
                 matching_file_products = task_db.file_product_by_filename(directory=task_info.working_directory,
                                                                           filename=filename)
 
@@ -75,7 +75,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
         # Create metadata for this task
         subtask_metadata = {
             **task_info.metadata,
-            "task_description": task_objects.MetadataItem(keyword="task_description", value=subtask_json_description)
+            "task_description": subtask_json_description
         }
 
         # Create entry for this task

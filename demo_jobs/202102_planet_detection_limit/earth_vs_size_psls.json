@@ -27,7 +27,7 @@
               ],
               "task_list": [
                 {
-                  "task": "psls_synthesise",
+                  "task": "synthesise_psls",
                   "outputs": {
                     "lightcurve": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
                   },
@@ -47,12 +47,11 @@
                   }
                 },
                 {
-                  "task": "transit_search",
+                  "task": "transit_search_${tda}",
                   "inputs": {
                     "lightcurve": "evsize_psls_${tda_index}_${cadence_index}_${size_index}.gz"
                   },
-                  "lc_duration": 730,
-                  "tda_name": "${tda}"
+                  "lc_duration": 730
                 }
               ]
             }

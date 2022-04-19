@@ -24,7 +24,7 @@
           ],
           "task_list": [
             {
-              "task": "psls_synthesise",
+              "task": "synthesise_psls",
               "outputs": {
                 "lightcurve": "btlp_${cadence_index}_${lc_length_index}.gz"
               },
@@ -35,12 +35,11 @@
               }
             },
             {
-              "task": "transit_search",
+              "task": "transit_search_bls_reference",
               "inputs": {
                 "lightcurve": "btlp_${cadence_index}_${lc_length_index}.gz"
               },
               "lc_duration": "${lc_length}",
-              "tda_name": "bls_reference",
               "search_settings": {
                 "period_min": 90
               }
