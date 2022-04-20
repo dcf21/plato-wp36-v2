@@ -3,9 +3,7 @@
 # task_synthesise_batman.py
 
 """
-Implementation of the EAS pipeline task <null>, which does nothing.
-
-This is a useful template for the minimal code needed to create a new EAS module from scratch.
+Implementation of the EAS pipeline task <synthesise_batman>.
 """
 
 import argparse

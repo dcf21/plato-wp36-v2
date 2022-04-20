@@ -3,9 +3,7 @@
 # task_transit_search_qats.py
 
 """
-Quality control implementation of the EAS pipeline task <null>, which does nothing.
-
-This is a useful template for the minimal code needed to create a new EAS module from scratch.
+Quality control implementation of the EAS pipeline task <transit_search_qats>.
 """
 
 import argparse

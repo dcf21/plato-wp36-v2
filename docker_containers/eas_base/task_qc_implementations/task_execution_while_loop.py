@@ -1,11 +1,9 @@
 #!../../../data/datadir_local/virtualenv/bin/python3
 # -*- coding: utf-8 -*-
-# task_null.py
+# task_execution_while_loop.py
 
 """
-Quality control implementation of the EAS pipeline task <null>, which does nothing.
-
-This is a useful template for the minimal code needed to create a new EAS module from scratch.
+Quality control implementation of the EAS pipeline task <execution_while_loop>.
 """
 
 import argparse

@@ -1,11 +1,9 @@
 #!../../../data/datadir_local/virtualenv/bin/python3
 # -*- coding: utf-8 -*-
-# task_null.py
+# task_execution_conditional.py
 
 """
-Implementation of the EAS pipeline task <null>, which does nothing.
-
-This is a useful template for the minimal code needed to create a new EAS module from scratch.
+Implementation of the EAS pipeline task <execution_conditional>.
 """
 
 import argparse
