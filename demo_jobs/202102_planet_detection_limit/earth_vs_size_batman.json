@@ -1,12 +1,13 @@
 {
   "job_name": "earth_vs_size_batman",
+  "working_directory": "earth_vs_size_batman",
   "task_list": [
     {
       "task": "execution_for_loop",
       "name": "tda",
       "values": [
-        "str('tls')",
-        "str('bls_reference')"
+        "tls",
+        "bls_reference"
       ],
       "task_list": [
         {
@@ -21,36 +22,36 @@
               "task": "execution_for_loop",
               "name": "size",
               "log_range": [
-                "constants.Rearth/4",
-                "constants.Rearth*4",
-                "10"
+                "(constants.Rearth / 4)",
+                "(constants.Rearth * 4)",
+                10
               ],
               "task_list": [
                 {
                   "task": "synthesise_batman",
                   "outputs": {
-                    "lightcurve": "evsize_batman_${tda_index}_${cadence_index}_${size_index}.gz"
+                    "lightcurve": "'evsize_batman_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                   },
                   "specs": {
                     "duration": 730,
-                    "planet_radius": "${size}",
+                    "planet_radius": "(metadata['size'])",
                     "orbital_period": 240,
                     "semi_major_axis": 1,
                     "orbital_angle": 0,
-                    "noise": "constants.plato_noise",
-                    "sampling_cadence": "${cadence}"
+                    "noise": "(constants.plato_noise)",
+                    "sampling_cadence": "(metadata['cadence'])"
                   }
                 },
                 {
                   "task": "verify",
                   "inputs": {
-                    "lightcurve": "evsize_batman_${tda_index}_${cadence_index}_${size_index}.gz"
+                    "lightcurve": "'evsize_batman_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                   }
                 },
                 {
-                  "task": "transit_search_${tda}",
+                  "task": "'transit_search_{tda}'.format(**metadata)",
                   "inputs": {
-                    "lightcurve": "evsize_batman_${tda_index}_${cadence_index}_${size_index}.gz"
+                    "lightcurve": "'evsize_batman_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                   },
                   "lc_duration": 730
                 }

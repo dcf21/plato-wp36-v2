@@ -1,39 +1,40 @@
 {
   "job_name": "earth_vs_snr",
+  "working_directory": "earth_vs_snr",
   "task_list": [
     {
       "task": "execution_for_loop",
       "name": "nsr",
       "log_range": [
-        "73/5",
-        "73*5",
-        "10"
+        "(73 / 5)",
+        "(73 * 5)",
+        10
       ],
       "task_list": [
         {
           "task": "synthesise_psls",
           "outputs": {
-            "lightcurve": "evs_${nsr_index}.gz"
+            "lightcurve": "'evs_{nsr_index}.gz'.format(**metadata)"
           },
           "specs": {
             "duration": 730,
-            "planet_radius": "constants.Rearth",
+            "planet_radius": "(constants.Rearth)",
             "orbital_period": 240,
             "semi_major_axis": 1,
             "orbital_angle": 0,
-            "nsr": "${nsr}"
+            "nsr": "(metadata['nsr'])"
           }
         },
         {
           "task": "verify",
           "inputs": {
-            "lightcurve": "evs_${nsr_index}.gz"
+            "lightcurve": "'evs_{nsr_index}.gz'.format(**metadata)"
           }
         },
         {
           "task": "transit_search_tls",
           "inputs": {
-            "lightcurve": "evs_${nsr_index}.gz"
+            "lightcurve": "'evs_{nsr_index}.gz'.format(**metadata)"
           },
           "lc_duration": 730
         }

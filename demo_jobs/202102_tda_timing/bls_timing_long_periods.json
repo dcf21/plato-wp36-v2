@@ -1,5 +1,6 @@
 {
   "job_name": "bls_timing_long_periods",
+  "working_directory": "bls_timing_long_periods",
   "task_list": [
     {
       "task": "execution_for_loop",
@@ -14,32 +15,32 @@
           "task": "execution_for_loop",
           "name": "lc_length",
           "values": [
-            "3 * constants.month",
-            "4 * constants.month",
-            "6 * constants.month",
-            "9 * constants.month",
-            "constants.year",
-            "1.5 * constants.year",
-            "2 * constants.year"
+            "(3 * constants.month)",
+            "(4 * constants.month)",
+            "(6 * constants.month)",
+            "(9 * constants.month)",
+            "(constants.year)",
+            "(1.5 * constants.year)",
+            "(2 * constants.year)"
           ],
           "task_list": [
             {
               "task": "synthesise_psls",
               "outputs": {
-                "lightcurve": "btlp_${cadence_index}_${lc_length_index}.gz"
+                "lightcurve": "'btlp_{cadence_index}_{lc_length_index}.gz'.format(**metadata)"
               },
               "specs": {
-                "duration": "${lc_length}",
+                "duration": "(metadata['lc_length'])",
                 "enable_transits": 0,
-                "sampling_cadence": "${cadence}"
+                "sampling_cadence": "(metadata['cadence'])"
               }
             },
             {
               "task": "transit_search_bls_reference",
               "inputs": {
-                "lightcurve": "btlp_${cadence_index}_${lc_length_index}.gz"
+                "lightcurve": "'btlp_{cadence_index}_{lc_length_index}.gz'.format(**metadata)"
               },
-              "lc_duration": "${lc_length}",
+              "lc_duration": "(metadata['lc_length'])",
               "search_settings": {
                 "period_min": 90
               }

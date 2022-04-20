@@ -50,8 +50,8 @@ class EasLoggingHandler(logging.StreamHandler):
         db, conn = db_connector.connect_db()
 
         # Truncate log message if necessary
-        log_message = str(record)
-        max_message_length = self.settings.installation_info['max_log_message_length']
+        log_message = str(record.msg)
+        max_message_length = int(self.settings.installation_info['max_log_message_length'])
         if len(log_message) > max_message_length:
             log_message = "{}...".format(log_message[:max_message_length - 5])
 
@@ -59,7 +59,7 @@ class EasLoggingHandler(logging.StreamHandler):
         conn.execute("""
 INSERT INTO eas_log_messages (generatedByTaskExecution, timestamp, severity, message)
 VALUES (%s, %s, %s, %s);
-""", (self.current_task_attempt_id, time.time(), record.levelno, record.msg))
+""", (self.current_task_attempt_id, time.time(), record.levelno, log_message))
 
         # Commit changes to the database
         db.commit()

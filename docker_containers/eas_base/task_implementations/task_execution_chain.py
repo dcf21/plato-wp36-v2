@@ -13,7 +13,7 @@ import time
 
 from typing import Dict
 
-from plato_wp36 import logging_database, task_database, task_execution, task_objects
+from plato_wp36 import logging_database, task_database, task_execution, task_expression_evaluation
 
 
 def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
@@ -31,46 +31,69 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
     assert isinstance(task_list, list), "Execution chain has incorrect type of <{}>".format(type(task_list))
 
     # Schedule each task in turn
-    for sub_task in task_list:
+    for subtask_info in task_list:
         # Check that this task descriptor is a dictionary, and specifies a task type
-        assert isinstance(sub_task, dict), "Task description has incorrect type of <{}>".format(type(sub_task))
-        assert 'task' in sub_task, "Task description has missing field 'task'."
-        subtask_type = sub_task['task']
+        assert isinstance(subtask_info, dict), "Task description has incorrect type of <{}>".format(type(subtask_info))
+        assert 'task' in subtask_info, "Task description has missing field 'task'."
+
+        # Evaluate any metadata expressions within fields we extract from the task description
+        expression_evaluator = task_expression_evaluation.TaskExpressionEvaluation(metadata=task_info.metadata)
+
+        # Determine the type of the subtask
+        subtask_type = expression_evaluator.evaluate_expression(expression=subtask_info['task'])
+
+        # Determine the job name of the subtask
+        job_name = task_info.job_name
+        if 'job_name' in subtask_info:
+            job_name = expression_evaluator.evaluate_expression(expression=subtask_info['job_name'])
+
+        # Determine the working directory for the subtask
+        working_directory = task_info.working_directory
+        if 'working_directory' in subtask_info:
+            working_directory = expression_evaluator.evaluate_expression(expression=subtask_info['working_directory'])
 
         # Identify all the file products that this task depends on
         subtask_file_inputs = []
-        if 'inputs' in sub_task:
-            assert isinstance(sub_task['inputs'], dict)
-            for semantic_type, filename in sub_task['inputs'].items():
-                matching_file_products = task_db.file_product_by_filename(directory=task_info.working_directory,
-                                                                          filename=filename)
+        if 'inputs' in subtask_info:
+            assert isinstance(subtask_info['inputs'], dict)
+            for semantic_type, filename in subtask_info['inputs'].items():
+                item_semantic_type = expression_evaluator.evaluate_expression(expression=semantic_type)
+                item_directory = working_directory
+                item_filename = expression_evaluator.evaluate_expression(expression=filename)
+                matching_file_products = task_db.file_product_by_filename(
+                    directory=item_directory, filename=item_filename
+                )
 
                 # Check that input file product exists in the database
                 if len(matching_file_products) != 1:
                     raise ValueError("Task <{}> could not find input <{}/{}>".
-                                     format(subtask_type, task_info.working_directory, filename))
+                                     format(subtask_type, item_directory, item_filename))
 
                 # Add this required file input to the list of dependencies
-                subtask_file_inputs.append([semantic_type, matching_file_products[0]])
+                subtask_file_inputs.append([item_semantic_type, matching_file_products[0]])
 
         # Identify all the file products that this task will create, and make sure they don't already exist
         subtask_file_outputs = []
-        if 'outputs' in sub_task:
-            assert isinstance(sub_task['outputs'], dict)
-            for semantic_type, filename in sub_task['outputs'].items():
-                matching_file_products = task_db.file_product_by_filename(directory=task_info.working_directory,
-                                                                          filename=filename)
+        if 'outputs' in subtask_info:
+            assert isinstance(subtask_info['outputs'], dict)
+            for semantic_type, filename in subtask_info['outputs'].items():
+                item_semantic_type = expression_evaluator.evaluate_expression(expression=semantic_type)
+                item_directory = working_directory
+                item_filename = expression_evaluator.evaluate_expression(expression=filename)
+                matching_file_products = task_db.file_product_by_filename(
+                    directory=item_directory, filename=item_filename
+                )
 
                 # Check that output file product does not already exist in the database
                 if len(matching_file_products) != 0:
                     raise ValueError("Task <{}> creates pre-existing file <{}/{}>".
-                                     format(subtask_type, task_info.working_directory, filename))
+                                     format(subtask_type, item_directory, item_filename))
 
                 # Add this required file input to the list of dependencies
-                subtask_file_outputs.append([semantic_type, task_info.working_directory, filename])
+                subtask_file_outputs.append([item_semantic_type, item_directory, item_filename])
 
         # Create JSON description for this task
-        subtask_json_description = json.dumps(sub_task)
+        subtask_json_description = json.dumps(subtask_info)
 
         # Create metadata for this task
         subtask_metadata = {
@@ -80,8 +103,8 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
 
         # Create entry for this task
         subtask_id = task_db.task_register(parent_id=task_info.task_id,
-                                           job_name=task_info.job_name,
-                                           working_directory=task_info.working_directory,
+                                           job_name=job_name,
+                                           working_directory=working_directory,
                                            task_type=subtask_type,
                                            metadata=subtask_metadata)
 

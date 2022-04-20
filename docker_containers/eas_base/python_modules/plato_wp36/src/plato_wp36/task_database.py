@@ -200,7 +200,7 @@ WHERE {};""".format(" AND ".join(constraints)))
         for item in self.conn.fetchall():
             value = None
             for value_field in ('valueString', 'valueFloat'):
-                if item[value_field]:
+                if item[value_field] is not None:
                     value = item[value_field]
             output[item['keyword']] = MetadataItem(keyword=item['keyword'],
                                                    value=value,
@@ -260,7 +260,7 @@ WHERE {};""".format(" AND ".join(constraints)))
         for item in self.conn.fetchall():
             value = None
             for value_field in ('valueString', 'valueFloat'):
-                if item[value_field]:
+                if item[value_field] is not None:
                     value = item[value_field]
             output = MetadataItem(keyword=item['keyword'],
                                   value=value,

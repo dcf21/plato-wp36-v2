@@ -1,5 +1,6 @@
 {
   "job_name": "hot_jupiter_vs_size_batman",
+  "working_directory": "hot_jupiter_vs_size_batman",
   "task_list": [
     {
       "task": "execution_for_loop",
@@ -13,36 +14,36 @@
           "task": "execution_for_loop",
           "name": "size",
           "log_range": [
-            "0.01",
-            "0.2",
-            "30"
+            0.01,
+            0.2,
+            30
           ],
           "task_list": [
             {
               "task": "synthesise_batman",
               "outputs": {
-                "lightcurve": "hjvsize_batman_${cadence_index}_${size_index}.gz"
+                "lightcurve": "'hjvsize_batman_{cadence_index}_{size_index}.gz'.format(**metadata)"
               },
               "specs": {
                 "duration": 90,
-                "planet_radius": "${size}",
+                "planet_radius": "(metadata['size'])",
                 "orbital_period": 4,
                 "semi_major_axis": 0.05,
                 "orbital_angle": 0,
-                "noise": "constants.plato_noise",
-                "sampling_cadence": "${cadence}"
+                "noise": "(constants.plato_noise)",
+                "sampling_cadence": "(metadata['cadence'])"
               }
             },
             {
               "task": "verify",
               "inputs": {
-                "lightcurve": "hjvsize_batman_${cadence_index}_${size_index}.gz"
+                "lightcurve": "'hjvsize_batman_{cadence_index}_{size_index}.gz'.format(**metadata)"
               }
             },
             {
               "task": "transit_search_tls",
               "inputs": {
-                "lightcurve": "hjvsize_batman_${cadence_index}_${size_index}.gz"
+                "lightcurve": "'hjvsize_batman_{cadence_index}_{size_index}.gz'.format(**metadata)"
               },
               "lc_duration": 90
             }

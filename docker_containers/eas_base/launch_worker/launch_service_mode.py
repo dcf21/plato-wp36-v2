@@ -19,7 +19,8 @@ EasLoggingHandlerInstance = logging_database.EasLoggingHandler()
 
 def enter_service_mode():
     """
-    Start working on tasks in service mode.
+    Start working on tasks in an infinite loop in service mode, listening to the message bus to receive the integer
+    IDs of the tasks we should work on.
 
     :return:
         None

@@ -12,13 +12,10 @@ import json
 import logging
 from math import log10
 import numpy as np
-# noinspection PyUnresolvedReferences
-import random
 
 from typing import Dict
 
-import plato_wp36.constants
-from plato_wp36 import logging_database, task_database, task_execution, task_objects
+from plato_wp36 import logging_database, task_database, task_execution
 
 
 def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
@@ -38,21 +35,19 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
     # Name of the metadata parameter we are to iterate over
     parameter_name = task_description['name']
 
-    # These constants may be used in evaluating the for loop parameter range
-    # noinspection PyUnusedLocal
-    constants = plato_wp36.constants.EASConstants()
-
     # Work out all the parameter values we need to iterate over
     if 'values' in task_description:
-        parameter_values = [eval(str(val)) for val in task_description['values']]
+        parameter_values = task_description['values']
     elif 'linear_range' in task_description:
-        parameter_values = np.linspace(eval(str(task_description['linear_range'][0])),
-                                       eval(str(task_description['linear_range'][1])),
-                                       eval(str(task_description['linear_range'][2])))
+        parameter_values = np.linspace(task_description['linear_range'][0],
+                                       task_description['linear_range'][1],
+                                       task_description['linear_range'][2]
+                                       )
     elif 'log_range' in task_description:
-        parameter_values = np.logspace(log10(eval(str(task_description['log_range'][0]))),
-                                       log10(eval(str(task_description['log_range'][1]))),
-                                       eval(str(task_description['log_range'][2])))
+        parameter_values = np.logspace(log10(task_description['log_range'][0]),
+                                       log10(task_description['log_range'][1]),
+                                       task_description['log_range'][2]
+                                       )
     else:
         raise ValueError(
             "Iteration values should be specified as either <values>, <linear_range> or <log_range"

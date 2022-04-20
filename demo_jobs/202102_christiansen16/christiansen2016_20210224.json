@@ -1,57 +1,58 @@
 {
-  "job_name": "christiansen2016",
+  "job_name": "christiansen2016_20210224",
+  "working_directory": "christiansen2016_20210224",
   "task_list": [
     {
       "task": "execution_for_loop",
       "name": "size",
       "linear_range": [
-        "constants.Rearth*0.25",
-        "constants.Rearth*2",
-        "10"
+        "(constants.Rearth * 0.25)",
+        "(constants.Rearth * 2)",
+        10
       ],
       "task_list": [
         {
           "task": "execution_for_loop",
           "name": "period",
           "linear_range": [
-            "0.5",
-            "500",
-            "10"
+            0.5,
+            500,
+            10
           ],
           "task_list": [
             {
               "task": "execution_for_loop",
               "name": "impact",
               "linear_range": [
-                "0",
-                "1",
-                "5"
+                0,
+                1,
+                5
               ],
               "task_list": [
                 {
                   "task": "synthesise_psls",
                   "outputs": {
-                    "lightcurve": "christiansen_${size_index}_${period_index}_${impact_index}.gz"
+                    "lightcurve": "'christiansen_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
                   },
                   "specs": {
                     "duration": 730,
-                    "planet_radius": "${size}",
-                    "orbital_period": "${period}",
-                    "impact_parameter": "${impact}",
-                    "semi_major_axis": "pow(${period}/365.25, 2/3)",
+                    "planet_radius": "(metadata['size'])",
+                    "orbital_period": "(metadata['period'])",
+                    "impact_parameter": "(metadata['impact'])",
+                    "semi_major_axis": "(pow(metadata['period'])/365.25, 2/3))",
                     "sampling_cadence": 900
                   }
                 },
                 {
                   "task": "verify",
                   "inputs": {
-                    "lightcurve": "christiansen_${size_index}_${period_index}_${impact_index}.gz"
+                    "lightcurve": "'christiansen_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
                   }
                 },
                 {
                   "task": "transit_search_tls",
                   "inputs": {
-                    "lightcurve": "christiansen_${size_index}_${period_index}_${impact_index}.gz"
+                    "lightcurve": "'christiansen_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
                   },
                   "lc_duration": 730
                 }

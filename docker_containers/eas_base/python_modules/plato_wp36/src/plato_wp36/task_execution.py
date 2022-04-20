@@ -15,7 +15,8 @@ import traceback
 
 from typing import Callable, Dict
 
-from plato_wp36 import logging_database, task_database, task_heartbeat, task_objects, task_timer
+from plato_wp36 import logging_database, task_database, task_expression_evaluation
+from plato_wp36 import task_heartbeat, task_objects, task_timer
 
 
 def do_pipeline_task(job_id: int,
@@ -67,7 +68,11 @@ def do_pipeline_task(job_id: int,
                     raise ValueError("Task does not have a task description supplied in its metadata.")
 
                 # Extract task description from JSON
-                task_description = json.loads(task_description_json.value)
+                task_description_raw = json.loads(task_description_json.value)
+
+                # Evaluate any metadata expressions within our task description
+                expression_evaluator = task_expression_evaluation.TaskExpressionEvaluation(metadata=task_info.metadata)
+                task_description = expression_evaluator.evaluate_in_structure(structure=task_description_raw)
 
                 # If an explicit job name is specified in the task description, update the job name of this task
                 if 'job_name' in task_description:
