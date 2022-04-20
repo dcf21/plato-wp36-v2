@@ -46,7 +46,7 @@ def display_job_tree(job_name: Optional[str] = None, status: str = 'any'):
         # Search for all tasks with a given parent
         task_db.conn.execute("""
 SELECT t.taskId, t.jobName, ett.taskName,
-   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NULL) AS runs_waiting,
+   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NULL) AS runs_queued,
    (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NOT NULL AND
                     NOT x.allProductsPassedQc AND x.latestHeartbeat < {min_heartbeat:f}) AS runs_stalled,
    (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NOT NULL AND
@@ -66,14 +66,17 @@ WHERE {constraint} ORDER BY taskId;
             if job_name is not None:
                 if item['jobName'] != job_name:
                     display_now = False
-                if (status == 'waiting') and (item['runs_waiting'] == 0):
-                    display_now = False
-                if (status == 'running') and (item['runs_running'] == 0):
-                    display_now = False
-                if (status == 'stalled') and (item['runs_stalled'] == 0):
-                    display_now = False
-                if (status == 'done') and (item['runs_done'] == 0):
-                    display_now = False
+            if (status == 'waiting') and ((item['runs_queued'] > 0) or (item['runs_running'] > 0) or
+                                          (item['runs_stalled'] > 0) or (item['runs_done'] > 0)):
+                display_now = False
+            if (status == 'queued') and (item['runs_queued'] == 0):
+                display_now = False
+            if (status == 'running') and (item['runs_running'] == 0):
+                display_now = False
+            if (status == 'stalled') and (item['runs_stalled'] == 0):
+                display_now = False
+            if (status == 'done') and (item['runs_done'] == 0):
+                display_now = False
 
             # Add this task to the hierarchy if parents
             parents.append({
@@ -92,7 +95,7 @@ WHERE {constraint} ORDER BY taskId;
                             job_name=parent['job_name'],
                             task_name=parent['task']['taskName'],
                             id=parent['task']['taskId'],
-                            w=parent['task']['runs_waiting'],
+                            w=parent['task']['runs_queued'],
                             r=parent['task']['runs_running'],
                             s=parent['task']['runs_stalled'],
                             d=parent['task']['runs_done']
@@ -118,7 +121,7 @@ if __name__ == "__main__":
     parser.add_argument('--job-name', default=None, type=str, dest='job_name',
                         help='Display jobs with a given name')
     parser.add_argument('--status', default='any', type=str, dest='status',
-                        choices=['any', 'waiting', 'running', 'stalled', 'done'],
+                        choices=['any', 'waiting', 'queued', 'running', 'stalled', 'done'],
                         help='Display only jobs with a particular status')
     args = parser.parse_args()
 
