@@ -3,10 +3,14 @@ FROM plato/eas_base:v1
 
 # Copy source code into the Docker container
 WORKDIR /plato-wp36-v2/docker_containers/worker_exotrans
-ADD src src
+ADD build build
 
 # Now build the transit-detection code
-RUN ./src/build.sh
+RUN ./build/build.sh
+
+# Link task implementations into the EAS worker distribution
+RUN ln -s task_implementations/task_transit_search_exotrans.py ../eas_base/task_implementations/
+RUN ln -s task_qc_implementations/task_transit_search_exotrans.py ../eas_base/task_qc_implementations/
 
 # *** Write name of the Docker container into its root
 RUN echo 'eas_worker_exotrans' > /plato-wp36-v2/container_name.txt

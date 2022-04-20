@@ -3,7 +3,7 @@
 # dataFetch.py
 
 """
-Automatically download all of the required data files from the internet.
+Automatically download all the required data files from the internet.
 """
 
 import logging
@@ -56,18 +56,18 @@ def fetch_required_files():
     required_files = [
         {
             'url': 'https://sites.lesia.obspm.fr/psls/files/2017/11/m0y27l.tar_.gz',
-            'destination': 'datadir_input/m0y27l.tar_.gz',
+            'destination': '/plato-wp36-v2/data/datadir_local/m0y27l.tar_.gz',
             'force_refresh': False
         },
         {
             'url': 'https://sites.lesia.obspm.fr/psls/files/2017/11/m0y24h.tar_.gz',
-            'destination': 'datadir_input/m0y24h.tar_.gz',
+            'destination': '/plato-wp36-v2/data/datadir_local/m0y24h.tar_.gz',
             'force_refresh': False
         },
         {
             # https://pypi.org/project/psls/#files
-            'url': 'https://files.pythonhosted.org/packages/09/16/1657adaa7444e1ce1884baf25e6fb3333d809ef2dc1a82cf8b3d9fdbe4c5/psls-1.3.tar.gz',
-            'destination': 'datadir_input/psls-1.3.tar.gz',
+            'url': 'https://files.pythonhosted.org/packages/cf/44/54224d23006d23c1bdae412fba183b799223e2adf06d1e51ffb01dd1bc8b/psls-1.4.tar.gz',
+            'destination': '/plato-wp36-v2/data/datadir_local/psls-1.4.tar.gz',
             'force_refresh': False
         }
     ]
@@ -81,15 +81,15 @@ def fetch_required_files():
 
     # Unzip PSLS data files
     os.system("""
-mkdir -p datadir_input/psls_data
-cd datadir_input/psls_data
-tar zxf ../psls-1.3.tar.gz
+mkdir -p /plato-wp36-v2/data/datadir_local/psls_data
+cd /plato-wp36-v2/data/datadir_local/psls_data
+tar zxf ../psls-1.4.tar.gz
 """)
 
     # Unzip the PSLS star frequency models
     os.system("""
-mkdir -p datadir_input/psls_models
-cd datadir_input/psls_models
+mkdir -p /plato-wp36-v2/data/datadir_local/psls_models
+cd /plato-wp36-v2/data/datadir_local/psls_models
 tar zxf ../m0y24h.tar_.gz
 tar zxf ../m0y27l.tar_.gz
 """)

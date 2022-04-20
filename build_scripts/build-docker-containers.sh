@@ -11,7 +11,7 @@ cwd=`pwd`
 mkdir -p ../data/datadir_local/build_logs
 
 # Build list of all Docker containers to build
-containers="../docker_containers/eas_base"
+containers="../docker_containers/eas_base ../docker_containers/eas_worker_synthesis_psls_batman"
 
 # Build each container in turn
 for item in $containers

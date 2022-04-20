@@ -36,11 +36,7 @@ ADD launch_worker launch_worker
 
 # Build and install plato_wp36 modules
 RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install --editable \
-    /plato-wp36-v2/docker_containers/eas_base/python_modules/plato_wp36 --no-binary :all:
-RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install --editable \
-    /plato-wp36-v2/docker_containers/eas_base/python_modules/eas_psls_wrapper --no-binary :all:
-RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install --editable \
-    /plato-wp36-v2/docker_containers/eas_base/python_modules/eas_batman_wrapper --no-binary :all:
+    python_modules/plato_wp36 --no-binary :all:
 
 # Create placeholders for input and output data
 RUN mkdir -p /plato-wp36-v2/data/datadir_input

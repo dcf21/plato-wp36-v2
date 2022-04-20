@@ -14,7 +14,7 @@ spec:
         app: plato
     spec:
       containers:
-        - image: plato/eas_base:v1
+        - image: plato/eas_worker_synthesis_psls_batman:v1
           name: plato
           command: [ 'sleep' ]
           args: [ '360000' ]
