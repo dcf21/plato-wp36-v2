@@ -18,8 +18,25 @@ from plato_wp36 import logging_database, task_database, task_execution
 def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
                  task_info: task_database.Task,
                  task_description: Dict):
-    # Perform the null task
-    time.sleep(10)
+    # Perform multiplication task
+    out_id = os.path.join(
+        output.get('directory', 'test_lightcurves'),
+        output.get('filename', 'lightcurve.dat')
+    )
+
+    logging.info("Multiplying lightcurves")
+
+    # Load lightcurve 1
+    lc_1 = self.read_lightcurve(source=input_1)
+
+    # Load lightcurve 2
+    lc_2 = self.read_lightcurve(source=input_2)
+
+    # Multiply lightcurves together
+    result = lc_1 * lc_2
+
+    # Store result
+    self.write_lightcurve(lightcurve=result, target=output)
 
 
 if __name__ == "__main__":

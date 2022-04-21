@@ -11,28 +11,12 @@ import random
 import time
 from math import asin, pi
 
+from typing import Optional
+
 import numpy as np
 from eas_batman_wrapper.batman_wrapper import BatmanWrapper
 from plato_wp36 import settings, lightcurve
-from plato_wp36.constants import *
-
-defaults = {
-    'mode': 'main_sequence',
-    'duration': 730,  # days
-    'master_seed': time.time(),
-    'datadir_input': settings.settings['inDataPath'],
-    'enable_transits': True,
-    'star_radius': sun_radius / jupiter_radius,  # Jupiter radii
-    'planet_radius': 1,  # Jupiter radii
-    'orbital_period': 365,  # days
-    'semi_major_axis': 1,  # AU
-    'orbital_angle': 0,  # degrees
-    'impact_parameter': None,  # Impact parameter (0-1); overrides <orbital_angle> if not None
-    'nsr': 73,  # noise-to-signal ratio (ppm/hr)
-    'sampling_cadence': 25,  # sampling cadence, seconds
-    'mask_updates': False,  # do we include mask updates?
-    'enable_systematics': False  # do we include systematics?
-}
+from plato_wp36.constants import EASConstants
 
 
 class PslsWrapper:
@@ -41,33 +25,93 @@ class PslsWrapper:
     """
 
     def __init__(self,
-                 mode=None,
-                 duration=None,
-                 enable_transits=None,
-                 star_radius=None,
-                 planet_radius=None,
-                 orbital_period=None,
-                 semi_major_axis=None,
-                 orbital_angle=None,
-                 impact_parameter=None,
-                 nsr=None,
-                 sampling_cadence=None,
-                 mask_updates=None,
-                 enable_systematics=None
+                 mode: Optional[str] = None,
+                 duration: Optional[float] = None,
+                 enable_transits: Optional[bool] = None,
+                 star_radius: Optional[float] = None,
+                 planet_radius: Optional[float] = None,
+                 orbital_period: Optional[float] = None,
+                 semi_major_axis: Optional[float] = None,
+                 orbital_angle: Optional[float] = None,
+                 impact_parameter: Optional[float] = None,
+                 nsr: Optional[float] = None,
+                 sampling_cadence: Optional[float] = None,
+                 mask_updates: Optional[bool] = None,
+                 enable_systematics: Optional[bool] = None,
+                  enable_random_noise: Optional[bool] = None,
+                  number_camera_groups: Optional[int] = None,
+                  number_cameras_per_group: Optional[int] = None
                  ):
         """
-        Instantiate wrapper for synthesising lightcurves using PSLS
+        Instantiate wrapper for synthesising lightcurves using PSLS.
+
+        :param mode:
+            Either "main_sequence" or "red_giant" to choose between two default star models.
+        :param duration:
+            Duration of the lightcurve we are to generate (days)
+        :param enable_transits:
+            Boolean indicating whether we inject transits into this LC.
+        :param star_radius:
+            The radius of the star (Jupiter radii)
+        :param planet_radius:
+            The radius of the planet (Jupiter radii)
+        :param orbital_period:
+            The orbital period of the planet (days)
+        :param semi_major_axis:
+            The semi-major axis of the exoplanet orbit (AU)
+        :param orbital_angle:
+            Orbital inclination to the line of sight (degrees). Zero means orbit is perfectly edge-on.
+        :param impact_parameter:
+            The impact parameter of the exoplanet (0-1). Overrides <orbital_angle> if not None.
+        :param nsr:
+            The noise-to-signal ratio (ppm/hr). Default value is 73 for nominal PLATO performance.
+        :param sampling_cadence:
+            The sampling cadence of the lightcurve (seconds)
+        :param mask_updates:
+            Boolean indicating whether we enable mask updates in PSLS
+        :param enable_systematics:
+            Boolean indicating whether we enable systematic effects in PSLS.
+        :param enable_random_noise:
+            Boolean indicating whether we enable random noise.
+        :param number_camera_groups:
+            The number of camera groups to simulate (1-4)
+        :param number_cameras_per_group:
+            The number of cameras to simulate in each group (1-6)
         """
 
-        # Create dictionary of settings
-        self.settings = defaults.copy()
+        # Look up settings
+        self.settings = settings.Settings()
+        self.constants = EASConstants()
+
+        # Create dictionary of default settings
+        self.settings = {
+            'mode': 'main_sequence',
+            'duration': 730,  # days
+            'master_seed': time.time(),
+            'datadir_input': self.settings.settings['inDataPath'],
+            'enable_transits': True,
+            'star_radius': self.constants.sun_radius / self.constants.jupiter_radius,  # Jupiter radii
+            'planet_radius': 1,  # Jupiter radii
+            'orbital_period': 365,  # days
+            'semi_major_axis': 1,  # AU
+            'orbital_angle': 0,  # degrees
+            'impact_parameter': None,  # Impact parameter (0-1); overrides <orbital_angle> if not None
+            'nsr': 73,  # noise-to-signal ratio (ppm/hr)
+            'sampling_cadence': 25,  # sampling cadence, seconds
+            'mask_updates': False,  # do we include mask updates?
+            'enable_systematics': False,  # do we include systematics?
+            'enable_random_noise': True,  # do we include random noise?
+            'number_camera_groups': 4,  # the number of groups of cameras to simulate
+            'number_cameras_per_group': 6  # the number of cameras to simulate in each group
+        }
 
         self.configure(mode=mode, duration=duration, enable_transits=enable_transits,
                        star_radius=star_radius, planet_radius=planet_radius,
                        orbital_period=orbital_period, semi_major_axis=semi_major_axis,
                        orbital_angle=orbital_angle, impact_parameter=impact_parameter,
                        nsr=nsr, sampling_cadence=sampling_cadence, mask_updates=mask_updates,
-                       enable_systematics=enable_systematics)
+                       enable_systematics=enable_systematics, enable_random_noise=enable_random_noise,
+                       number_camera_groups=number_camera_groups, number_cameras_per_group=number_cameras_per_group)
 
         # Create temporary working directory
         identifier = "eas_psls"
@@ -86,53 +130,95 @@ class PslsWrapper:
         self.active = False
 
     def configure(self,
-                  mode=None,
-                  duration=None,
-                  enable_transits=None,
-                  star_radius=None,
-                  planet_radius=None,
-                  orbital_period=None,
-                  semi_major_axis=None,
-                  orbital_angle=None,
-                  impact_parameter=None,
-                  nsr=None,
-                  sampling_cadence=None,
-                  mask_updates=None,
-                  enable_systematics=None
+                  mode: Optional[str] = None,
+                  duration: Optional[float] = None,
+                  enable_transits: Optional[bool] = None,
+                  star_radius: Optional[float] = None,
+                  planet_radius: Optional[float] = None,
+                  orbital_period: Optional[float] = None,
+                  semi_major_axis: Optional[float] = None,
+                  orbital_angle: Optional[float] = None,
+                  impact_parameter: Optional[float] = None,
+                  nsr: Optional[float] = None,
+                  sampling_cadence: Optional[float] = None,
+                  mask_updates: Optional[bool] = None,
+                  enable_systematics: Optional[bool] = None,
+                  enable_random_noise: Optional[bool] = None,
+                  number_camera_groups: Optional[int] = None,
+                  number_cameras_per_group: Optional[int] = None
                   ):
         """
-        Change settings for synthesising lightcurves using PSLS
+        Change settings for synthesising lightcurves using PSLS.
+
+        :param mode:
+            Either "main_sequence" or "red_giant" to choose between two default star models.
+        :param duration:
+            Duration of the lightcurve we are to generate (days)
+        :param enable_transits:
+            Boolean indicating whether we inject transits into this LC.
+        :param star_radius:
+            The radius of the star (Jupiter radii)
+        :param planet_radius:
+            The radius of the planet (Jupiter radii)
+        :param orbital_period:
+            The orbital period of the planet (days)
+        :param semi_major_axis:
+            The semi-major axis of the exoplanet orbit (AU)
+        :param orbital_angle:
+            Orbital inclination to the line of sight (degrees). Zero means orbit is perfectly edge-on.
+        :param impact_parameter:
+            The impact parameter of the exoplanet (0-1). Overrides <orbital_angle> if not None.
+        :param nsr:
+            The noise-to-signal ratio (ppm/hr). Default value is 73 for nominal PLATO performance.
+        :param sampling_cadence:
+            The sampling cadence of the lightcurve (seconds)
+        :param mask_updates:
+            Boolean indicating whether we enable mask updates in PSLS
+        :param enable_systematics:
+            Boolean indicating whether we enable systematic effects in PSLS.
+        :param enable_random_noise:
+            Boolean indicating whether we enable random noise.
+        :param number_camera_groups:
+            The number of camera groups to simulate (1-4)
+        :param number_cameras_per_group:
+            The number of cameras to simulate in each group (1-6)
         """
 
         # Create dictionary of settings
         if mode is not None:
             self.settings['mode'] = mode
         if duration is not None:
-            self.settings['duration'] = float(eval(str(duration)))
+            self.settings['duration'] = float(duration)
         if enable_transits is not None:
-            self.settings['enable_transits'] = int(eval(str(enable_transits)))
+            self.settings['enable_transits'] = int(enable_transits)
         if star_radius is not None:
-            self.settings['star_radius'] = float(eval(str(star_radius)))
+            self.settings['star_radius'] = float(star_radius)
         if planet_radius is not None:
-            self.settings['planet_radius'] = float(eval(str(planet_radius)))
+            self.settings['planet_radius'] = float(planet_radius)
         if orbital_period is not None:
-            self.settings['orbital_period'] = float(eval(str(orbital_period)))
+            self.settings['orbital_period'] = float(orbital_period)
         if semi_major_axis is not None:
-            self.settings['semi_major_axis'] = float(eval(str(semi_major_axis)))
+            self.settings['semi_major_axis'] = float(semi_major_axis)
         if orbital_angle is not None:
-            self.settings['orbital_angle'] = float(eval(str(orbital_angle)))
+            self.settings['orbital_angle'] = float(orbital_angle)
             self.settings['impact_parameter'] = None
         if impact_parameter is not None:
-            self.settings['impact_parameter'] = float(eval(str(impact_parameter)))
+            self.settings['impact_parameter'] = float(impact_parameter)
             self.settings['orbital_angle'] = None
         if nsr is not None:
-            self.settings['nsr'] = float(eval(str(nsr)))
+            self.settings['nsr'] = float(nsr)
         if sampling_cadence is not None:
-            self.settings['sampling_cadence'] = float(eval(str(sampling_cadence)))
+            self.settings['sampling_cadence'] = float(sampling_cadence)
         if mask_updates is not None:
-            self.settings['mask_updates'] = int(eval(str(mask_updates)))
+            self.settings['mask_updates'] = int(mask_updates)
         if enable_systematics is not None:
-            self.settings['enable_systematics'] = int(eval(str(enable_systematics)))
+            self.settings['enable_systematics'] = int(enable_systematics)
+        if enable_random_noise is not None:
+            self.settings['enable_random_noise'] = int(enable_random_noise)
+        if number_camera_groups is not None:
+            self.settings['number_camera_groups'] = int(number_camera_groups)
+        if number_cameras_per_group is not None:
+            self.settings['number_cameras_per_group'] = int(number_cameras_per_group)
 
     def synthesise(self):
         """
@@ -163,10 +249,12 @@ class PslsWrapper:
         yaml_template = open(yaml_template_filename).read()
         yaml_filename = "{}.yaml".format(run_identifier)
 
-        # Work out inclination of orbit
+        # Work out inclination of orbit, which may be specified either as an inclination to the line of sight (degrees)
+        # or as an impact parameter (0-1).
         if self.settings['impact_parameter'] is not None:
             orbital_angle = asin(self.settings['impact_parameter'] * self.settings['star_radius'] /
-                                 (self.settings['semi_major_axis'] * (phy_AU / jupiter_radius))
+                                 (self.settings['semi_major_axis'] * (
+                                         self.constants.phy_AU / self.constants.jupiter_radius))
                                  ) * 180 / pi
         else:
             orbital_angle = self.settings['orbital_angle']
@@ -177,6 +265,9 @@ class PslsWrapper:
                             "PLATO_systematics_BOL_FixedMask_V2.npy")
 
         enable_systematics = int(self.settings['enable_systematics'])
+        enable_random_noise = int(self.settings['enable_random_noise'])
+        number_camera_groups = int(self.settings['number_camera_groups'])
+        number_cameras_per_group = int(self.settings['number_cameras_per_group'])
 
         # Create YAML configuration file for PSLS
         with open(yaml_filename, "w") as out:
@@ -185,7 +276,7 @@ class PslsWrapper:
                     duration=float(self.settings['duration']),
                     master_seed=int(self.settings['master_seed']),
                     nsr=float(self.settings['nsr']),
-                    datadir_input=settings.settings['inDataPath'],
+                    datadir_input=self.settings['localDataPath'],
                     enable_transits=int(self.settings['enable_transits']),
                     planet_radius=float(self.settings['planet_radius']),
                     orbital_period=float(self.settings['orbital_period']),
@@ -194,14 +285,17 @@ class PslsWrapper:
                     sampling_cadence=float(self.settings['sampling_cadence']),
                     integration_time=float(self.settings['sampling_cadence']) * 22 / 25,
                     systematics=systematics_file,
-                    enable_systematics=enable_systematics,
-                    noise_type="PLATO_SIMU" if enable_systematics else "PLATO_SCALING"
+                    enable_systematics=int(enable_systematics),
+                    noise_type="PLATO_SIMU" if enable_systematics else "PLATO_SCALING",
+                    enable_random_noise=int(enable_random_noise),
+                    number_camera_groups=int(number_camera_groups),
+                    number_cameras_per_group=int(number_cameras_per_group)
                 )
             )
 
         # Path to PSLS binary
         psls_binary = os.path.join(
-            settings.settings['localDataPath'],
+            self.settings['localDataPath'],
             "virtualenv/bin/psls.py"
         )
 
@@ -221,7 +315,8 @@ class PslsWrapper:
         fluxes = 1 + 1e-6 * data[1]
         flags = data[2]
 
-        # Compute MES statistic
+        # Compute MES statistic. To do this, we need a theoretical model of the pure transit signal, which we
+        # generate using batman.
         if not self.settings['enable_transits']:
             integrated_transit_power = 0
             pixels_in_transit = 0
@@ -237,7 +332,7 @@ class PslsWrapper:
                                             semi_major_axis=self.settings['semi_major_axis'],
                                             orbital_angle=self.settings['orbital_angle'],
                                             impact_parameter=self.settings['impact_parameter'],
-                                            noise=plato_noise * (self.settings['nsr'] / 73),
+                                            noise=self.constants.plato_noise * (self.settings['nsr'] / 73),
                                             sampling_cadence=self.settings['sampling_cadence']
                                             )
             batman_lc = batman_instance.synthesise()

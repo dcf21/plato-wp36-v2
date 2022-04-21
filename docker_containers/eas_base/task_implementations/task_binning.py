@@ -8,18 +8,40 @@ Implementation of the EAS pipeline task <binning>.
 
 import argparse
 import logging
-import time
 
 from typing import Dict
 
-from plato_wp36 import logging_database, task_database, task_execution
+from plato_wp36 import lightcurve_resample, logging_database, task_database, task_execution
 
 
 def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
                  task_info: task_database.Task,
                  task_description: Dict):
-    # Perform the null task
-    time.sleep(10)
+    # Perform rebinning task
+    input_id = os.path.join(
+        source.get('directory', 'test_lightcurves'),
+        source.get('filename', 'lightcurve.dat')
+    )
+
+    logging.info("Rebinning <{input_id}>.".format(input_id=input_id))
+
+    # Read input lightcurve
+    lc = self.read_lightcurve(source=source)
+
+    # Re-bin lightcurve
+    start_time = np.min(lc.times)
+    end_time = np.max(lc.times)
+    new_times = np.arange(start_time, end_time, cadence / 86400)  # Array of times (days)
+
+    resampler = lightcurve_resample.LightcurveResampler(input_lc=lc)
+    new_lc = resampler.onto_raster(output_raster=new_times)
+
+    # Eliminate nasty edge effects
+    new_lc.fluxes[0] = 1
+    new_lc.fluxes[-1] = 1
+
+    # Write output
+    self.write_lightcurve(lightcurve=new_lc, target=target)
 
 
 if __name__ == "__main__":

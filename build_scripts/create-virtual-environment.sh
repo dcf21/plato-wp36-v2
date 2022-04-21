@@ -23,8 +23,10 @@ ${venv_dir}/bin/pip install --editable \
 
 # Install the PSLS wrapper
 ${venv_dir}/bin/pip install --editable \
-    ${cwd}/../docker_containers/eas_base/python_modules/eas_psls_wrapper --no-binary :all:
+    ${cwd}/../docker_containers/eas_worker_synthesis_psls_batman/python_modules/eas_psls_wrapper \
+    --no-binary :all:
 
 # Install the batman wrapper
 ${venv_dir}/bin/pip install --editable \
-    ${cwd}/../docker_containers/eas_base/python_modules/eas_batman_wrapper --no-binary :all:
+    ${cwd}/../docker_containers/eas_worker_synthesis_psls_batman/python_modules/eas_batman_wrapper \
+    --no-binary :all:
