@@ -8,67 +8,65 @@ Implementation of the EAS pipeline task <transit_search_tls>.
 
 import argparse
 import logging
-import time
 
 from typing import Dict
 
-from plato_wp36 import logging_database, task_database, task_execution
+from plato_wp36 import quality_control, lightcurve, logging_database, task_database, task_execution
 
 
 def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
                  task_info: task_database.Task,
                  task_description: Dict):
+    """
+    Implementation of the EAS pipeline task <transit_search_tls>.
+
+    :param execution_attempt:
+        Object describing this attempt by the job scheduler to run this task.
+    :param task_info:
+        Object describing the task we are to execute.
+    :param task_description:
+        A dictionary of metadata containing all the configuration options supplied by the user for this task.
+    :return:
+        None
+    """
+
     # Perform the transit detection task
-    input_id = os.path.join(
-        source.get('directory', 'test_lightcurves'),
-        source.get('filename', 'lightcurve.dat')
-    )
 
-    logging.info("Running <{input_id}> through <{tda_name}> with duration {lc_days:.1f}.".format(
-        input_id=input_id,
-        tda_name=tda_name,
-        lc_days=lc_duration)
-    )
+    # Read specification for the lightcurve we are to verify
+    directory = task_info.working_directory
+    filename_in = task_description['inputs']['lightcurve']
+    lc_duration = float(task_description['lc_duration'])
 
-    # Record start time
-    start_time = time.time()
+    logging.info("Running  <{directory}/{filename}> through TLS with duration {lc_days:.1f}.".format(
+        directory=directory, filename=filename_in, lc_days=lc_duration)
+    )
 
     # Read input lightcurve
-    lc = self.read_lightcurve(source=source)
+    lc_in = lightcurve.LightcurveArbitraryRaster.from_file(directory=directory, filename=filename_in,
+                                                           must_have_passed_qc=True)
 
     # Process lightcurve
-    if tda_name == 'bls_reference':
-        x = bls_reference.process_lightcurve(lc=lc, lc_duration=lc_duration, search_settings=search_settings)
-    elif tda_name == 'bls_kovacs':
-        x = bls_kovacs.process_lightcurve(lc=lc, lc_duration=lc_duration, search_settings=search_settings)
-    elif tda_name == 'dst_v26':
-        x = dst_v26.process_lightcurve(lc=lc, lc_duration=lc_duration, search_settings=search_settings)
-    elif tda_name == 'dst_v29':
-        x = dst_v29.process_lightcurve(lc=lc, lc_duration=lc_duration, search_settings=search_settings)
-    elif tda_name == 'exotrans':
-        x = exotrans.process_lightcurve(lc=lc, lc_duration=lc_duration, search_settings=search_settings)
-    elif tda_name == 'qats':
-        x = qats.process_lightcurve(lc=lc, lc_duration=lc_duration, search_settings=search_settings)
-    elif tda_name == 'tls':
-        x = tls.process_lightcurve(lc=lc, lc_duration=lc_duration, search_settings=search_settings)
-    else:
-        assert False, "Unknown transit-detection code <{}>".format(tda_name)
+    x = tls.process_lightcurve(lc=lc, lc_duration=lc_duration, search_settings=search_settings)
 
-        # Extract output
-        output, output_extended = x
+    # Extract output
+    output, output_extended = x
 
     # Test whether transit-detection was successful
-    quality_control(lc=lc, metadata=output)
+    quality_control.transit_detection_quality_control(lc=lc_in, metadata=output)
 
     # Add additional metadata to results
     for item in ['integrated_transit_power', 'pixels_in_transit', 'pixels_in_transit', 'mes']:
-        output[item] = lc.metadata.get(item, None)
+        output[item] = lc_in.metadata.get(item, None)
 
-    # Send result to message queue
-    result_log.record_result(job_name=job_name, tda_code=tda_name, target_name=input_id,
-                             task_name='transit_detection',
-                             parameters=self.job_parameters, timestamp=start_time,
-                             result=output, result_extended=output_extended)
+    # Open a connection to the task database
+    task_db = task_database.TaskDatabaseConnection()
+
+    # Log outcome metadata to the database
+    task_db.execution_attempt_update(attempt_id=execution_attempt.attempt_id, metadata=lc_result.metadata)
+
+    # Close database
+    task_db.commit()
+    task_db.close_db()
 
 
 if __name__ == "__main__":

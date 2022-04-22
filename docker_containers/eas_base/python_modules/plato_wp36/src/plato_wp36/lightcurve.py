@@ -118,7 +118,9 @@ class LightcurveArbitraryRaster:
 
         # Find out what file product this lightcurve corresponds to
         product_ids = task_db.file_product_by_filename(directory=directory, filename=filename)
-        assert len(product_ids) > 0, "This lightcurve does not correspond to any file product in the database"
+        assert len(product_ids) > 0, \
+            ("This lightcurve <{}/{}> does not correspond to any file product in the database".
+             format(directory, filename))
         product_id = product_ids[0]
 
         # Import lightcurve into the task database
@@ -159,12 +161,17 @@ class LightcurveArbitraryRaster:
 
         # Find out what file product this lightcurve corresponds to
         product_ids = task_db.file_product_by_filename(directory=directory, filename=filename)
-        assert len(product_ids) > 0, "This lightcurve does not correspond to any file product in the database"
+        assert len(product_ids) > 0, \
+            ("This lightcurve <{}/{}> does not correspond to any file product in the database".
+             format(directory, filename))
         product_id = product_ids[0]
 
+        # Find out which version of this file we should use
         version_ids = task_db.file_version_by_product(product_id=product_id, attempt_id=execution_id,
                                                       must_have_passed_qc=must_have_passed_qc)
-        assert len(version_ids) > 0, "No matching lightcurve found in the database"
+        assert len(version_ids) > 0, \
+            ("No matching lightcurve <{}/{}> found in the database".
+             format(execution_id, product_id))
         version_id = version_ids[-1]
 
         # Fetch file product version record

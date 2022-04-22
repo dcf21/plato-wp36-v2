@@ -478,7 +478,7 @@ WHERE productVersionId = %s;
             modified_time=result[0]['modifiedTime'],
             file_md5=result[0]['fileMD5'],
             file_size=result[0]['fileSize'],
-            passed_qc=result[0]['passed_qc'],
+            passed_qc=result[0]['passedQc'],
             metadata=metadata
         )
 
@@ -613,7 +613,7 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
         return product_version_id
 
     def file_version_update(self, product_version_id: int,
-                            file_path_input: str,
+                            file_path_input: Optional[str] = None,
                             preserve: bool = False,
                             modified_time: Optional[float] = None,
                             passed_qc: Optional[bool] = None,

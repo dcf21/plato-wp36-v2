@@ -278,11 +278,16 @@ class PslsWrapper:
         number_camera_groups = int(self.settings['number_camera_groups'])
         number_cameras_per_group = int(self.settings['number_cameras_per_group'])
 
+        # PSLS always puts first transit at the beginning of the lightcurve, so we create a longer lightcurve
+        # and cut out a segment with the first transit in the requested position
+        run_in_time = self.settings['orbital_period'] - self.settings['t0']  # days
+        simulation_duration = run_in_time + self.settings['duration'] + 1
+
         # Create YAML configuration file for PSLS
         with open(yaml_filename, "w") as out:
             out.write(
                 yaml_template.format(
-                    duration=float(self.settings['duration']),
+                    duration=simulation_duration,
                     master_seed=int(self.settings['master_seed']),
                     nsr=float(self.settings['nsr']),
                     datadir_local=self.settings['datadir_local'],
@@ -321,6 +326,15 @@ class PslsWrapper:
         fluxes = 1 + 1e-6 * data[1]
         flags = data[2]
 
+        # Cut out the segment we are to return to the user
+        cadence_days = self.settings['sampling_cadence'] / 3600. / 24.
+        run_in_samples = int(run_in_time / cadence_days)
+        final_length = int(self.settings['duration'] / cadence_days)
+
+        times = times[run_in_samples: run_in_samples + final_length]
+        fluxes = fluxes[run_in_samples: run_in_samples + final_length]
+        flags = flags[run_in_samples: run_in_samples + final_length]
+
         # Compute MES statistic. To do this, we need a theoretical model of the pure transit signal, which we
         # generate using batman.
         if not self.settings['enable_transits']:
@@ -331,7 +345,7 @@ class PslsWrapper:
         else:
             batman_instance = BatmanWrapper(duration=self.settings['duration'],
                                             eccentricity=0,
-                                            t0=0,
+                                            t0=self.settings['t0'],
                                             star_radius=self.settings['star_radius'],
                                             planet_radius=self.settings['planet_radius'],
                                             orbital_period=self.settings['orbital_period'],

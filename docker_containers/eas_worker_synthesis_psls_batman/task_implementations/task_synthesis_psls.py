@@ -18,6 +18,19 @@ from eas_psls_wrapper.psls_wrapper import PslsWrapper
 def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
                  task_info: task_database.Task,
                  task_description: Dict):
+    """
+    Implementation of the EAS pipeline task <synthesis_psls>.
+
+    :param execution_attempt:
+        Object describing this attempt by the job scheduler to run this task.
+    :param task_info:
+        Object describing the task we are to execute.
+    :param task_description:
+        A dictionary of metadata containing all the configuration options supplied by the user for this task.
+    :return:
+        None
+    """
+
     # Run synthesis task
 
     # Open a connection to the task database
@@ -26,7 +39,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
     # Read specification for the lightcurve we are to synthesise
     specs = task_description.get('specs', {})
     directory = task_info.working_directory
-    filename = task_description.get('filename', 'lightcurve.dat')
+    filename = task_description['outputs']['lightcurve']
 
     logging.info("Running PSLS synthesis of <{}/{}>".format(directory, filename))
 

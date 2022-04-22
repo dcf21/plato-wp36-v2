@@ -30,7 +30,7 @@ Instrument:
 # Stellar parameters
 Star:
   Mag : 12.5 #  Magnitude
-  ID : 9882316 #  star ID (integer)
+  ID : 12069449 #  star ID (integer)
   ModelDir : {datadir_local}/psls_data/psls-1.4/models/  # Directory containing the single models or the grid (parameters and associated theoretical frequencies)
   ModelType: UP # Type of model: 'grid' or 'single' or 'UP'
   ModelName: KIC9882316  # Name of the input model, to be specified when ModelType = 'single'
