@@ -1,9 +1,9 @@
 #!../../../data/datadir_local/virtualenv/bin/python3
 # -*- coding: utf-8 -*-
-# task_synthesise_psls.py
+# task_synthesis_batman.py
 
 """
-Quality control implementation of the EAS pipeline task <synthesise_psls>.
+Quality control implementation of the EAS pipeline task <synthesis_batman>.
 """
 
 import argparse

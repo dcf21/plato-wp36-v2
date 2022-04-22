@@ -28,7 +28,7 @@
               ],
               "task_list": [
                 {
-                  "task": "synthesise_batman",
+                  "task": "synthesis_batman",
                   "outputs": {
                     "lightcurve": "'evsize_batman_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                   },

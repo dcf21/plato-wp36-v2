@@ -1,14 +1,13 @@
 #!../../../data/datadir_local/virtualenv/bin/python3
 # -*- coding: utf-8 -*-
-# task_synthesise_platosim.py
+# task_synthesis_psls.py
 
 """
-Implementation of the EAS pipeline task <synthesise_platosim>.
+Quality control implementation of the EAS pipeline task <synthesis_psls>.
 """
 
 import argparse
 import logging
-import time
 
 from typing import Dict
 
@@ -18,8 +17,20 @@ from plato_wp36 import logging_database, task_database, task_execution
 def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
                  task_info: task_database.Task,
                  task_description: Dict):
-    # Perform the null task
-    time.sleep(10)
+    # Open a connection to the task database
+    task_db = task_database.TaskDatabaseConnection()
+
+    # Mark QC outcome
+    for output_file in execution_attempt.output_files.values():
+        task_db.file_version_update(product_version_id=output_file.product_version_id,
+                                    passed_qc=True)
+
+    task_db.execution_attempt_update(attempt_id=execution_attempt.attempt_id,
+                                     all_products_passed_qc=True)
+
+    # Close database
+    task_db.commit()
+    task_db.close_db()
 
 
 if __name__ == "__main__":

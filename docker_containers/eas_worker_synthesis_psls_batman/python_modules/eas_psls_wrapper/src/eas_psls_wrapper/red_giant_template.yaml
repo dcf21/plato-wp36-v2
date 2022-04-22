@@ -19,7 +19,7 @@ Instrument:
   Systematics:
     Enable : {enable_systematics}
 # The binary file containing the systematics parameters:
-    Table: {datadir_input}/psls_data/psls-1.4/systematics/{systematics}
+    Table: {datadir_local}/psls_data/psls-1.4/systematics/{systematics}
 #    Table : PLATO_systematics_BOL_V2.npy
 #    Table : PLATO_systematics_BOL_FixedMask_V2.npy
 #    Table : PLATO_systematics_BOL_P1_V2.npy
@@ -31,7 +31,7 @@ Instrument:
 Star:
   Mag : 12.5 #  Magnitude
   ID : 9882316 #  star ID (integer)
-  ModelDir : {datadir_input}/psls_data/psls-1.4/models/  # Directory containing the single models or the grid (parameters and associated theoretical frequencies)
+  ModelDir : {datadir_local}/psls_data/psls-1.4/models/  # Directory containing the single models or the grid (parameters and associated theoretical frequencies)
   ModelType: UP # Type of model: 'grid' or 'single' or 'UP'
   ModelName: KIC9882316  # Name of the input model, to be specified when ModelType = 'single'
   ES : rg  # Evolutionary status: 'ms' for the main-sequence phase, 'sg' for the sub-giant phase, 'rg' for redgiants (Red Giant Branch or clump stars)

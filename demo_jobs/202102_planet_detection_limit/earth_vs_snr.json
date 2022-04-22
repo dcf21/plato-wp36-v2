@@ -12,7 +12,7 @@
       ],
       "task_list": [
         {
-          "task": "synthesise_psls",
+          "task": "synthesis_psls",
           "outputs": {
             "lightcurve": "'evs_{nsr_index}.gz'.format(**metadata)"
           },

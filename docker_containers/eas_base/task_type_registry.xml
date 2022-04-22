@@ -5,34 +5,31 @@
             <name>eas_base</name>
         </container>
         <container>
-            <name>worker_bls_kovacs</name>
+            <name>eas_worker_bls_kovacs</name>
         </container>
         <container>
-            <name>worker_bls_reference</name>
+            <name>eas_worker_bls_reference</name>
         </container>
         <container>
-            <name>worker_dst_v26</name>
+            <name>eas_worker_dst_v26</name>
         </container>
         <container>
-            <name>worker_dst_v29</name>
+            <name>eas_worker_dst_v29</name>
         </container>
         <container>
-            <name>worker_exotrans</name>
+            <name>eas_worker_exotrans</name>
         </container>
         <container>
-            <name>worker_synthesis_platosim</name>
+            <name>eas_worker_qats</name>
         </container>
         <container>
-            <name>worker_qats</name>
+            <name>eas_worker_synthesis_platosim</name>
         </container>
         <container>
-            <name>worker_synthesis_platosim</name>
+            <name>eas_worker_synthesis_psls_batman</name>
         </container>
         <container>
-            <name>worker_synthesis_psls_batman</name>
-        </container>
-        <container>
-            <name>worker_tls</name>
+            <name>eas_worker_tls</name>
         </container>
     </containers>
     <tasks>
@@ -69,44 +66,44 @@
             <container>all</container>
         </task>
         <task>
-            <name>synthesise_batman</name>
-            <container>worker_synthesis_psls_batman</container>
+            <name>synthesis_batman</name>
+            <container>eas_worker_synthesis_psls_batman</container>
         </task>
         <task>
-            <name>synthesise_psls</name>
-            <container>worker_synthesis_psls_batman</container>
+            <name>synthesis_psls</name>
+            <container>eas_worker_synthesis_psls_batman</container>
         </task>
         <task>
-            <name>synthesise_platosim</name>
-            <container>worker_synthesis_platosim</container>
+            <name>synthesis_platosim</name>
+            <container>eas_worker_synthesis_platosim</container>
         </task>
         <task>
             <name>transit_search_bls_kovacs</name>
-            <container>worker_bls_kovacs</container>
+            <container>eas_worker_bls_kovacs</container>
         </task>
         <task>
             <name>transit_search_bls_reference</name>
-            <container>worker_bls_reference</container>
+            <container>eas_worker_bls_reference</container>
         </task>
         <task>
             <name>transit_search_dst_v26</name>
-            <container>worker_dst_v26</container>
+            <container>eas_worker_dst_v26</container>
         </task>
         <task>
             <name>transit_search_dst_v29</name>
-            <container>worker_dst_v29</container>
+            <container>eas_worker_dst_v29</container>
         </task>
         <task>
             <name>transit_search_exotrans</name>
-            <container>worker_exotrans</container>
+            <container>eas_worker_exotrans</container>
         </task>
         <task>
             <name>transit_search_qats</name>
-            <container>worker_qats</container>
+            <container>eas_worker_qats</container>
         </task>
         <task>
             <name>transit_search_tls</name>
-            <container>worker_tls</container>
+            <container>eas_worker_tls</container>
         </task>
         <task>
             <name>verify</name>

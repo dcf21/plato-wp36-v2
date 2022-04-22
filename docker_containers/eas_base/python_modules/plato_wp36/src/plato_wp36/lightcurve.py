@@ -5,15 +5,19 @@
 Classes for representing light curves, either on arbitrary time rasters, or on rasters with fixed step.
 """
 
+# This allows class methods to type-hint their arguments as being class instances, before the class is fully defined
+from __future__ import annotations
+
 import gzip
 import logging
 import math
 import os
-import re
 
 import numpy as np
 
-from .settings import Settings
+from typing import Dict, Optional
+
+from .task_database import TaskDatabaseConnection
 
 
 class LightcurveArbitraryRaster:
@@ -21,30 +25,21 @@ class LightcurveArbitraryRaster:
     A class representing a lightcurve which is sampled on an arbitrary raster of times.
     """
 
-    def __init__(self, times, fluxes, uncertainties=None, flags=None, metadata=None):
+    def __init__(self, times: np.ndarray, fluxes: np.ndarray, uncertainties: Optional[np.ndarray] = None,
+                 flags: Optional[np.ndarray] = None, metadata: Dict = None):
         """
         Create a lightcurve which is sampled on an arbitrary raster of times.
 
         :param times:
             The times of the data points (days).
-        :type times:
-            np.ndarray
         :param fluxes:
             The light fluxes at each data point.
-        :type fluxes:
-            np.ndarray
         :param uncertainties:
             The uncertainty in each data point.
-        :type uncertainties:
-            np.ndarray
         :param flags:
             The flag associated with each data point.
-        :type flags:
-            np.ndarray
         :param metadata:
             The metadata associated with this lightcurve.
-        :type metadata:
-            dict
         """
 
         # Check inputs
@@ -70,73 +65,48 @@ class LightcurveArbitraryRaster:
             uncertainties = np.zeros_like(fluxes)
 
         # Store the data
-        self.times = times  # days
-        self.fluxes = fluxes
-        self.uncertainties = uncertainties
-        self.flags = flags
-        self.flags_set = True
-        self.metadata = metadata
+        self.times: np.ndarray = times  # days
+        self.fluxes: np.ndarray = fluxes
+        self.uncertainties: np.ndarray = uncertainties
+        self.flags: np.ndarray = flags
+        self.flags_set: bool = True
+        self.metadata: dict = metadata
 
-    def to_file(self, directory, filename, binary=False, gzipped=True, overwrite=True, create_directory=True):
+    def to_file(self, directory: str, filename: str, execution_id: int,
+                binary: bool = False, gzipped: bool = True):
         """
         Write a lightcurve out to a text data file. The time axis is multiplied by a factor 86400 to convert
         from days into seconds.
 
         :param filename:
             The filename of the lightcurve (within our local lightcurve archive).
-        :type filename
-            str
         :param directory:
             The name of the directory inside the lightcurve archive where this lightcurve should be saved.
-        :type directory:
-            str
+        :param execution_id:
+            The integer ID of the task execution attempt id generating this file.
         :param binary:
             Boolean specifying whether we store lightcurve on disk in binary format or plain text.
-        :type binary:
-            bool
         :param gzipped:
             Boolean specifying whether we gzip plain-text lightcurves.
-        :type gzipped:
-            bool
-        :param overwrite:
-            Boolean specifying whether we're allowed to overwrite existing files.
-        :type overwrite:
-            bool
-        :param create_directory:
-            Boolean flag indicating whether we should create the parent directory, if it doesn't exist.
-        :type create_directory:
-            bool
         """
 
-        # Fetch testbench settings
-        settings = Settings().settings
+        # Open a connection to the task database
+        task_db = TaskDatabaseConnection()
 
-        # Make sure target directory exists
-        if create_directory:
-            os.system("mkdir -p '{}'".format(os.path.join(settings['lcPath'], directory)))
+        # Create temporary working directory
+        identifier = "eas_lc_writer"
+        id_string = "eas_{:d}_{}".format(os.getpid(), identifier)
+        tmp_dir = os.path.join("/tmp", id_string)
+        os.makedirs(name=tmp_dir, mode=0o700, exist_ok=True)
 
         # Target path for this lightcurve
-        target_path = os.path.join(settings['lcPath'], directory, filename)
-
-        # Check that we're not overwriting an existing file
-        if not overwrite:
-            assert not os.path.exists(target_path), \
-                "Attempting to overwrite existing lightcurve <{}>".format(target_path)
+        target_path = os.path.join(tmp_dir, filename)
 
         # Pick the writer for this lightcurve
         if not gzipped:
             opener = open
         else:
             opener = gzip.open
-
-        # Write lightcurve metadata
-        target_path_metadata = "{}.metadata".format(target_path)
-        with open(target_path_metadata, "w") as out:
-            out.write("{}={}\n".format("binary", int(binary)))
-            out.write("{}={}\n".format("gzipped", int(gzipped)))
-            # Include metadata in text file
-            for key, value in self.metadata.items():
-                out.write("{}={}\n".format(key, value))
 
         # Write this lightcurve output into lightcurve archive (store times in seconds)
         if not binary:
@@ -146,76 +116,83 @@ class LightcurveArbitraryRaster:
         else:
             np.save(target_path, np.transpose([self.times * 86400, self.fluxes, self.flags, self.uncertainties]))
 
+        # Find out what file product this lightcurve corresponds to
+        product_ids = task_db.file_product_by_filename(directory=directory, filename=filename)
+        assert len(product_ids) > 0, "This lightcurve does not correspond to any file product in the database"
+        product_id = product_ids[0]
+
+        # Import lightcurve into the task database
+        task_db.file_version_register(product_id=product_id, generated_by_task_execution=execution_id,
+                                      file_path_input=target_path, preserve=False, metadata=self.metadata)
+
+        # Close database
+        task_db.commit()
+        task_db.close_db()
+
+        # Clean up temporary directory
+        os.rmdir(tmp_dir)
+
     @classmethod
-    def from_file(cls, directory, filename, cut_off_time=None):
+    def from_file(cls, directory: str, filename: str,
+                  cut_off_time: Optional[float] = None,
+                  execution_id: Optional[int] = None, must_have_passed_qc: bool = True):
         """
         Read a lightcurve from a data file in our lightcurve archive.
 
         :param filename:
             The filename of the input data file.
-        :type filename:
-            str
         :param cut_off_time:
             Only read lightcurve up to some cut off time
-        :type cut_off_time:
-            float
         :param directory:
             The directory in which the lightcurve is stored.
-        :type directory:
-            str
+        :param execution_id:
+            The ID number of the task execution attempt which generated this file product. If None, then
+            we open the latest-dated version of this file product.
+        :param must_have_passed_qc:
+            Boolean flag indicating whether this lightcurve must have passed QC for us to be allowed to open it.
         :return:
             A <LightcurveArbitraryRaster> object.
         """
 
-        # Fetch testbench settings
-        settings = Settings().settings
+        # Open a connection to the task database
+        task_db = TaskDatabaseConnection()
 
+        # Find out what file product this lightcurve corresponds to
+        product_ids = task_db.file_product_by_filename(directory=directory, filename=filename)
+        assert len(product_ids) > 0, "This lightcurve does not correspond to any file product in the database"
+        product_id = product_ids[0]
+
+        version_ids = task_db.file_version_by_product(product_id=product_id, attempt_id=execution_id,
+                                                      must_have_passed_qc=must_have_passed_qc)
+        assert len(version_ids) > 0, "No matching lightcurve found in the database"
+        version_id = version_ids[-1]
+
+        # Fetch file product version record
+        file_info = task_db.file_version_lookup(product_version_id=version_id)
+        file_location = task_db.file_version_path_for_id(product_version_id=version_id, full_path=True)
+
+        # Read file format of lightcurve from metadata
+        assert 'binary' in file_info.metadata
+        binary = bool(file_info.metadata['binary'])
+        assert 'gzipped' in file_info.metadata
+        gzipped = bool(file_info.metadata['gzipped'])
+
+        # Initialise structures to hold lightcurve data
         times = []  # Times stored as days, but data files contain seconds
         fluxes = []
         uncertainties = []
         flags = []
-
-        metadata = {
-            'directory': directory,
-            'filename': filename
-        }
-
-        # Full path for this lightcurve
-        file_path = os.path.join(settings['lcPath'], directory, filename)
-
-        # Read all lightcurve metadata
-        file_path_metadata = "{}.metadata".format(file_path)
-        with open(file_path_metadata) as f:
-            for line in f:
-                test = re.match(r"(.*)=(.*)", line)
-                if test is not None:
-                    metadata_key = test.group(1).strip()
-                    metadata_value = test.group(2).strip()
-
-                    # If metadata value is a float, convert it to a float. Otherwise keep it as string.
-                    try:
-                        metadata_value = float(metadata_value)
-                    except ValueError:
-                        pass
-
-                    metadata[metadata_key] = metadata_value
-
-        # Read file format of lightcurve from metadata
-        assert 'binary' in metadata
-        binary = bool(metadata['binary'])
-        assert 'gzipped' in metadata
-        gzipped = bool(metadata['gzipped'])
 
         # Look up file open function
         file_opener = gzip.open if gzipped else open
 
         if binary:
             # Read binary lightcurve file
-            time, flux, flag, uncertainties = np.load(file_path)
+            time, flux, flag, uncertainties = np.load(file_location)
             time /= 86400  # Times stored in seconds; but Lightcurve objects use days
         else:
             # Textual lightcurve: loop over lines of input file
-            with file_opener(file_path, "rt") as file:
+            with file_opener(file_location, "rt") as file:
                 for line in file:
                     # Ignore blank lines and comment lines
                     if len(line) == 0 or line[0] == '#':
@@ -243,13 +220,13 @@ class LightcurveArbitraryRaster:
                                                fluxes=np.asarray(fluxes),
                                                uncertainties=np.asarray(uncertainties),
                                                flags=np.asarray(flags),
-                                               metadata=metadata
+                                               metadata=file_info.metadata
                                                )
 
         # Return lightcurve
         return lightcurve
 
-    def __add__(self, other):
+    def __add__(self, other: LightcurveArbitraryRaster):
         """
         Add two lightcurves together.
 
@@ -281,7 +258,7 @@ class LightcurveArbitraryRaster:
 
         return result
 
-    def __sub__(self, other):
+    def __sub__(self, other: LightcurveArbitraryRaster):
         """
         Subtract one lightcurve from another.
 
@@ -310,7 +287,7 @@ class LightcurveArbitraryRaster:
 
         return result
 
-    def __mul__(self, other):
+    def __mul__(self, other: LightcurveArbitraryRaster):
         """
         Multiply two lightcurves together.
 
@@ -361,18 +338,14 @@ class LightcurveArbitraryRaster:
 
         return float(interquartile_mean)
 
-    def check_fixed_step(self, verbose=True, max_errors=6):
+    def check_fixed_step(self, verbose: bool = True, max_errors: int = 6):
         """
         Check that this light curve is sampled at a fixed time interval. Return the number of errors.
 
         :param verbose:
             Should we output a logging message about every missing time point?
-        :type verbose:
-            bool
         :param max_errors:
             The maximum number of errors we should show
-        :type max_errors:
-            int
         :return:
             int
         """
@@ -418,18 +391,14 @@ class LightcurveArbitraryRaster:
         # Return the verdict on this lightcurve
         return error_count
 
-    def check_fixed_step_v2(self, verbose=True, max_errors=6):
+    def check_fixed_step_v2(self, verbose: bool = True, max_errors: int = 6):
         """
         Check that this light curve is sampled at a fixed time interval. Return the number of errors.
 
         :param verbose:
             Should we output a logging message about every missing time point?
-        :type verbose:
-            bool
         :param max_errors:
             The maximum number of errors we should show
-        :type max_errors:
-            int
         :return:
             int
         """
@@ -472,18 +441,14 @@ class LightcurveArbitraryRaster:
         # Return the verdict on this lightcurve
         return error_count
 
-    def to_fixed_step(self, verbose=True, max_errors=6):
+    def to_fixed_step(self, verbose: bool = True, max_errors: int = 6):
         """
         Convert this lightcurve to a fixed time stride.
 
         :param verbose:
             Should we output a logging message about every missing time point?
-        :type verbose:
-            bool
         :param max_errors:
             The maximum number of errors we should show
-        :type max_errors:
-            int
         :return:
             [LightcurveFixedStep]
         """
@@ -544,34 +509,24 @@ class LightcurveFixedStep:
     A class representing a lightcurve which is sampled on a fixed time step.
     """
 
-    def __init__(self, time_start, time_step, fluxes, uncertainties=None, flags=None, metadata=None):
+    def __init__(self, time_start: float, time_step: float, fluxes: np.ndarray,
+                 uncertainties: Optional[np.ndarray] = None, flags: Optional[np.ndarray] = None,
+                 metadata: Optional[Dict] = None):
         """
         Create a lightcurve which is sampled on an arbitrary raster of times.
 
         :param time_start:
             The time at the start of the lightcurve.
-        :type time_start:
-            float
         :param time_step:
             The interval between the points in the lightcurve.
-        :type time_step:
-            float
         :param fluxes:
             The light fluxes at each data point.
-        :type fluxes:
-            np.ndarray
         :param uncertainties:
             The uncertainty in each data point.
-        :type uncertainties:
-            np.ndarray
         :param flags:
             The flag associated with each data point.
-        :type flags:
-            np.ndarray
         :param metadata:
             The metadata associated with this lightcurve.
-        :type metadata:
-            dict
         """
 
         # Check inputs
@@ -604,14 +559,12 @@ class LightcurveFixedStep:
         self.flags_set = True
         self.metadata = metadata
 
-    def time_value(self, index):
+    def time_value(self, index: float):
         """
         Return the time value associated with a particular index in this lightcurve.
 
         :param index:
             The index of the time point within the lightcurve
-        :type index:
-            float
         :return:
             The time value, in days
         """

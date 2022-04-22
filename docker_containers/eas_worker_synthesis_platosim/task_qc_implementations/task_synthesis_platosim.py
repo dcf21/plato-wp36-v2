@@ -1,9 +1,9 @@
 #!../../../data/datadir_local/virtualenv/bin/python3
 # -*- coding: utf-8 -*-
-# task_synthesise_psls.py
+# task_synthesis_platosim.py
 
 """
-Implementation of the EAS pipeline task <synthesise_psls>.
+Quality control implementation of the EAS pipeline task <synthesis_platosim>.
 """
 
 import argparse
@@ -12,35 +12,21 @@ import logging
 from typing import Dict
 
 from plato_wp36 import logging_database, task_database, task_execution
-from eas_psls_wrapper.psls_wrapper import PslsWrapper
 
 
 def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
                  task_info: task_database.Task,
                  task_description: Dict):
-    # Run synthesis task
-
     # Open a connection to the task database
     task_db = task_database.TaskDatabaseConnection()
 
-    # Read specification for the lightcurve we are to synthesise
-    specs = task_description.get('specs', {})
-    directory = task_info.working_directory
-    filename = task_description.get('filename', 'lightcurve.dat')
+    # Mark QC outcome
+    for output_file in execution_attempt.output_files.values():
+        task_db.file_version_update(product_version_id=output_file.product_version_id,
+                                    passed_qc=True)
 
-    logging.info("Running PSLS synthesis of <{}/{}>".format(directory, filename))
-
-    # Do synthesis
-    synthesiser = PslsWrapper()
-    synthesiser.configure(**specs)
-    lc_object = synthesiser.synthesise()
-    synthesiser.close()
-
-    # Write output
-    lc_object.to_file(directory=directory, filename=filename)
-
-    # Log lightcurve metadata to the database
-    task_db.execution_attempt_update(attempt_id=execution_attempt.attempt_id, metadata=lc_object.metadata)
+    task_db.execution_attempt_update(attempt_id=execution_attempt.attempt_id,
+                                     all_products_passed_qc=True)
 
     # Close database
     task_db.commit()

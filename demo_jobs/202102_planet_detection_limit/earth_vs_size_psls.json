@@ -28,7 +28,7 @@
               ],
               "task_list": [
                 {
-                  "task": "synthesise_psls",
+                  "task": "synthesis_psls",
                   "outputs": {
                     "lightcurve": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                   },

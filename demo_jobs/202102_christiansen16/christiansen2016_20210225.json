@@ -30,7 +30,7 @@
               ],
               "task_list": [
                 {
-                  "task": "synthesise_psls",
+                  "task": "synthesis_psls",
                   "outputs": {
                     "lightcurve": "'christiansen_A_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
                   },
@@ -41,7 +41,7 @@
                   }
                 },
                 {
-                  "task": "synthesise_batman",
+                  "task": "synthesis_batman",
                   "outputs": {
                     "lightcurve": "'christiansen_B_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
                   },

@@ -20,7 +20,7 @@
           ],
           "task_list": [
             {
-              "task": "synthesise_psls",
+              "task": "synthesis_psls",
               "outputs": {
                 "lightcurve": "'hjvsize_psls_{cadence_index}_{size_index}.gz'.format(**metadata)"
               },

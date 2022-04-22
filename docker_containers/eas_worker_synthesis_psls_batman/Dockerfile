@@ -14,15 +14,20 @@ RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install --editable \
 RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install --editable \
     python_modules/eas_batman_wrapper --no-binary :all:
 
-# Link task implementations into the EAS worker distribution
-RUN ln -s task_implementations/task_synthesise_batman.py ../eas_base/task_implementations/
-RUN ln -s task_implementations/task_synthesise_psls.py ../eas_base/task_implementations/
-
-RUN ln -s task_qc_implementations/task_synthesise_batman.py ../eas_base/task_qc_implementations/
-RUN ln -s task_qc_implementations/task_synthesise_psls.py ../eas_base/task_qc_implementations/
-
 # Fetch PSLS data files
 RUN ./build/build.sh
+
+# Link task implementations into the EAS worker distribution
+WORKDIR /plato-wp36-v2/docker_containers/eas_base/
+RUN ln -s /plato-wp36-v2/docker_containers/eas_worker_synthesis_psls_batman/task_implementations/task_synthesis_batman.py \
+    /plato-wp36-v2/docker_containers/eas_base/task_implementations/
+RUN ln -s /plato-wp36-v2/docker_containers/eas_worker_synthesis_psls_batman/task_implementations/task_synthesis_psls.py \
+    /plato-wp36-v2/docker_containers/eas_base/task_implementations/
+
+RUN ln -s /plato-wp36-v2/docker_containers/eas_worker_synthesis_psls_batman/task_qc_implementations/task_synthesis_batman.py \
+    /plato-wp36-v2/docker_containers/eas_base/task_qc_implementations/
+RUN ln -s /plato-wp36-v2/docker_containers/eas_worker_synthesis_psls_batman/task_qc_implementations/task_synthesis_psls.py \
+    /plato-wp36-v2/docker_containers/eas_base/task_qc_implementations/
 
 # *** Write name of the Docker container into its root
 RUN echo 'eas_worker_synthesis_psls_batman' > /plato-wp36-v2/container_name.txt

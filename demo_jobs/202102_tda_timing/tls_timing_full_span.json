@@ -33,7 +33,7 @@
           ],
           "task_list": [
             {
-              "task": "synthesise_psls",
+              "task": "synthesis_psls",
               "outputs": {
                 "lightcurve": "'ttfs_{cadence_index}_{lc_length_index}.gz'.format(**metadata)"
               },

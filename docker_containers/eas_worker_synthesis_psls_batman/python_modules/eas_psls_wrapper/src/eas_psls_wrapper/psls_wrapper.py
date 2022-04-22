@@ -27,6 +27,7 @@ class PslsWrapper:
     def __init__(self,
                  mode: Optional[str] = None,
                  duration: Optional[float] = None,
+                 t0: Optional[float] = None,
                  enable_transits: Optional[bool] = None,
                  star_radius: Optional[float] = None,
                  planet_radius: Optional[float] = None,
@@ -49,6 +50,8 @@ class PslsWrapper:
             Either "main_sequence" or "red_giant" to choose between two default star models.
         :param duration:
             Duration of the lightcurve we are to generate (days)
+        :param t0:
+            Time of inferior conjunction relative to the beginning of the lightcurve (days)
         :param enable_transits:
             Boolean indicating whether we inject transits into this LC.
         :param star_radius:
@@ -80,15 +83,16 @@ class PslsWrapper:
         """
 
         # Look up settings
-        self.settings = settings.Settings()
+        self.eas_settings = settings.Settings()
         self.constants = EASConstants()
 
         # Create dictionary of default settings
         self.settings = {
             'mode': 'main_sequence',
             'duration': 730,  # days
+            't0': 1,  # Time for inferior conjunction (days)
             'master_seed': time.time(),
-            'datadir_input': self.settings.settings['inDataPath'],
+            'datadir_local': self.eas_settings.settings['localDataPath'],
             'enable_transits': True,
             'star_radius': self.constants.sun_radius / self.constants.jupiter_radius,  # Jupiter radii
             'planet_radius': 1,  # Jupiter radii
@@ -105,7 +109,7 @@ class PslsWrapper:
             'number_cameras_per_group': 6  # the number of cameras to simulate in each group
         }
 
-        self.configure(mode=mode, duration=duration, enable_transits=enable_transits,
+        self.configure(mode=mode, duration=duration, t0=t0, enable_transits=enable_transits,
                        star_radius=star_radius, planet_radius=planet_radius,
                        orbital_period=orbital_period, semi_major_axis=semi_major_axis,
                        orbital_angle=orbital_angle, impact_parameter=impact_parameter,
@@ -132,6 +136,7 @@ class PslsWrapper:
     def configure(self,
                   mode: Optional[str] = None,
                   duration: Optional[float] = None,
+                 t0: Optional[float] = None,
                   enable_transits: Optional[bool] = None,
                   star_radius: Optional[float] = None,
                   planet_radius: Optional[float] = None,
@@ -154,6 +159,8 @@ class PslsWrapper:
             Either "main_sequence" or "red_giant" to choose between two default star models.
         :param duration:
             Duration of the lightcurve we are to generate (days)
+        :param t0:
+            Time of inferior conjunction relative to the beginning of the lightcurve (days)
         :param enable_transits:
             Boolean indicating whether we inject transits into this LC.
         :param star_radius:
@@ -189,6 +196,8 @@ class PslsWrapper:
             self.settings['mode'] = mode
         if duration is not None:
             self.settings['duration'] = float(duration)
+        if t0 is not None:
+            self.settings['t0'] = float(t0)
         if enable_transits is not None:
             self.settings['enable_transits'] = int(enable_transits)
         if star_radius is not None:
@@ -276,7 +285,7 @@ class PslsWrapper:
                     duration=float(self.settings['duration']),
                     master_seed=int(self.settings['master_seed']),
                     nsr=float(self.settings['nsr']),
-                    datadir_input=self.settings['localDataPath'],
+                    datadir_local=self.settings['datadir_local'],
                     enable_transits=int(self.settings['enable_transits']),
                     planet_radius=float(self.settings['planet_radius']),
                     orbital_period=float(self.settings['orbital_period']),
@@ -294,10 +303,7 @@ class PslsWrapper:
             )
 
         # Path to PSLS binary
-        psls_binary = os.path.join(
-            self.settings['localDataPath'],
-            "virtualenv/bin/psls.py"
-        )
+        psls_binary = os.path.join(self.settings['datadir_local'], "virtualenv/bin/psls.py")
 
         # Run PSLS
         command = "{} {}".format(psls_binary, yaml_filename)

@@ -83,7 +83,7 @@ class TaskDatabaseConnection:
         # Fetch list of tasks
         self.conn.execute("""
 SELECT taskTypeId, taskName, workerContainers
-FROM eas_task_types;""")
+FROM eas_task_types ORDER BY taskTypeId;""")
 
         for item in self.conn.fetchall():
             container_list = json.loads(item['workerContainers'])
@@ -405,6 +405,42 @@ WHERE v.productVersionId = %s;
             logging.warning("Could not delete file <{}>".format(file_path))
             pass
         self.conn.execute('DELETE FROM eas_product_version WHERE productVersionId = %s;', (product_version_id,))
+
+    def file_version_by_product(self, product_id: int, attempt_id: Optional[int] = None,
+                                must_have_passed_qc: bool = False):
+        """
+        Look up the ID (or IDs) of the file product versions associated with a particular integer file product ID.
+
+        :param product_id:
+            The file product ID in the <eas_product> table.
+        :param attempt_id:
+            The integer ID of the task execution attempt whose output files we should return. If none, then we return
+            the all versions of this file product.
+        :param must_have_passed_qc:
+            If true, then we only return files which have passed QC checks. If false, we also return file products
+            which have not passed QC (useful, for example, if the user is trying to *do* a QC check!)
+        :return:
+            List[int]
+        """
+
+        # Build list of SQL constraints
+        contraints = ["productId={:d}".format(product_id)]
+        if attempt_id is not None:
+            contraints.append("generatedByTaskExecution={:d}".format(attempt_id))
+        if must_have_passed_qc:
+            contraints.append("passedQc")
+
+        # Look up matching file versions
+        self.conn.execute("""
+SELECT v.productVersionId
+FROM eas_product_version v
+WHERE {}
+ORDER BY v.productVersionId;
+""".format(" AND ".join(contraints)))
+        results = self.conn.fetchall()
+
+        # Return list of integer IDs
+        return [item['productVersionId'] for item in results]
 
     def file_version_lookup(self, product_version_id: int):
         """
@@ -921,7 +957,8 @@ SELECT v.productVersionId, s.name AS semanticType
 FROM eas_product_version v
 INNER JOIN eas_product p ON p.productId = v.productId
 INNER JOIN eas_semantic_type s ON s.semanticTypeId = p.semanticType
-WHERE generatedByTaskExecution = %s;
+WHERE generatedByTaskExecution = %s
+ORDER BY v.productVersionId;
 """, (attempt_id,))
         file_product_versions = self.conn.fetchall()
 
@@ -1143,7 +1180,8 @@ VALUES (%s, %s);
 SELECT p.productId, s.name AS semanticType
 FROM eas_product p
 INNER JOIN eas_semantic_type s ON s.semanticTypeId = p.semanticType
-WHERE generatorTask = %s;
+WHERE generatorTask = %s
+ORDER BY p.productId;
 """, (task_id,))
         file_products = self.conn.fetchall()
 
@@ -1170,7 +1208,8 @@ WHERE generatorTask = %s;
 SELECT p.inputId, s.name AS semanticType
 FROM eas_task_input p
 INNER JOIN eas_semantic_type s ON s.semanticTypeId = p.semanticType
-WHERE taskId = %s;
+WHERE taskId = %s
+ORDER BY p.inputId;
 """, (task_id,))
         file_products = self.conn.fetchall()
 
@@ -1191,7 +1230,7 @@ WHERE taskId = %s;
             Dictionary of :class:`TaskExecutionAttempt`, indexed by unique ID.
         """
 
-        output: Dict[str, TaskExecutionAttempt] = {}
+        output: Dict[int, TaskExecutionAttempt] = {}
 
         # Compile constraints
         constraint = "1"
@@ -1205,7 +1244,8 @@ WHERE taskId = %s;
         self.conn.execute("""
 SELECT s.schedulingAttemptId
 FROM eas_scheduling_attempt s
-WHERE taskId = %s AND {};
+WHERE taskId = %s AND {}
+ORDER BY s.schedulingAttemptId;
 """.format(constraint), (task_id,))
         execution_attempts = self.conn.fetchall()
 
@@ -1269,8 +1309,8 @@ WHERE taskId = %s;
             job_name=result[0]['jobName'],
             working_directory=result[0]['workingDirectory'],
             input_files=input_products,
-            execution_attempts_passed=execution_attempts_passed,
-            execution_attempts_incomplete=execution_attempts_incomplete,
+            execution_attempts_passed=list(execution_attempts_passed.values()),
+            execution_attempts_incomplete=list(execution_attempts_incomplete.values()),
             metadata=metadata,
             output_files=output_products
         )
