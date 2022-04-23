@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="author" content="Dominic Ford"/>
+
+    <title id="title1">
+        {% block title %}{% endblock %}
+    </title>
+
+    <script src="/static/vendor/jquery/dist/jquery.min.js" type="text/javascript"></script>
+
+    <link rel="stylesheet" href="/static/vendor/bootstrap/dist/css/bootstrap.min.css">
+    <script src="/static/vendor/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <script src="/static/vendor/jquery-ui/jquery-ui.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="/static/vendor/font-awesome/css/font-awesome.min.css">
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css" media="all"/>
+    <script type="text/javascript" src="/static/js/dummy.js"></script>
+
+</head>
+<body>
+<div class="contentwrapper">
+    <nav id="navbar-header" class="navbar navbar-dark bg-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" style="padding-right:25px;" href="/">
+                <i class="fa fa-home" aria-hidden="true"></i>
+            </a>
+            <div style="padding-top:8px;color:#ccc;font-size:13px;">
+                The EAS pipeline web console
+            </div>
+        </div>
+    </nav>
+    <div class="mainpage container-fluid">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+</body>
+</html>

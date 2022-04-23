@@ -7,8 +7,12 @@ ADD build build
 ADD task_implementations task_implementations
 ADD task_qc_implementations task_qc_implementations
 
-# Now build QATS code
+# Build QATS code
 RUN ./build/build.sh
+
+# Build and install wrapper Python modules
+RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install --editable \
+    python_modules/eas_qats_wrapper --no-binary :all:
 
 # Link task implementations into the EAS worker distribution
 WORKDIR /plato-wp36-v2/docker_containers/eas_base/
@@ -16,6 +20,9 @@ RUN ln -s /plato-wp36-v2/docker_containers/eas_worker_qats/task_implementations/
     /plato-wp36-v2/docker_containers/eas_base/task_implementations/
 RUN ln -s /plato-wp36-v2/docker_containers/eas_worker_qats/task_qc_implementations/task_transit_search_qats.py \
     /plato-wp36-v2/docker_containers/eas_base/task_qc_implementations/
+
+# Move into the directory where the launch script lives
+WORKDIR /plato-wp36-v2/docker_containers/eas_base/launch_worker
 
 # *** Write name of the Docker container into its root
 RUN echo 'eas_worker_qats' > /plato-wp36-v2/container_name.txt

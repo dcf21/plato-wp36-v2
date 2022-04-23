@@ -76,7 +76,7 @@ def do_pipeline_task(job_id: int,
 
                 # If an explicit job name is specified in the task description, update the job name of this task
                 if 'job_name' in task_description:
-                    task_info.set_metadata(keyword='job_name', value=task_description['job_name'])
+                    task_info.job_name = task_description['job_name']
 
                 # If an explicit working directory is specified in the task description, update the task descriptor
                 if 'working_directory' in task_description:
@@ -93,3 +93,14 @@ def do_pipeline_task(job_id: int,
     except Exception:
         error_message = traceback.format_exc()
         logging.error(error_message)
+
+        # Open a connection to the EasControl task database
+        task_db = task_database.TaskDatabaseConnection()
+
+        # Record the failure of this task
+        task_db.execution_attempt_update(attempt_id=job_id, error_fail=True, error_text=error_message)
+
+        # Close database
+        task_db.commit()
+        task_db.close_db()
+        del task_db

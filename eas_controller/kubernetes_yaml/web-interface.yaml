@@ -1,23 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: plato
+  labels:
+    component: eas-web-interface
+  name: eas-web-interface
 spec:
   selector:
     matchLabels:
-      app: plato
+      app: eas-web-interface
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: plato
+        app: eas-web-interface
+        component: eas-web-interface
     spec:
       containers:
-        - image: plato/eas_worker_synthesis_psls_batman:v1
-          name: plato
-          command: [ './launch_service_mode.py' ]
-          args: [  ]
+        - image: plato/eas_web_interface:v1
+          name: eas-web-interface
+          command: [ './web_interface.py' ]
+          args: [ ]
           volumeMounts:
             - name: output-persistent-storage
               mountPath: /plato-wp36-v2/data/datadir_output

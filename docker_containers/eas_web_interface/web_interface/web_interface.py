@@ -1,28 +1,30 @@
-#!../../data/datadir_local/virtualenv/bin/python3
+#!../../../data/datadir_local/virtualenv/bin/python3
 # -*- coding: utf-8 -*-
-# display_job_tree.py
+# web_interface.py
 
-"""
-Display the hierarchy of jobs in the database
-"""
-
+from os import path as os_path
+from flask import Flask, render_template, url_for
 import argparse
-import logging
-import os
+import datetime
 import time
 
-from typing import Optional
+from typing import Dict, List, Optional
 
 from plato_wp36 import settings, task_database
 
+# Instantiate flask http server
+app = Flask(__name__)
 
-def display_job_tree(job_name: Optional[str] = None, status: str = 'any'):
+
+def fetch_job_tree(job_name: Optional[str] = None, status: str = 'any'):
     """
-    Display the hierarchy of jobs in the database.
+    Fetch the hierarchy of jobs in the database.
 
     :return:
-        None
+        List[Dict]
     """
+
+    output: List[Dict] = []
 
     # Fetch testbench settings
     s = settings.Settings()
@@ -91,16 +93,28 @@ WHERE {constraint} ORDER BY taskId;
                 for level, parent in enumerate(parents):
                     if not parent['shown']:
                         parent['shown'] = True
-                        print('{indent}{job_name}/{task_name} ({id} - {w}/{r}/{s}/{d})'.format(
-                            indent=" | " * level,
-                            job_name=parent['job_name'],
-                            task_name=parent['task']['taskName'],
-                            id=parent['task']['taskId'],
-                            w=parent['task']['runs_queued'],
-                            r=parent['task']['runs_running'],
-                            s=parent['task']['runs_stalled'],
-                            d=parent['task']['runs_done']
-                        ))
+
+                        html_class = 'waiting'
+                        if parent['task']['runs_done'] > 0:
+                            html_class = 'done'
+                        elif parent['task']['runs_running'] > 0:
+                            html_class = 'running'
+                        elif parent['task']['runs_stalled'] > 0:
+                            html_class = 'stalled'
+                        elif parent['task']['runs_queued'] > 0:
+                            html_class = 'queued'
+
+                        output.append({
+                            'indent': " &rarr; " * level,
+                            'job_name': parent['job_name'],
+                            'task_name': parent['task']['taskName'],
+                            'class': html_class,
+                            'id': parent['task']['taskId'],
+                            'w': parent['task']['runs_queued'],
+                            'r': parent['task']['runs_running'],
+                            's': parent['task']['runs_stalled'],
+                            'd': parent['task']['runs_done']
+                        })
 
             # Search for child tasks
             search_children(parent_id=item['taskId'])
@@ -108,38 +122,42 @@ WHERE {constraint} ORDER BY taskId;
             # Pop this task from the hierarchy
             parents.pop()
 
-    # Display job tree
+    # Fetch job tree
     search_children()
 
     # Commit database
     task_db.commit()
     task_db.close_db()
 
+    # Return results
+    return output
+
+
+# Index of all the tasks in the database
+@app.route("/")
+def task_index():
+    # Fetch a list of all the tasks in the database
+    task_list = fetch_job_tree()
+
+    # Render list of SpectrumLibraries into HTML
+    return render_template('index.html', task_table=task_list)
+
 
 if __name__ == "__main__":
-    # Read command-line arguments
+    # Read input parameters
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--job-name', default=None, type=str, dest='job_name',
-                        help='Display jobs with a given name')
-    parser.add_argument('--status', default='any', type=str, dest='status',
-                        choices=['any', 'waiting', 'queued', 'running', 'stalled', 'done'],
-                        help='Display only jobs with a particular status')
+    parser.add_argument('--public',
+                        required=False,
+                        action='store_true',
+                        dest="public",
+                        help="Make this python/flask instance publicly visible on the network.")
+    parser.add_argument('--private',
+                        required=False,
+                        action='store_false',
+                        dest="public",
+                        help="Make this python/flask instance only visible on localhost (default).")
+    parser.set_defaults(public=True)
     args = parser.parse_args()
 
-    # Fetch testbench settings
-    s = settings.Settings()
-
-    # Set up logging
-    log_file_path = os.path.join(s.settings['dataPath'], 'plato_wp36.log')
-    logging.basicConfig(level=logging.INFO,
-                        format='[%(asctime)s] %(levelname)s:%(filename)s:%(message)s',
-                        datefmt='%d/%m/%Y %H:%M:%S',
-                        handlers=[
-                            logging.FileHandler(log_file_path),
-                            logging.StreamHandler()
-                        ])
-    logger = logging.getLogger(__name__)
-    logger.info(__doc__.strip())
-
-    # Display job tree
-    display_job_tree(job_name=args.job_name, status=args.status)
+    # Start web interface
+    app.run(host="0.0.0.0" if args.public else "127.0.0.1")

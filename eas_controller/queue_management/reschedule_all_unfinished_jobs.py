@@ -28,14 +28,15 @@ def schedule_jobs():
     message_bus = task_queues.TaskQueue()
 
     # Fetch list of all the tasks to schedule
-    # This is all tasks which do not have a scheduling attempt which has already passed QC, and which also do
-    # not require any file products which have not passed QC.
+    # This is all tasks which do not have a scheduling attempt which has already completed without error, and which
+    # also do not require any file products which have not passed QC.
     task_db.conn.execute("""
 SELECT t.taskId, ett.taskName
 FROM eas_task t
 INNER JOIN eas_task_types ett on t.taskTypeId = ett.taskTypeId
 WHERE
-  NOT EXISTS (SELECT 1 FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND allProductsPassedQc)
+  NOT EXISTS (SELECT 1 FROM eas_scheduling_attempt x
+              WHERE x.taskId = t.taskId AND x.endTime IS NOT NULL AND NOT x.errorFail)
     AND
   NOT EXISTS (SELECT 1 FROM eas_task_input y INNER JOIN eas_product z on y.inputId = z.productId
               WHERE y.taskId = t.taskId AND

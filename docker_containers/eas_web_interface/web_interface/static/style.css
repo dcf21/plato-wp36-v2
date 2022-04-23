@@ -1,0 +1,81 @@
+.mainpage {
+    padding-top: 54px;
+}
+
+body {
+    color: #222;
+}
+
+h1 {
+    margin: 15px 0 10px 0;
+    padding-top: 5px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #c0c0c0;
+    text-align: left;
+    font-size: 25px;
+    font-weight: normal;
+    color: #777777;
+}
+
+h4 {
+    padding: 0;
+    margin: 25px 0;
+    color: #888;
+    font-size: 16px;
+    font-weight: normal;
+}
+
+kbd {
+    background: none;
+    color: #222;
+}
+
+td {
+    padding: 2px;
+}
+
+thead {
+    font-weight: bold;
+}
+
+table.greycells td {
+    background-color: #e8e8e8;
+    padding: 5px;
+}
+
+table.stripy thead {
+    font-weight: bold;
+    background-color: #ffffff;
+    text-align: center;
+}
+
+table.stripy tbody tr:nth-child( odd) {
+    background-color: #e8e8e8;
+}
+
+table.bordered {
+    border: 2px solid #888888;
+    border-collapse: collapse;
+}
+
+table.bordered thead td {
+    border: 1px solid #888888;
+}
+
+table.bordered td {
+    border-left: 1px solid #888888;
+    border-right: 1px solid #888888;
+    border-top: 0;
+    border-bottom: 0;
+    padding: 8px 6px;
+}
+
+table.bordered_slim td {
+    padding: 2px 6px;
+}
+
+.item_done { background-color: #a0ffa0; }
+.item_running { background-color: #ffa0ff; }
+.item_stalled { background-color: #ff8080; }
+.item_queued { background-color: #ffff80; }
+.item_waiting { background-color: #808080; }

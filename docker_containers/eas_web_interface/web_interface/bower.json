@@ -1,0 +1,22 @@
+{
+  "name": "eas_web_interface",
+  "version": "1.0.0",
+  "authors": [
+    "Dominic Ford <dcf21@ast.cam.ac.uk>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/dcf21/plato-wp36-v2",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "static/vendor",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "4.0.0-alpha.2",
+    "jquery": "~1.11.3",
+    "font-awesome": "fontawesome#^4.6.1"
+  }
+}

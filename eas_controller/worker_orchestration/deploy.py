@@ -20,7 +20,8 @@ def deploy_all(namespace: str):
 
     # List of components in the order in which we create them
     components = ["input-pv", "input-pvc", "output-pv", "output-pvc", "mysql-pv-minikube", "mysql-pvc-minikube",
-                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service", "eas-debugging"]
+                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service", "eas-debugging",
+                  "web-interface", "web-interface-service"]
 
     # Create components in order
     for item in components:

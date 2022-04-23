@@ -8,10 +8,12 @@ data/datadir_output
 data/datadir_local
 
 # Transit decection codes which are non-public
-docker_containers/worker_dst/asalto26.5.tar.gz
-docker_containers/worker_dst/asalto27.tar.gz
-docker_containers/worker_dst/asalto29.tgz
-docker_containers/worker_dst/juan.tar.gz
+/docker_containers/worker_dst/asalto26.5.tar.gz
+/docker_containers/worker_dst/asalto27.tar.gz
+/docker_containers/worker_dst/asalto29.tgz
+/docker_containers/worker_dst/juan.tar.gz
+
+/docker_containers/eas_web_interface/web_interface/static/vendor
 
 # pycharm
 .idea
