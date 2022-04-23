@@ -1,0 +1,34 @@
+{% extends "page.html" %}
+{% block title %}File explorer: Directories{% endblock %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<h1>File explorer: Directories</h1>
+
+<div class="alert alert-info" role="alert">
+    File explorer: Directories
+</div>
+
+<table class="library_list bordered bordered_compact">
+    <tbody>
+    {% for item in item_list %}
+    <tr>
+        <td>
+            <a href="/files/{{ item.name }}">
+                {{ item.name }}
+            </a>
+        </td>
+    </tr>
+    {% else %}
+    <tr>
+        <td>
+            There are no directories currently in the database.
+        </td>
+        <td>
+
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

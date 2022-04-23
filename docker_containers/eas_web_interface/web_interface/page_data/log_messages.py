@@ -39,7 +39,7 @@ def fetch_log_messages(attempt_id: Optional[int] = None,
     if min_severity is not None:
         constraints.append("l.severity >= {:d}".format(min_severity))
 
-    # Search for all tasks with a given parent
+    # Search for all matching log messages
     task_db.conn.execute("""
 SELECT l.timestamp, l.generatedByTaskExecution, l.severity, l.message
 FROM eas_log_messages l

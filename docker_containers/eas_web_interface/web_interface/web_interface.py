@@ -6,7 +6,7 @@
 from flask import Flask, render_template, url_for
 import argparse
 
-from page_data import task_tree, log_messages
+from page_data import file_explorer, task_tree, log_messages
 
 # Instantiate flask http server
 app = Flask(__name__)
@@ -18,7 +18,7 @@ def task_index():
     # Fetch a list of all the tasks in the database
     task_list = task_tree.fetch_job_tree()
 
-    # Render list of SpectrumLibraries into HTML
+    # Render list of tasks into HTML
     return render_template('index.html', task_table=task_list)
 
 
@@ -28,8 +28,28 @@ def task_info(taskId):
     # Fetch a list of all the log messages in the database
     log_list = log_messages.fetch_log_messages(task_id=int(taskId))
 
-    # Render list of SpectrumLibraries into HTML
+    # Render task information into HTML
     return render_template('task_info.html', log_table=log_list)
+
+
+# Index of all the file directories in the database
+@app.route("/directories")
+def directory_index():
+    # Fetch a list of all the directories in the database
+    directory_list = file_explorer.fetch_directory_list()
+
+    # Render list of directories into HTML
+    return render_template('directories.html', item_list=directory_list)
+
+
+# Index of all the file directories in the database
+@app.route("/files/<directory>", methods=("GET", "POST"))
+def file_index(directory):
+    # Fetch a list of all the files in the directory
+    file_list = file_explorer.fetch_file_list(directory=directory)
+
+    # Render list of files into HTML
+    return render_template('files.html', item_list=file_list)
 
 
 # Index of all log messages in the database
@@ -38,7 +58,7 @@ def log_index():
     # Fetch a list of all the log messages in the database
     log_list = log_messages.fetch_log_messages()
 
-    # Render list of SpectrumLibraries into HTML
+    # Render list of log messages into HTML
     return render_template('logs.html', log_table=log_list)
 
 
