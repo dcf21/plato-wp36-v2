@@ -74,8 +74,16 @@ table.bordered_slim td {
     padding: 2px 6px;
 }
 
+table.bordered_compact td {
+    padding: 0 6px;
+}
+
 .item_done { background-color: #a0ffa0; }
 .item_running { background-color: #ffa0ff; }
 .item_stalled { background-color: #ff8080; }
 .item_queued { background-color: #ffff80; }
 .item_waiting { background-color: #808080; }
+
+.log_item_info { background-color: #a0ffa0; }
+.log_item_warning { background-color: #ffe0a0; }
+.log_item_error { background-color: #ff8080; }

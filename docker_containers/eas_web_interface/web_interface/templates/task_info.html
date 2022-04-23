@@ -1,0 +1,39 @@
+{% extends "page.html" %}
+{% block title %}Pipeline task information{% endblock %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<h1>Pipeline task information</h1>
+
+<div class="alert alert-info" role="alert">
+    Showing task logs
+</div>
+
+<table class="library_list bordered bordered_compact">
+    <thead>
+    <tr>
+        <td>Task id</td>
+        <td>Timestamp</td>
+        <td>Message</td>
+    </tr>
+    </thead>
+    <tbody>
+    {% for log_item in log_table %}
+    <tr class="log_item_{{log_item.class}}">
+        <td>{{ log_item.attempt_id }}</td>
+        <td style="white-space: nowrap">{{ log_item.time }}</td>
+        <td><pre style="font-size: 12px; margin-bottom:0;">{{ log_item.message }}</pre></td>
+    </tr>
+    {% else %}
+    <tr>
+        <td>
+            There are no log messages currently in the database.
+        </td>
+        <td>
+
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
