@@ -4,6 +4,7 @@ FROM plato/eas_base:v1
 # Copy source code into the Docker container
 WORKDIR /plato-wp36-v2/docker_containers/eas_worker_bls_kovacs
 ADD build build
+ADD python_modules python_modules
 ADD task_implementations task_implementations
 ADD task_qc_implementations task_qc_implementations
 

@@ -43,8 +43,8 @@ def fetch_log_messages(attempt_id: Optional[int] = None,
     task_db.conn.execute("""
 SELECT l.timestamp, l.generatedByTaskExecution, l.severity, l.message
 FROM eas_log_messages l
-INNER JOIN eas_scheduling_attempt esa on l.generatedByTaskExecution = esa.schedulingAttemptId
-INNER JOIN eas_task et on esa.taskId = et.taskId
+LEFT JOIN eas_scheduling_attempt esa on l.generatedByTaskExecution = esa.schedulingAttemptId
+LEFT JOIN eas_task et on esa.taskId = et.taskId
 WHERE {constraint}
 ORDER BY generatedByTaskExecution, timestamp;
 """.format(constraint=" AND ".join(constraints)))

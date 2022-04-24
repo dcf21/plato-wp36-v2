@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plato-bls-reference
+spec:
+  selector:
+    matchLabels:
+      app: plato-bls-reference
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: plato-bls-reference
+    spec:
+      containers:
+        - image: plato/eas_worker_bls_reference:v1
+          name: plato
+          command: [ './launch_service_mode.py' ]
+          args: [  ]
+          volumeMounts:
+            - name: output-persistent-storage
+              mountPath: /plato-wp36-v2/data/datadir_output
+            - name: input-persistent-storage
+              mountPath: /plato-wp36-v2/data/datadir_input
+      volumes:
+        - name: output-persistent-storage
+          persistentVolumeClaim:
+            claimName: output-pv-claim
+        - name: input-persistent-storage
+          persistentVolumeClaim:
+            claimName: input-pv-claim

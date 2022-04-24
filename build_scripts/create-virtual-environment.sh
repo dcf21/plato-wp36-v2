@@ -30,3 +30,10 @@ ${venv_dir}/bin/pip install --editable \
 ${venv_dir}/bin/pip install --editable \
     ${cwd}/../docker_containers/eas_worker_synthesis_psls_batman/python_modules/eas_batman_wrapper \
     --no-binary :all:
+
+# Install TDA wrappers
+for tda in bls_kovacs bls_reference dst_v26 dst_v29 exotrans qats tls
+do
+  ${venv_dir}/bin/pip install --editable \
+      ${cwd}/../docker_containers/eas_worker_${tda}/python_modules/eas_${tda}_wrapper --no-binary :all:
+done

@@ -16,10 +16,16 @@ import sys
 def delete_all(namespace: str):
     # List of components in the order in which we create them
     components = ["input-pv", "input-pvc", "output-pv", "output-pvc", "mysql-pv-minikube", "mysql-pvc-minikube",
-                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service", "eas-debugging"]
+                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service", "eas-debugging",
+                  "web-interface", "web-interface-service"]
 
     # Delete components in the opposite order to which they are created
     for item in reversed(components):
+        # Do not restart input/output persistent volumes
+        if item.startswith("input") or item.startswith("output"):
+            continue
+
+        # Delete all other items
         delete_item(name=item, namespace=namespace)
 
 

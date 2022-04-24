@@ -14,6 +14,7 @@ COPY src/Makefile.asalto27.patch Makefile.patch
 # Copy source code into the Docker container
 WORKDIR /plato-wp36-v2/docker_containers/eas_worker_dst_v26/
 ADD build build
+ADD python_modules python_modules
 ADD task_implementations task_implementations
 ADD task_qc_implementations task_qc_implementations
 

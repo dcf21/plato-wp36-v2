@@ -68,9 +68,9 @@ if __name__ == "__main__":
 
     # Default list of all Docker containers to build
     if args.containers is None:
-        containers = glob.glob(os.path.join(path_to_containers, "eas_*"))
+        containers = sorted(glob.glob(os.path.join(path_to_containers, "eas_*")))
     else:
-        containers = [os.path.join(path_to_containers, item) for item in args.containers]
+        containers = sorted([os.path.join(path_to_containers, item) for item in args.containers])
 
     # Fetch testbench settings
     settings = settings.Settings()
