@@ -1,10 +1,10 @@
-# minikube setup instuctions
+# Installing the EAS pipeline via minikube
 
 The prerequisites to deploy the test-bench via minikube are as follows:
 
 1. **Install minikube**
 
-   If you need to install minikube, this can be done on a Ubuntu machine as follows. Note that you should install Docker via aptitude, not via snap, if you subsequently want to use minikube:
+   If you need to install minikube, this can be done on a Ubuntu machine as follows. Under Ubuntu, you should install Docker via the `docker-ce` aptitude package. Don't be tempted to install Docker via snap if you subsequently want to use minikube, otherwise you'll run into permissions issues.
 
     ```
     # Install Docker
@@ -34,32 +34,46 @@ The prerequisites to deploy the test-bench via minikube are as follows:
     minikube start --cpus=12 --memory='9g' --mount=true
     ```
 
-   You may wish to tweak the number of CPU cores and the amount of RAM made available to the Kubernetes cluster. Under MacOS, you should also specify:
+   The command-line options really matter here. The memory you allocate to minikube will cease to be available on your host machine, so don't allocate too much, but you need at least 4-8 GB if you want to synthesise two-year lightcurves at 25-second cadence.
+
+    Under MacOS, it is essential that you specify:
 
    ```
    --driver=virtualbox
    ```
 
-   (because services aren't accessible from the host machine if it uses the Docker driver)
+   By default `minikube` will use the `docker` driver under MacOS, but this makes it impossible to access services from the host machine. This is a killer, because it means EAS Control can't access the database or job queue,
 
-4. **Mount data directories**
+3. **Mount data directories**
 
-   The Kubernetes cluster needs access to the directories on the host machine containing the input lightcurves and where it should write the
-   output from the transit-detection codes. These two commands to mount these directories into the Kubernets cluster each need keep running, so execute them in two separate `screen` sessions:
+   If you want your intermediate file products and SQL database to be persistent when you shut down the Kubernetes cluster, they need to be stored on persistent storage. There are two components to this. Firstly the Kubernetes resource descriptors need to create persistent volumes to store the data on - which is already configured for you by the YAML files in `eas_controller/kubernetes_yaml`. However, because `minikube` runs in a virtual machine, you also need to tell minikube to store these persistent volumes on the host machine, and not on disks in the VM, which will get wiped when the VM is deleted.
+
+    To achieve this, you need to run two commands to mount directories from your host machine into the minikube VM. These commands each need keep running, so execute them in two separate `screen` sessions:
 
     ```
     minikube mount --uid 999 ../data/datadir_output/:/mnt/datadir_output/
     minikube mount --uid 999 ../data/datadir_input/:/mnt/datadir_input/
     ```
    
+4. **Create a Python virtual environment**
+
+   Build a Python virtual environment in which to run all the EAS Control scripts on your host machine:
+   ```
+   cd build_scripts
+   ./create-virtual-environment.sh
+   ```
+   The resulting Python environment is built in `data/datadir_local`. All of the EAS Control Python scripts include shebang lines which automatically use this virtual environment.
+
 5. **Build the Docker containers**
 
    The Docker containers that comprise the EAS pipeline need to be built within the minikube Docker environment (which is a virtual machine):
 
    ```
    cd build_scripts
-   ./build-docker-containers.sh
+   ./build-docker-containers.py --target minikube
    ```
+   
+   This Python script can also be used to build the Docker containers within the local Docker environment on your host machine, if you wish to push them to an image repository, by specifying the `--target local` option.
 
 6. **Deploy the test-bench Docker containers within Kubernetes**
 
@@ -79,14 +93,14 @@ The prerequisites to deploy the test-bench via minikube are as follows:
 
 8. **Initialise the databases**
 
-   First you need to find out the port and host on which minikube is exposing the MySQL and RabbitMQ services on the host machine:
+   Before you can connect to the database, you need to find out the port and host on which minikube is exposing the MySQL and RabbitMQ services on the host machine. There is a convenience function for doing this as follows:
 
    ```
    minikube service --url mysql -n=plato
    minikube service --url rabbitmq-service -n=plato
    ```
    
-   Then initialise the databases:
+   Then initialise the databases using commands like this:
 
    ```
    cd eas_controller/database_initialisation
@@ -96,19 +110,22 @@ The prerequisites to deploy the test-bench via minikube are as follows:
 
 9. **Restart**
 
-   To restart the test-bench, for example after changing the code:
+   To restart the prototype, for example after changing the code:
 
     ```
-    ./restart.sh
+    cd ../eas_controller/worker_orchestration
+    ./restart_workers.sh
     ```
 
-10. **Stop the test-bench**
+10. **Stop the prototype**
 
     To close the test-bench down:
 
      ```
-     ./stop.sh
+     ./stop.py
      ```
+    
+     This stops all of the running containers and services, but does not delete the persistent storage volumes.
 
 11. **Stop minikube**
 
@@ -116,6 +133,11 @@ The prerequisites to deploy the test-bench via minikube are as follows:
 
      ```
      minikube stop
+     ```
+
+     If you wish to totally destroy the minikube VM, in preparation for changing your minikube configuration:    
+
+     ```
      minikube delete
      ```
 
@@ -124,7 +146,7 @@ The prerequisites to deploy the test-bench via minikube are as follows:
     To clear out the output results and start again afresh:
 
      ```
-     cd ../datadir_output/
+     cd data/datadir_output/
      ./wipe.sh
      ```
 

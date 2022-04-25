@@ -1,18 +1,18 @@
 # PLATO WP36 EAS pipeline prototype
 
-The code in this repository is a fully functional prototype of the parallel-computing environment in which we propose to run the PLATO WP36 EAS pipeline.
+The code in this repository is a fully-functional prototype of the parallel-computing environment in which we propose to run the PLATO WP36 EAS pipeline.
 
-The pipeline runs in a series of Docker containers within a Kubernetes environment:
+The prototype pipeline runs in a series of Docker containers within a Kubernetes environment:
 
 ![The prototype pipeline structure](docs/code_structure.jpg)
 
 The key components are as follows:
 
-* An SQL database (currently MySQL) which holds an index of all of the tasks the pipeline needs to perform, all of the intermediate file products that each task produces, the logs and errors produces by each task, and the dependencies of each task on input file products.
-* A message queue (currently RabbitMQ) which holds a job queue of tasks which are ready to be executed. The worker nodes listen to these message queues in order to receive work to do.
-* An EAS control module which sits outside the Kubernetes environment, and continually monitors the task database looking for jobs whose input dependencies have been created and have passed QC. When tasks are ready to run, they are fed into the job queues. The EAS control module also deals with the horizontal scaling of the cluster, changing the number of deployed worker nodes capable of running different tasks, based on demand.
-* Worker nodes, all derived from a core `eas_base` Docker container, which provides the core code for listening to the message queues and communicating with other components of the EAS system. Most science codes are run in their own separate Docker containers, allowing them to sit up their own custom software environments.
-* A web interface (not shown above, based on Python/Flask) allows monitoring of the pipeline's state, and easy access to any error messages, including Python tracebacks from malfunctioning tasks.
+* An SQL database (currently MySQL) which holds an index of all the tasks that the pipeline has been requested to perform; all the intermediate file products that each task produces; the logs and errors produced by each task; and the dependencies of each task on input file products.
+* A message queue (currently RabbitMQ) which holds a job queue. This is populated by EAS Control with tasks which are ready to be executed (i.e. all of their input dependencies have been met). The worker nodes listen to these message queues in order to receive work to do.
+* An EAS control module which resides outside the Kubernetes environment, and continually monitors the task database looking for jobs whose input dependencies have been created and have passed QC. When tasks are ready to run, they are fed into the job queues. The EAS control module also manages the horizontal scaling of the cluster, changing the number of deployed worker nodes capable of running different tasks, based on demand.
+* Worker nodes, all derived from a core `eas_base` Docker container, which perform various different types of task. The `eas_base` container provides core code for listening to the message queues and communicating with other components of the EAS system. On top of this core code, science codes can install their own custom software environments in which to run.
+* A web interface (not shown above, based on Python/Flask) allows monitoring of the pipeline's state and easy access to any error messages, including Python tracebacks from malfunctioning tasks.
 
 ### Building the code
 
@@ -21,8 +21,7 @@ Kubernetes environment. The communications between the containers and with the
 outside world is defined via Kubernetes services.
 
 The simplest way to run the pipeline on a single laptop or desktop computer is
-by using `minikube`, which provides a simulation environment which is almost
-identical to how Kubernetes runs on large clusters.
+by using `minikube`, which is a minimal Kubernetes implementation which nonetheless provides a test environment which is almost identical to Kubernetes on large clusters.
 
 Instructions on how to deploy the pipeline can be found in `install.md`.
 
@@ -42,10 +41,10 @@ to build more complex processes:
 * Importing lightcurves from external sources, including the light-curve stitching group (LCSG) or from the WP38 PLATO-DB prototype.
 * Multiplying lightcurves together to inject transits.
 * Searching for transits with a range of transit-detection codes, including: BLS, TLS, QATS, (support for DST and EXOTRANS is on the way).
-* Lightcurve diagnostics - verifying that lightcurves are readable.
+* Lightcurve diagnostics - verifying that lightcurves contain valid data.
 * QC - all tasks are automatically followed-up by a QC task to test whether the output is valid.
 
-Currently all jobs are specified via JSON descriptions, of which there are several examples in the `demo_jobs` directory. This may or may not be a good format to continue using - JSON editors are are plentiful, but the format is rather verbose and full of punctuation.
+Currently, pipeline jobs are specified via JSON descriptions, of which there are several examples in the `demo_jobs` directory. This may or may not be a good format to continue using - JSON editors are plentiful, but the format is rather verbose and full of punctuation. Perhaps YAML would be a better choice (we're not tied to any particular format...)
 
 For example, a request to synthesise a lightcurve for the Earth using PSLS would look as follows:
 
@@ -64,11 +63,11 @@ For example, a request to synthesise a lightcurve for the Earth using PSLS would
   }
 ```
 
-More complex chains of tasks can easily be built by sequencing operations together. Loops, such as for loops and while loops, can be executed using special tasks which perform iterations just like any other task.
+More complex chains of tasks can easily be built by sequencing operations together into an execution chain (see. `demo_jobs` for some examples). Loops, such as for loops and while loops, can be executed using special tasks which perform iterations just like any other task.
 
 ### Directory structure
 
-The code in this repository is arranged as follows:
+The code in this repository is arranged as follows. More information about the contents of each directory can be found in README files in each directory.
 
 * `build_scripts` -- Convenience scripts which build the Docker containers containing the pipeline prototype.
 
