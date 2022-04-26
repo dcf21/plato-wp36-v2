@@ -1,14 +1,21 @@
-# PLATO EAS core test-bench code
+# PLATO WP36 EAS pipeline core Docker container
 
-This directory contains the core source code for the PLATO EAS test-bench signalling and control. This directory is the root directory of the code hierarchy which is copied into the Docker containers in which the test-bench runs.
+The Docker container in this directory contains all the core code for the workers in the PLATO WP36 EAS prototype pipeline.
 
-The directory structure is as follows:
+All containers which run specific science codes within the pipeline should be derived from this container, which provides the communications and signalling code used to communicate with other parts of the pipeline.
 
-* `python_modules` -- Python modules which contain most of the code of the test-bench. These modules are as follows:
+The directory structure of the core container is as follows.:
 
-  * `plato_wp36` -- utility functions used by the test-bench. These include reading/writing light curves in text/FITS formats, and measuring the run time of operations. It also includes wrappers for each transit-detection code, so that they can all be called via a common Python interface.
+* `python_modules` -- This contains the source-code for the `plato_wp36` module, which provides the Python API for interacting with the task database and retrieving/writing file products. All interaction with other parts of the EAS system should be done using this API, as the implementation details may be subject to change at any time.
 
-  * `eas_batman_wrapper` -- A Python wrapper for Batman, allowing transit signals to be synthesized with a homogenoeous interface by both Batman and PSLS.
-    
-  * `eas_psls_wrapper` -- A Python wrapper for PSLS, allowing transit signals to be synthesized with a homogenoeous interface by both Batman and PSLS.
+* `task_type_registry.xml` -- This XML file provides a complete registry of all of the types of task that the pipeline is able to run, and the names of the Docker containers which are able to run them. This registry is used by EAS Control, when a new task is scheduled, to establish which Docker containers need to be running on the cluster in order for the task to be executed.
 
+* `launch_worker` -- The script in this directory is the main entry point for worker nodes. It connects to the message bus and listens for work to do. It uses the name of the Docker container it is running within to establish (from the task type registry) which tasks this container is capable of running, and hence which job queues it should listen to.
+
+* `task_implementations` -- This directory contains the Python scripts which get executed for each task that the pipeline is capable of running. When building derived containers to run new science codes, an additional script should be placed in this directory to run the new task. The scripts are deliberately quite concise, to avoid too much code duplication. The Python decorator `@task_execution.eas_pipeline_task` does the magic of running the `task_handler` function for each task in a controlled environment, with all Python logging messages transmitted to the EAS database, and with access to the arguments of the task to be performed given via a Python `Task` object. In the event of a Python traceback, this is also intercepted and transmitted to the EAS database.
+
+* `task_qc_implementations` -- Every task in the `task_implementations` directory must also have a corresponding script in this directory which performs QC after the task has been executed. This sets a flag on each file product, and on the task as a whole, indicating whether its output is valid.
+
+* `configuration` -- The configuration file in this directory sets global configuration options for the worker nodes.
+
+* `worker_diagnostics` -- The shell scripts in this directory are useful when debugging a worker container by starting a bash shell within the container.
