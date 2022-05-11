@@ -349,6 +349,7 @@ class TaskExecutionAttempt:
         self.run_time_cpu_inc_children: Optional[float] = None
         self.metadata: Dict[str, MetadataItem] = {}
         self.output_files: Dict[str, FileProductVersion] = {}
+        self.task_object: Optional[Task] = None
 
         # Configure task execution attempt
         self.configure(**kwargs)
@@ -364,7 +365,8 @@ class TaskExecutionAttempt:
                   run_time_cpu: Optional[float] = None,
                   run_time_cpu_inc_children: Optional[float] = None,
                   metadata: Optional[Dict[str, MetadataItem]] = None,
-                  output_files: Optional[Dict[str, FileProductVersion]] = None):
+                  output_files: Optional[Dict[str, FileProductVersion]] = None,
+                  task_object=None):  # TaskExecutionAttempt object
         """
         :param attempt_id:
             The integer ID of this task execution attempt.
@@ -396,6 +398,8 @@ class TaskExecutionAttempt:
         :param output_files:
             A dictionary of the output file products from this execution attempt, represented by
             FileProductVersion objects.
+        :param task_object:
+            The <Task> object describing the task that this execution attempt is to run.
         :return:
             None
         """
@@ -431,6 +435,8 @@ class TaskExecutionAttempt:
             # Merge new output files with existing ones
             for semantic_type, item in output_files.items():
                 self.output_files[semantic_type] = item
+        if task_object is not None:
+            self.task_object = task_object
 
     def set_metadata(self, keyword: str, value):
         """
@@ -469,7 +475,8 @@ class TaskExecutionAttempt:
             "run_time_cpu": self.run_time_cpu,
             "run_time_cpu_inc_children": self.run_time_cpu_inc_children,
             "metadata": [item.as_dict() for item in self.metadata.values()],
-            "output_files": [(keyword, item.as_dict()) for keyword, item in self.output_files.items()]
+            "output_files": [(keyword, item.as_dict()) for keyword, item in self.output_files.items()],
+            "task_object": self.task_object.as_dict()
         }
 
     @classmethod
@@ -495,7 +502,8 @@ class TaskExecutionAttempt:
             error_text=d['error_text'],
             run_time_wall_clock=d['run_time_wall_clock'],
             run_time_cpu=d['run_time_cpu'],
-            run_time_cpu_inc_children=d['run_time_cpu_inc_children']
+            run_time_cpu_inc_children=d['run_time_cpu_inc_children'],
+            task_object=Task.from_dict(d['task_object'])
         )
 
         # Populate metadata
@@ -529,6 +537,9 @@ class Task:
         self.execution_attempts_incomplete: Dict[int, TaskExecutionAttempt] = {}
         self.metadata: Dict[str, MetadataItem] = {}
         self.output_files: Dict[str, FileProduct] = {}
+
+        # Holder for the JSON structure describing the task to be done
+        self.task_description = None
 
         # Configure task
         self.configure(**kwargs)

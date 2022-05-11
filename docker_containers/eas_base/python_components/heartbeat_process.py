@@ -56,23 +56,17 @@ def start_heartbeat(parent_pid: int, task_attempt_id: int, heartbeat_cadence: in
                 sys.exit(0)
 
             # Open connection to the database
-            db_connector = connect_db.DatabaseConnector()
-            db, conn = db_connector.connect_db()
+            with connect_db.DatabaseConnector().connect_db() as db_handle:
+                # Log heartbeat
+                logging.info("Heartbeat for <{}>".format(task_attempt_id))
 
-            # Log heartbeat
-            logging.info("Heartbeat for <{}>".format(task_attempt_id))
-
-            # Send heartbeat to the database
-            conn.execute("""
+                # Send heartbeat to the database
+                db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
 SET latestHeartbeat=%s
 WHERE schedulingAttemptId=%s;
 """, (time.time(), task_attempt_id))
 
-            # Commit changes to the database
-            db.commit()
-            db.close()
-            del db, conn, db_connector
         except Exception:
             error_message = traceback.format_exc()
             logging.error(error_message)

@@ -14,7 +14,7 @@ import math
 
 import numpy as np
 
-from typing import Dict, Optional
+from typing import Dict, Optional, IO
 
 
 class Lightcurve:
@@ -237,54 +237,25 @@ class LightcurveArbitraryRaster(Lightcurve):
         return self.fluxes
 
     @classmethod
-    def from_file(cls, directory: str, filename: str,
-                  cut_off_time: Optional[float] = None,
-                  execution_id: Optional[int] = None, must_have_passed_qc: bool = True):
+    def from_file(cls, file_handle: IO, file_metadata: Dict, cut_off_time: Optional[float] = None):
         """
         Read a lightcurve from a data file in our lightcurve archive.
 
-        :param filename:
-            The filename of the input data file.
+        :param file_handle:
+            An open file handle connected to the input data file.
+        :param file_metadata:
+            A dictionary of metadata associated with the input file.
         :param cut_off_time:
-            Only read lightcurve up to some cut off time
-        :param directory:
-            The directory in which the lightcurve is stored.
-        :param execution_id:
-            The ID number of the task execution attempt which generated this file product. If None, then
-            we open the latest-dated version of this file product.
-        :param must_have_passed_qc:
-            Boolean flag indicating whether this lightcurve must have passed QC for us to be allowed to open it.
+            Only read lightcurve up to some cut-off time.
         :return:
             A <LightcurveArbitraryRaster> object.
         """
 
-        # Open a connection to the task database
-        task_db = TaskDatabaseConnection()
-
-        # Find out what file product this lightcurve corresponds to
-        product_ids = task_db.file_product_by_filename(directory=directory, filename=filename)
-        assert len(product_ids) > 0, \
-            ("This lightcurve <{}/{}> does not correspond to any file product in the database".
-             format(directory, filename))
-        product_id = product_ids[0]
-
-        # Find out which version of this file we should use
-        version_ids = task_db.file_version_by_product(product_id=product_id, attempt_id=execution_id,
-                                                      must_have_passed_qc=must_have_passed_qc)
-        assert len(version_ids) > 0, \
-            ("No matching lightcurve <{}/{}> found in the database".
-             format(execution_id, product_id))
-        version_id = version_ids[-1]
-
-        # Fetch file product version record
-        file_info = task_db.file_version_lookup(product_version_id=version_id)
-        file_location = task_db.file_version_path_for_id(product_version_id=version_id, full_path=True)
-
         # Read file format of lightcurve from metadata
-        assert 'binary' in file_info.metadata
-        binary = bool(file_info.metadata['binary'])
-        assert 'gzipped' in file_info.metadata
-        gzipped = bool(file_info.metadata['gzipped'])
+        assert 'binary' in file_metadata
+        binary = bool(file_metadata['binary'])
+        assert 'gzipped' in file_metadata
+        gzipped = bool(file_metadata['gzipped'])
 
         # Initialise structures to hold lightcurve data
         times = []  # Times stored as days, but data files contain seconds
@@ -292,44 +263,45 @@ class LightcurveArbitraryRaster(Lightcurve):
         uncertainties = []
         flags = []
 
-        # Look up file open function
-        file_opener = gzip.open if gzipped else open
-
         if binary:
             # Read binary lightcurve file
-            time, flux, flag, uncertainties = np.load(file_location)
+            time, flux, flag, uncertainties = np.load(file=file_handle)
             time /= 86400  # Times stored in seconds; but Lightcurve objects use days
         else:
             # Textual lightcurve: loop over lines of input file
-            with file_opener(file_location, "rt") as file:
-                for line in file:
-                    # Ignore blank lines and comment lines
-                    if len(line) == 0 or line[0] == '#':
-                        continue
+            if gzipped:
+                file = gzip.GzipFile(fileobj=file_handle)
+            else:
+                file = file_handle
 
-                    # Unpack data
-                    words = line.split()
-                    time = float(words[0]) / 86400  # Times stored on disk in seconds; but Lightcurve objects use days
-                    flux = float(words[1])
-                    flag = float(words[2])
-                    uncertainty = float(words[3])
+            for line in file:
+                # Ignore blank lines and comment lines
+                if len(line) == 0 or line[0] == '#':
+                    continue
 
-                    # Check we have not exceeded cut-off time
-                    if cut_off_time is not None and time > cut_off_time:
-                        continue
+                # Unpack data
+                words = line.split()
+                time = float(words[0]) / 86400  # Times stored on disk in seconds; but Lightcurve objects use days
+                flux = float(words[1])
+                flag = float(words[2])
+                uncertainty = float(words[3])
 
-                    # Read three columns of data
-                    times.append(time)
-                    fluxes.append(flux)
-                    flags.append(flag)
-                    uncertainties.append(uncertainty)
+                # Check we have not exceeded cut-off time
+                if cut_off_time is not None and time > cut_off_time:
+                    continue
+
+                # Read three columns of data
+                times.append(time)
+                fluxes.append(flux)
+                flags.append(flag)
+                uncertainties.append(uncertainty)
 
         # Convert into a Lightcurve object
         lightcurve = cls(times=np.asarray(times),
                          fluxes=np.asarray(fluxes),
                          uncertainties=np.asarray(uncertainties),
                          flags=np.asarray(flags),
-                         metadata=file_info.metadata
+                         metadata=file_metadata
                          )
 
         # Return lightcurve

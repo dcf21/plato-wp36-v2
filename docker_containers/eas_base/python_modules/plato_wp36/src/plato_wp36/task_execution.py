@@ -16,14 +16,14 @@ import os
 import sys
 import traceback
 
-from typing import Callable, Dict
+from typing import Callable
 
 from plato_wp36 import logging_database, task_database, task_expression_evaluation
 from plato_wp36 import task_heartbeat, task_objects, task_timer
 
 
 def eas_pipeline_task(
-        task_handler: Callable[[task_database.TaskExecutionAttempt, task_database.Task, Dict], None],
+        task_handler: Callable[[task_database.TaskExecutionAttempt], None],
 
 ):
     """
@@ -68,7 +68,7 @@ def eas_pipeline_task(
 
 def do_pipeline_task(job_id: int,
                      is_qc_task: bool,
-                     task_handler: Callable[[task_database.TaskExecutionAttempt, task_database.Task, Dict], None],
+                     task_handler: Callable[[task_database.TaskExecutionAttempt], None],
                      eas_logger: logging_database.EasLoggingHandler):
     """
     Perform the EAS pipeline task.
@@ -107,56 +107,48 @@ def do_pipeline_task(job_id: int,
             # as otherwise the task scheduler will believe that this task has crashed.
             with task_heartbeat.TaskHeartbeat(task_attempt_id=job_id):
                 # Open a connection to the EasControl task database
-                task_db = task_database.TaskDatabaseConnection()
+                with task_database.TaskDatabaseConnection() as task_db:
+                    # Fetch the task description for the job we are to work on
+                    attempt_info = task_db.execution_attempt_lookup(attempt_id=job_id)
 
-                # Fetch the task description for the job we are to work on
-                attempt_info = task_db.execution_attempt_lookup(attempt_id=job_id)
-                task_info = task_db.task_lookup(task_id=attempt_info.task_id)
+                    # Extract the JSON code describing the task to execute
+                    task_description_json = attempt_info.task_info.metadata.get('task_description', None)
 
-                # Extract the JSON code describing the task to execute
-                task_description_json = task_info.metadata.get('task_description', None)
+                    # Check we have a task description specified
+                    if type(task_description_json) != task_objects.MetadataItem:
+                        raise ValueError("Task does not have a task description supplied in its metadata.")
 
-                # Check we have a task description specified
-                if type(task_description_json) != task_objects.MetadataItem:
-                    raise ValueError("Task does not have a task description supplied in its metadata.")
+                    # Extract task description from JSON
+                    task_description_raw = json.loads(task_description_json.value)
 
-                # Extract task description from JSON
-                task_description_raw = json.loads(task_description_json.value)
+                    # Evaluate any metadata expressions within our task description
+                    expression_evaluator = task_expression_evaluation.TaskExpressionEvaluation(
+                        metadata=attempt_info.task_info.metadata
+                    )
+                    task_description = expression_evaluator.evaluate_in_structure(structure=task_description_raw)
 
-                # Evaluate any metadata expressions within our task description
-                expression_evaluator = task_expression_evaluation.TaskExpressionEvaluation(metadata=task_info.metadata)
-                task_description = expression_evaluator.evaluate_in_structure(structure=task_description_raw)
+                    # Set task description within Task object
+                    attempt_info.task_info.task_description = task_description
 
-                # If an explicit job name is specified in the task description, update the job name of this task
-                if 'job_name' in task_description:
-                    task_info.job_name = task_description['job_name']
+                    # If an explicit job name is specified in the task description, update the job name of this task
+                    if 'job_name' in task_description:
+                        attempt_info.task_info.job_name = task_description['job_name']
 
-                # If an explicit working directory is specified in the task description, update the task descriptor
-                if 'working_directory' in task_description:
-                    task_info.working_directory = task_description['working_directory']
+                    # If an explicit working directory is specified in the task description, update the task descriptor
+                    if 'working_directory' in task_description:
+                        attempt_info.task_info.working_directory = task_description['working_directory']
 
                 # Launch task handler
-                task_handler(attempt_info, task_info, task_description)
-
-                # Close database
-                task_db.commit()
-                task_db.close_db()
-                del task_db
+                task_handler(attempt_info)
 
     except Exception:
         error_message = traceback.format_exc()
         logging.error(error_message)
 
         # Open a connection to the EasControl task database
-        task_db = task_database.TaskDatabaseConnection()
-
-        # Record the failure of this task
-        task_db.execution_attempt_update(attempt_id=job_id, error_fail=True, error_text=error_message)
-
-        # Close database
-        task_db.commit()
-        task_db.close_db()
-        del task_db
+        with task_database.TaskDatabaseConnection() as task_db:
+            # Record the failure of this task
+            task_db.execution_attempt_update(attempt_id=job_id, error_fail=True, error_text=error_message)
 
     # Announce that we've finished running a task
     logging.info("Finished {} attempt <{}> in child process".format(task_type, job_id))

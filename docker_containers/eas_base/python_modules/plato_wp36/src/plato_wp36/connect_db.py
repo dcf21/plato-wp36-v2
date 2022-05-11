@@ -136,6 +136,12 @@ class DatabaseInterface:
         """
         return self.db_cursor.fetchone()
 
+    def lastrowid(self):
+        """
+        Fetch the ID of the last inserted row.
+        """
+        return self.db_cursor.lastrowid
+
 
 class DatabaseInterfaceMySql(DatabaseInterface):
     """

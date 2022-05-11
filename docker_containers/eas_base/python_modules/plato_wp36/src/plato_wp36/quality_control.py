@@ -43,8 +43,9 @@ def transit_detection_quality_control(lc: LightcurveArbitraryRaster, metadata: d
             outcome = "FAIL"
 
     # Return summary results
-    metadata['outcome'] = outcome
-    metadata['target_period'] = target_period
+    output_metadata = {
+        'outcome': outcome,
+        'target_period': target_period
+    }
 
-    # Return results
-    return metadata
+    return output_metadata

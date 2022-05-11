@@ -603,10 +603,10 @@ INSERT INTO eas_product_version
      fileMD5, fileSize, passedQc)
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
 """,
-                          (product_id, generated_by_task_execution, repository_fname,
-                           created_time, modified_time,
-                           file_md5, file_size_bytes, passed_qc))
-        product_version_id = self.conn.lastrowid
+                                           (product_id, generated_by_task_execution, repository_fname,
+                                            created_time, modified_time,
+                                            file_md5, file_size_bytes, passed_qc))
+        product_version_id = self.db_handle.lastrowid
 
         # Physically move file into our file archive
         target_file_directory = os.path.join(self.file_store_path, file_product_obj.directory)
@@ -889,8 +889,9 @@ WHERE productId = %s;
 INSERT INTO eas_product (generatorTask, plannedTime, directoryName, filename, semanticType, mimeType)
 VALUES (%s, %s, %s, %s, %s, %s);
 """,
-                          (generator_task, planned_time, directory, filename, semantic_type_id, mime_type))
-        product_id = self.conn.lastrowid
+                                           (generator_task, planned_time, directory, filename, semantic_type_id,
+                                            mime_type))
+        product_id = self.db_handle.lastrowid
 
         # Register file metadata
         if metadata is not None:
@@ -1002,12 +1003,15 @@ ORDER BY v.productVersionId;
 
         return output
 
-    def execution_attempt_lookup(self, attempt_id: int):
+    def execution_attempt_lookup(self, attempt_id: int, embed_task_object: bool = False):
         """
         Retrieve a TaskExecutionAttempt object representing a task execution attempt in the database
 
-        :param int attempt_id:
+        :param attempt_id:
             The execution attempt ID
+        :param embed_task_object:
+            Boolean flag indicating whether the returned TaskExecutionAttempt object should include a descriptor for
+            its parent task.
         :return:
             A :class:`TaskExecutionAttempt` instance, or None if not found
         """
@@ -1034,6 +1038,12 @@ WHERE schedulingAttemptId = %s;
         # Read scheduling attempt metadata
         metadata = self.metadata_fetch_all(scheduling_attempt_id=result[0]['schedulingAttemptId'])
 
+        # Create Task instance
+        if embed_task_object:
+            task_object = self.task_lookup(task_id=result[0]['taskId'])
+        else:
+            task_object = None
+
         # Build TaskExecutionAttempt instance
         return TaskExecutionAttempt(
             attempt_id=result[0]['schedulingAttemptId'],
@@ -1049,8 +1059,54 @@ WHERE schedulingAttemptId = %s;
             run_time_cpu=result[0]['runTimeCpu'],
             run_time_cpu_inc_children=result[0]['runTimeCpuIncChildren'],
             metadata=metadata,
-            output_files=output_files
+            output_files=output_files,
+            task_object=task_object
         )
+
+    def execution_attempt_register_output(self, execution_attempt: TaskExecutionAttempt, output_name: str,
+                                          file_path: str, file_metadata: dict, preserve: bool = False):
+        """
+        Register an output file product from a task execution attempt into the task database.
+
+        :param execution_attempt:
+            The <TaskExecutionAttempt> describing the task execution which generated this file.
+        :param output_name:
+            The unique semantic type which identifies this output file from this task.
+        :param file_path:
+            The path to where a copy of the output file can be found.
+        :param file_metadata:
+            A dictionary of metadata to associate with this file product.
+        :param preserve:
+            A boolean indicating whether we should preserve the original file at location <file_path> after importing
+            it into the database, or whether it should be deleted once it is in the database.
+        :return:
+            None
+        """
+
+        # Fetch task object
+        task_info: Task = execution_attempt.task_object
+
+        # Fetch task description
+        task_description: Dict = task_info.task_description
+
+        # Fetch filename for this file product
+        directory = task_info.working_directory
+        filename = task_description['outputs'][output_name]
+
+        # Find out what file product this output file corresponds to
+        product_ids = self.file_product_by_filename(directory=directory, filename=filename)
+        assert len(product_ids) > 0, \
+            ("This file product <{}/{}> does not correspond to any file product entry in the database".
+             format(directory, filename))
+        product_id = product_ids[0]
+
+        # Import output file into the task database
+        self.file_version_register(product_id=product_id,
+                                   generated_by_task_execution=execution_attempt.attempt_id,
+                                   file_path_input=file_path,
+                                   preserve=preserve,
+                                   metadata=file_metadata
+                                   )
 
     def execution_attempt_register(self, task_id: Optional[int] = None,
                                    queued_time: Optional[float] = None,
@@ -1073,7 +1129,7 @@ WHERE schedulingAttemptId = %s;
 INSERT INTO eas_scheduling_attempt (taskId, queuedTime)
 VALUES (%s, %s);
 """, (task_id, queued_time))
-        output_id = self.conn.lastrowid
+        output_id = self.db_handle.lastrowid
 
         # Register execution attempt metadata
         if metadata is not None:
@@ -1198,7 +1254,7 @@ UPDATE eas_scheduling_attempt SET runTimeCpuIncChildren=%s WHERE schedulingAttem
 
         # Delete any execution attempts
         self.db_handle.parameterised_query("SELECT schedulingAttemptId FROM eas_scheduling_attempt WHERE taskId = %s;",
-                          (task_id,))
+                                           (task_id,))
         execution_attempts = self.db_handle.fetchall()
 
         for item in execution_attempts:
@@ -1263,6 +1319,52 @@ ORDER BY p.inputId;
 
         return output
 
+    def task_open_file_input(self, task: Task, input_name: str, execution_id: Optional[int] = None,
+                             must_have_passed_qc: bool = True):
+        """
+        Open an input file to a task.
+
+        :param task:
+            The task which is requesting to open one of its input files.
+        :param input_name:
+            The semantic type which identifies the particular input file to this task.
+        :param execution_id:
+            Optional - if set, only open file products generated by a particular execution attempt.
+        :param must_have_passed_qc:
+            If true, only open file products which have passed QC.
+        :return:
+            List [ file handle, file metadata dictionary ]
+        """
+        # Fetch task description
+        task_description: Dict = task.task_description
+
+        # Fetch filename for this file product
+        directory = task.working_directory
+        filename = task_description['outputs'][input_name]
+
+        # Find out what file product this output file corresponds to
+        product_ids = self.file_product_by_filename(directory=directory, filename=filename)
+        assert len(product_ids) > 0, \
+            ("This file product <{}/{}> does not correspond to any file product entry in the database".
+             format(directory, filename))
+        product_id = product_ids[0]
+
+        # Find out which version of this file we should use
+        version_ids = self.file_version_by_product(product_id=product_id, attempt_id=execution_id,
+                                                   must_have_passed_qc=must_have_passed_qc)
+        assert len(version_ids) > 0, \
+            ("No matching input file <{}/{}> found in the database".
+             format(execution_id, product_id))
+        version_id = version_ids[-1]
+
+        # Fetch file product version record
+        file_info = self.file_version_lookup(product_version_id=version_id)
+        file_location = self.file_version_path_for_id(product_version_id=version_id, full_path=True)
+        file_metadata = file_info.metadata
+        file_handle = open(file_location, "r")
+
+        return file_handle, file_metadata
+
     def task_fetch_execution_attempts(self, task_id: int, successful: Optional[bool] = None):
         """
         Retrieve a dictionary of all the attempts to execute a task, indexed by their integer UIDs
@@ -1296,7 +1398,8 @@ ORDER BY s.schedulingAttemptId;
 
         for item in execution_attempts:
             output[item['schedulingAttemptId']] = self.execution_attempt_lookup(
-                attempt_id=item['schedulingAttemptId']
+                attempt_id=item['schedulingAttemptId'],
+                embed_task_object=False
             )
 
         return output
@@ -1401,7 +1504,7 @@ WHERE taskId = %s;
 INSERT INTO eas_task (parentTask, createdTime, taskTypeId, jobName, workingDirectory)
 VALUES (%s, %s, %s, %s, %s);
 """, (parent_id, created_time, task_type_id, job_name, working_directory))
-        output_id = self.conn.lastrowid
+        output_id = self.db_handle.lastrowid
 
         # Register task metadata
         if metadata is not None:
