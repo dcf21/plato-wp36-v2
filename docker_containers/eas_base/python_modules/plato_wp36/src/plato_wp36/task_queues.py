@@ -31,7 +31,7 @@ class TaskQueue:
         else:
             logging.getLogger("pika").setLevel(logging.WARNING)
 
-        # Fetch testbench settings
+        # Fetch EAS settings
         self.settings = Settings()
 
         # Look up MySQL database log in details

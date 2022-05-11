@@ -32,9 +32,9 @@ class TaskDatabaseConnection:
         """
 
         # Null database connection (so destructor doesn't fail if we never open database)
-        self.db = None
+        self.db_handle = None
 
-        # Fetch testbench settings
+        # Fetch EAS settings
         self.settings = Settings().settings
 
         # If file store path is not specified, use default
@@ -45,8 +45,7 @@ class TaskDatabaseConnection:
         self.file_store_path = file_store_path
 
         # Open connection to the database
-        self.db_connector = DatabaseConnector()
-        self.db, self.conn = self.db_connector.connect_db()
+        self.db_handle = DatabaseConnector().connect_db()
 
     def __del__(self):
         """
@@ -54,19 +53,32 @@ class TaskDatabaseConnection:
         """
         self.close_db()
 
+    def __enter__(self):
+        """
+        Called at the start of a with block
+        """
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Called at the end of a with block
+        """
+        self.commit()
+        self.close_db()
+
     def commit(self):
         """
         Commit changes to the database.
         """
-        self.db.commit()
+        if self.db_handle is not None:
+            self.db_handle.commit()
 
     def close_db(self):
         """
         Close database connection.
         """
-        if self.db is not None:
-            self.db.close()
-            self.db = None
+        if self.db_handle is not None:
+            self.db_handle.close()
+            self.db_handle = None
 
     # *** Functions relating to task type lists
     def task_list_from_db(self):
@@ -81,11 +93,11 @@ class TaskDatabaseConnection:
         output = TaskTypeList()
 
         # Fetch list of tasks
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT taskTypeId, taskName, workerContainers
 FROM eas_task_types ORDER BY taskTypeId;""")
 
-        for item in self.conn.fetchall():
+        for item in self.db_handle.fetchall():
             container_list = json.loads(item['workerContainers'])
             output.task_list[item['taskName']] = container_list
 
@@ -110,8 +122,8 @@ FROM eas_task_types ORDER BY taskTypeId;""")
 
         # Write each task type in turn
         for name, containers in task_list.task_list.items():
-            self.conn.execute("""
-REPLACE INTO eas_task_types (taskName, workerContainers) VALUES (%s, %s);
+            self.db_handle.parameterised_query("""
+INSERT INTO eas_task_types (taskName, workerContainers) VALUES (%s, %s);
 """, (name, json.dumps(list(containers))))
 
     def task_list_fetch_id(self, task_name: str):
@@ -123,8 +135,8 @@ REPLACE INTO eas_task_types (taskName, workerContainers) VALUES (%s, %s);
         :return:
             Integer ID
         """
-        self.conn.execute("SELECT taskTypeId FROM eas_task_types WHERE taskName=%s;", (task_name,))
-        results = self.conn.fetchall()
+        self.db_handle.parameterised_query("SELECT taskTypeId FROM eas_task_types WHERE taskName=%s;", (task_name,))
+        results = self.db_handle.fetchall()
 
         # Check that task is recognised
         assert len(results) == 1, "Unrecognised task type <{}>".format(task_name)
@@ -145,14 +157,14 @@ REPLACE INTO eas_task_types (taskName, workerContainers) VALUES (%s, %s);
 
         while True:
             # Lookup ID from database
-            self.conn.execute("SELECT keyId FROM eas_metadata_keys WHERE name=%s;", (keyword,))
+            self.db_handle.parameterised_query("SELECT keyId FROM eas_metadata_keys WHERE name=%s;", (keyword,))
 
-            result = self.conn.fetchall()
+            result = self.db_handle.fetchall()
             if len(result) > 0:
                 return result[0]['keyId']
 
             # Create new ID
-            self.conn.execute("INSERT INTO eas_metadata_keys (name) VALUES (%s);", (keyword,))
+            self.db_handle.parameterised_query("INSERT INTO eas_metadata_keys (name) VALUES (%s);", (keyword,))
 
     def metadata_fetch_all(self,
                            task_id: Optional[int] = None,
@@ -188,7 +200,7 @@ REPLACE INTO eas_task_types (taskName, workerContainers) VALUES (%s, %s);
             constraints.append("productVersionId={:d}".format(int(product_version_id)))
 
         # Fetch metadata from database
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT k.name AS keyword, m.valueFloat, m.valueString, m.setAtTime
 FROM eas_metadata_item m
 INNER JOIN eas_metadata_keys k ON k.keyId=m.metadataKey
@@ -197,7 +209,7 @@ WHERE {};""".format(" AND ".join(constraints)))
         # Create a dictionary from database results
         output = {}
 
-        for item in self.conn.fetchall():
+        for item in self.db_handle.fetchall():
             value = None
             for value_field in ('valueString', 'valueFloat'):
                 if item[value_field] is not None:
@@ -248,7 +260,7 @@ WHERE {};""".format(" AND ".join(constraints)))
             constraints.append("productVersionId={:d}".format(int(product_version_id)))
 
         # Fetch metadata from database
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT k.name AS keyword, m.valueFloat, m.valueString, m.setAtTime
 FROM eas_metadata_item m
 INNER JOIN eas_metadata_keys k ON k.keyId=m.metadataKey
@@ -257,7 +269,7 @@ WHERE {};""".format(" AND ".join(constraints)))
         # Create a dictionary from database results
         output = None
 
-        for item in self.conn.fetchall():
+        for item in self.db_handle.fetchall():
             value = None
             for value_field in ('valueString', 'valueFloat'):
                 if item[value_field] is not None:
@@ -320,7 +332,7 @@ WHERE {};""".format(" AND ".join(constraints)))
                 value_string = str(value.value)
 
             # Write metadata to the database
-            self.conn.execute("""
+            self.db_handle.parameterised_query("""
 REPLACE INTO eas_metadata_item
     (taskId, schedulingAttemptId, productId, productVersionId, metadataKey, valueFloat, valueString)
 VALUES (%s, %s, %s, %s, %s, %s, %s);
@@ -343,13 +355,13 @@ VALUES (%s, %s, %s, %s, %s, %s, %s);
         """
 
         # Look up file repository filename
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT v.repositoryId, p.directoryName
 FROM eas_product_version v
 INNER JOIN eas_product p on v.productId = p.productId
 WHERE v.productVersionId = %s;
 """, (product_version_id,))
-        result = self.conn.fetchall()
+        result = self.db_handle.fetchall()
         if len(result) != 1:
             return None
 
@@ -374,8 +386,10 @@ WHERE v.productVersionId = %s;
         :return:
             True if we have a record with this ID, False otherwise
         """
-        self.conn.execute('SELECT 1 FROM eas_product_version WHERE productVersionId = %s;', (product_version_id,))
-        return len(self.conn.fetchall()) > 0
+        self.db_handle.parameterised_query("""
+SELECT 1 FROM eas_product_version WHERE productVersionId = %s;
+""", (product_version_id,))
+        return len(self.db_handle.fetchall()) > 0
 
     def file_version_exists_in_file_system(self, product_version_id: int):
         """
@@ -404,7 +418,9 @@ WHERE v.productVersionId = %s;
         except OSError:
             logging.warning("Could not delete file <{}>".format(file_path))
             pass
-        self.conn.execute('DELETE FROM eas_product_version WHERE productVersionId = %s;', (product_version_id,))
+        self.db_handle.parameterised_query("""
+DELETE FROM eas_product_version WHERE productVersionId = %s;
+""", (product_version_id,))
 
     def file_version_by_product(self, product_id: int, attempt_id: Optional[int] = None,
                                 must_have_passed_qc: bool = False):
@@ -431,13 +447,13 @@ WHERE v.productVersionId = %s;
             contraints.append("passedQc")
 
         # Look up matching file versions
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT v.productVersionId
 FROM eas_product_version v
 WHERE {}
 ORDER BY v.productVersionId;
 """.format(" AND ".join(contraints)))
-        results = self.conn.fetchall()
+        results = self.db_handle.fetchall()
 
         # Return list of integer IDs
         return [item['productVersionId'] for item in results]
@@ -453,13 +469,13 @@ ORDER BY v.productVersionId;
         """
 
         # Look up file version properties
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT productVersionId, productId, generatedByTaskExecution, repositoryId,
        createdTime, modifiedTime, fileMD5, fileSize, passedQc
 FROM eas_product_version v
 WHERE productVersionId = %s;
 """, (product_version_id,))
-        result = self.conn.fetchall()
+        result = self.db_handle.fetchall()
 
         # Return None if no match
         if len(result) != 1:
@@ -581,7 +597,7 @@ WHERE productVersionId = %s;
                                                       product_id, time.time())
 
         # Insert record into the database
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 INSERT INTO eas_product_version
     (productId, generatedByTaskExecution, repositoryId, createdTime, modifiedTime,
      fileMD5, fileSize, passedQc)
@@ -670,19 +686,19 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
                 logging.error("Could not move file <{}> into repository".format(target_file_path))
 
             # Update database information about the file
-            self.conn.execute("""
+            self.db_handle.parameterised_query("""
 UPDATE eas_product_version SET fileMD5=%s, fileSize=%s WHERE productVersionId=%s;
 """, (file_md5, file_size_bytes, product_version_id))
 
         # Update timestamp
         if modified_time is not None:
-            self.conn.execute("""
+            self.db_handle.parameterised_query("""
 UPDATE eas_product_version SET modifiedTime=%s WHERE productVersionId=%s;
 """, (modified_time, product_version_id))
 
         # Update remaining fields
         if passed_qc is not None:
-            self.conn.execute("""
+            self.db_handle.parameterised_query("""
 UPDATE eas_product_version SET passedQc=%s WHERE productVersionId=%s;
 """, (passed_qc, product_version_id))
 
@@ -700,8 +716,10 @@ UPDATE eas_product_version SET passedQc=%s WHERE productVersionId=%s;
         :return:
             True if we have a record with this ID, False otherwise
         """
-        self.conn.execute('SELECT 1 FROM eas_product WHERE productId = %s;', (product_id,))
-        return len(self.conn.fetchall()) > 0
+        self.db_handle.parameterised_query("""
+SELECT 1 FROM eas_product WHERE productId = %s;
+""", (product_id,))
+        return len(self.db_handle.fetchall()) > 0
 
     def file_product_has_been_created(self, product_id: int):
         """
@@ -712,8 +730,10 @@ UPDATE eas_product_version SET passedQc=%s WHERE productVersionId=%s;
         :return:
             True if we have a file in the file system with this ID, False otherwise
         """
-        self.conn.execute('SELECT 1 FROM eas_product_version WHERE productId = %s;', (product_id,))
-        return len(self.conn.fetchall()) > 0
+        self.db_handle.parameterised_query("""
+SELECT 1 FROM eas_product_version WHERE productId = %s;
+""", (product_id,))
+        return len(self.db_handle.fetchall()) > 0
 
     def file_product_has_passed_qc(self, product_id: int):
         """
@@ -724,8 +744,10 @@ UPDATE eas_product_version SET passedQc=%s WHERE productVersionId=%s;
         :return:
             True if we have a file in the file system with this ID, False otherwise
         """
-        self.conn.execute('SELECT 1 FROM eas_product_version WHERE productId = %s AND passedQc;', (product_id,))
-        return len(self.conn.fetchall()) > 0
+        self.db_handle.parameterised_query("""
+SELECT 1 FROM eas_product_version WHERE productId = %s AND passedQc;
+""", (product_id,))
+        return len(self.db_handle.fetchall()) > 0
 
     def file_product_by_filename(self, directory: str, filename: str):
         """
@@ -739,13 +761,13 @@ UPDATE eas_product_version SET passedQc=%s WHERE productVersionId=%s;
             A list of integer IDs
         """
 
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT p.productId
 FROM eas_product p
 WHERE p.directoryName=%s AND p.filename=%s;
 """, (directory, filename))
 
-        matching_file_products = self.conn.fetchall()
+        matching_file_products = self.db_handle.fetchall()
 
         return [item['productId'] for item in matching_file_products]
 
@@ -758,13 +780,17 @@ WHERE p.directoryName=%s AND p.filename=%s;
         :return:
             None
         """
-        self.conn.execute('SELECT productVersionId FROM eas_product_version WHERE productId = %s;', (product_id,))
-        file_product_versions = self.conn.fetchall()
+        self.db_handle.parameterised_query("""
+SELECT productVersionId FROM eas_product_version WHERE productId = %s;
+""", (product_id,))
+        file_product_versions = self.db_handle.fetchall()
 
         for item in file_product_versions:
             self.file_version_delete(product_version_id=item['productVersionId'])
 
-        self.conn.execute('DELETE FROM eas_product WHERE productId = %s', (product_id,))
+        self.db_handle.parameterised_query("""
+DELETE FROM eas_product WHERE productId = %s;
+""", (product_id,))
 
     def file_product_lookup(self, product_id: int):
         """
@@ -777,14 +803,14 @@ WHERE p.directoryName=%s AND p.filename=%s;
         """
 
         # Look up file product properties
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT productId, generatorTask, plannedTime, directoryName, filename, mimeType,
        s.name AS semanticType
 FROM eas_product p
 INNER JOIN eas_semantic_type s ON s.semanticTypeId=p.semanticType
 WHERE productId = %s;
 """, (product_id,))
-        result = self.conn.fetchall()
+        result = self.db_handle.fetchall()
 
         # Return None if no match
         if len(result) != 1:
@@ -817,14 +843,14 @@ WHERE productId = %s;
 
         while True:
             # Lookup ID from database
-            self.conn.execute("SELECT semanticTypeId FROM eas_semantic_type WHERE name=%s;", (name,))
+            self.db_handle.parameterised_query("SELECT semanticTypeId FROM eas_semantic_type WHERE name=%s;", (name,))
 
-            result = self.conn.fetchall()
+            result = self.db_handle.fetchall()
             if len(result) > 0:
                 return result[0]['semanticTypeId']
 
             # Create new ID
-            self.conn.execute("INSERT INTO eas_semantic_type (name) VALUES (%s);", (name,))
+            self.db_handle.parameterised_query("INSERT INTO eas_semantic_type (name) VALUES (%s);", (name,))
 
     def file_product_register(self, generator_task: int, directory: str, filename: str,
                               semantic_type: str,
@@ -859,7 +885,7 @@ WHERE productId = %s;
         semantic_type_id = self.semantic_type_get_id(semantic_type)
 
         # Insert record into the database
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 INSERT INTO eas_product (generatorTask, plannedTime, directoryName, filename, semanticType, mimeType)
 VALUES (%s, %s, %s, %s, %s, %s);
 """,
@@ -894,11 +920,15 @@ VALUES (%s, %s, %s, %s, %s, %s);
 
         # Update timestamps
         if planned_time is not None:
-            self.conn.execute("UPDATE eas_product SET plannedTime=%s WHERE productId=%s", (planned_time, product_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_product SET plannedTime=%s WHERE productId=%s;
+""", (planned_time, product_id))
 
         # Update remaining fields
         if mime_type is not None:
-            self.conn.execute("UPDATE eas_product SET mimeType=%s WHERE productId=%s", (mime_type, product_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_product SET mimeType=%s WHERE productId=%s;
+""", (mime_type, product_id))
 
         # Register file metadata
         if metadata is not None:
@@ -914,8 +944,10 @@ VALUES (%s, %s, %s, %s, %s, %s);
         :return:
             True if we have a record with this ID, False otherwise
         """
-        self.conn.execute('SELECT 1 FROM eas_scheduling_attempt WHERE schedulingAttemptId = %s;', (attempt_id,))
-        return len(self.conn.fetchall()) > 0
+        self.db_handle.parameterised_query("""
+SELECT 1 FROM eas_scheduling_attempt WHERE schedulingAttemptId = %s;
+""", (attempt_id,))
+        return len(self.db_handle.fetchall()) > 0
 
     def execution_attempt_delete(self, attempt_id: int):
         """
@@ -928,15 +960,18 @@ VALUES (%s, %s, %s, %s, %s, %s);
         """
 
         # Delete file products
-        self.conn.execute('SELECT productVersionId FROM eas_product_version WHERE generatedByTaskExecution = %s;',
-                          (attempt_id,))
-        file_product_versions = self.conn.fetchall()
+        self.db_handle.parameterised_query("""
+SELECT productVersionId FROM eas_product_version WHERE generatedByTaskExecution = %s;
+""", (attempt_id,))
+        file_product_versions = self.db_handle.fetchall()
 
         for item in file_product_versions:
             self.file_version_delete(product_version_id=item['productVersionId'])
 
         # Delete execution attempt
-        self.conn.execute('DELETE FROM eas_scheduling_attempt WHERE schedulingAttemptId = %s', (attempt_id,))
+        self.db_handle.parameterised_query("""
+DELETE FROM eas_scheduling_attempt WHERE schedulingAttemptId = %s;
+""", (attempt_id,))
 
     def execution_attempt_fetch_output_files(self, attempt_id: int):
         """
@@ -952,7 +987,7 @@ VALUES (%s, %s, %s, %s, %s, %s);
         output: Dict[str, FileProductVersion] = {}
 
         # Look up all the file products generated by this task execution attempt
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT v.productVersionId, s.name AS semanticType
 FROM eas_product_version v
 INNER JOIN eas_product p ON p.productId = v.productId
@@ -960,7 +995,7 @@ INNER JOIN eas_semantic_type s ON s.semanticTypeId = p.semanticType
 WHERE generatedByTaskExecution = %s
 ORDER BY v.productVersionId;
 """, (attempt_id,))
-        file_product_versions = self.conn.fetchall()
+        file_product_versions = self.db_handle.fetchall()
 
         for item in file_product_versions:
             output[item['semanticType']] = self.file_version_lookup(product_version_id=item['productVersionId'])
@@ -978,14 +1013,14 @@ ORDER BY v.productVersionId;
         """
 
         # Look up execution attempt properties
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT schedulingAttemptId, taskId, queuedTime, startTime, latestHeartbeat, endTime,
        allProductsPassedQc, errorFail, errorText,
        runTimeWallClock, runTimeCpu, runTimeCpuIncChildren
 FROM eas_scheduling_attempt a
 WHERE schedulingAttemptId = %s;
 """, (attempt_id,))
-        result = self.conn.fetchall()
+        result = self.db_handle.fetchall()
 
         # Return None if no match
         if len(result) != 1:
@@ -1034,7 +1069,7 @@ WHERE schedulingAttemptId = %s;
             queued_time = time.time()
 
         # Insert record into the database
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 INSERT INTO eas_scheduling_attempt (taskId, queuedTime)
 VALUES (%s, %s);
 """, (task_id, queued_time))
@@ -1092,37 +1127,47 @@ VALUES (%s, %s);
 
         # Update timestamps
         if queued_time is not None:
-            self.conn.execute("UPDATE eas_scheduling_attempt SET queuedTime=%s WHERE schedulingAttemptId=%s",
-                              (queued_time, attempt_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET queuedTime=%s WHERE schedulingAttemptId=%s;
+""", (queued_time, attempt_id))
         if start_time is not None:
-            self.conn.execute("UPDATE eas_scheduling_attempt SET startTime=%s WHERE schedulingAttemptId=%s",
-                              (start_time, attempt_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET startTime=%s WHERE schedulingAttemptId=%s;
+""", (start_time, attempt_id))
         if latest_heartbeat_time is not None:
-            self.conn.execute("UPDATE eas_scheduling_attempt SET latestHeartbeat=%s WHERE schedulingAttemptId=%s",
-                              (latest_heartbeat_time, attempt_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET latestHeartbeat=%s WHERE schedulingAttemptId=%s;
+""", (latest_heartbeat_time, attempt_id))
         if end_time is not None:
-            self.conn.execute("UPDATE eas_scheduling_attempt SET endTime=%s WHERE schedulingAttemptId=%s",
-                              (end_time, attempt_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET endTime=%s WHERE schedulingAttemptId=%s;
+""", (end_time, attempt_id))
 
         # Update remaining fields
         if all_products_passed_qc is not None:
-            self.conn.execute("UPDATE eas_scheduling_attempt SET allProductsPassedQc=%s WHERE schedulingAttemptId=%s",
-                              (all_products_passed_qc, attempt_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET allProductsPassedQc=%s WHERE schedulingAttemptId=%s;
+""", (all_products_passed_qc, attempt_id))
         if error_fail is not None:
-            self.conn.execute("UPDATE eas_scheduling_attempt SET errorFail=%s WHERE schedulingAttemptId=%s",
-                              (error_fail, attempt_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET errorFail=%s WHERE schedulingAttemptId=%s;
+""", (error_fail, attempt_id))
         if error_text is not None:
-            self.conn.execute("UPDATE eas_scheduling_attempt SET errorText=%s WHERE schedulingAttemptId=%s",
-                              (error_text, attempt_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET errorText=%s WHERE schedulingAttemptId=%s;
+""", (error_text, attempt_id))
         if run_time_wall_clock is not None:
-            self.conn.execute("UPDATE eas_scheduling_attempt SET runTimeWallClock=%s WHERE schedulingAttemptId=%s",
-                              (run_time_wall_clock, attempt_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET runTimeWallClock=%s WHERE schedulingAttemptId=%s;
+""", (run_time_wall_clock, attempt_id))
         if run_time_cpu is not None:
-            self.conn.execute("UPDATE eas_scheduling_attempt SET runTimeCpu=%s WHERE schedulingAttemptId=%s",
-                              (run_time_cpu, attempt_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET runTimeCpu=%s WHERE schedulingAttemptId=%s;
+""", (run_time_cpu, attempt_id))
         if run_time_cpu_inc_children is not None:
-            self.conn.execute("UPDATE eas_scheduling_attempt SET runTimeCpuIncChildren=%s WHERE schedulingAttemptId=%s",
-                              (run_time_cpu_inc_children, attempt_id))
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET runTimeCpuIncChildren=%s WHERE schedulingAttemptId=%s;
+""", (run_time_cpu_inc_children, attempt_id))
 
         # Register execution attempt metadata
         if metadata is not None:
@@ -1138,8 +1183,8 @@ VALUES (%s, %s);
         :return:
             True if we have a record with this ID, False otherwise
         """
-        self.conn.execute('SELECT 1 FROM eas_task WHERE taskId = %s;', (task_id,))
-        return len(self.conn.fetchall()) > 0
+        self.db_handle.parameterised_query("SELECT 1 FROM eas_task WHERE taskId = %s;", (task_id,))
+        return len(self.db_handle.fetchall()) > 0
 
     def task_delete(self, task_id: int):
         """
@@ -1152,15 +1197,15 @@ VALUES (%s, %s);
         """
 
         # Delete any execution attempts
-        self.conn.execute('SELECT schedulingAttemptId FROM eas_scheduling_attempt WHERE taskId = %s;',
+        self.db_handle.parameterised_query("SELECT schedulingAttemptId FROM eas_scheduling_attempt WHERE taskId = %s;",
                           (task_id,))
-        execution_attempts = self.conn.fetchall()
+        execution_attempts = self.db_handle.fetchall()
 
         for item in execution_attempts:
             self.execution_attempt_delete(attempt_id=item['schedulingAttemptId'])
 
         # Delete task
-        self.conn.execute('DELETE FROM eas_task WHERE taskId = %s', (task_id,))
+        self.db_handle.parameterised_query("DELETE FROM eas_task WHERE taskId = %s", (task_id,))
 
     def task_fetch_file_products(self, task_id: int):
         """
@@ -1176,14 +1221,14 @@ VALUES (%s, %s);
         output: Dict[str, FileProduct] = {}
 
         # Look up all the file products generated by this task execution attempt
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT p.productId, s.name AS semanticType
 FROM eas_product p
 INNER JOIN eas_semantic_type s ON s.semanticTypeId = p.semanticType
 WHERE generatorTask = %s
 ORDER BY p.productId;
 """, (task_id,))
-        file_products = self.conn.fetchall()
+        file_products = self.db_handle.fetchall()
 
         for item in file_products:
             output[item['semanticType']] = self.file_product_lookup(product_id=item['productId'])
@@ -1204,14 +1249,14 @@ ORDER BY p.productId;
         output: Dict[str, FileProduct] = {}
 
         # Look up all the file products required by this task execution attempt
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT p.inputId, s.name AS semanticType
 FROM eas_task_input p
 INNER JOIN eas_semantic_type s ON s.semanticTypeId = p.semanticType
 WHERE taskId = %s
 ORDER BY p.inputId;
 """, (task_id,))
-        file_products = self.conn.fetchall()
+        file_products = self.db_handle.fetchall()
 
         for item in file_products:
             output[item['semanticType']] = self.file_product_lookup(product_id=item['inputId'])
@@ -1241,13 +1286,13 @@ ORDER BY p.inputId;
                 constraint = "NOT allProductsPassedQc"
 
         # Look up all the file products generated by this task execution attempt
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT s.schedulingAttemptId
 FROM eas_scheduling_attempt s
 WHERE taskId = %s AND {}
 ORDER BY s.schedulingAttemptId;
 """.format(constraint), (task_id,))
-        execution_attempts = self.conn.fetchall()
+        execution_attempts = self.db_handle.fetchall()
 
         for item in execution_attempts:
             output[item['schedulingAttemptId']] = self.execution_attempt_lookup(
@@ -1267,13 +1312,13 @@ ORDER BY s.schedulingAttemptId;
         """
 
         # Look up task properties
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 SELECT taskId, parentTask, createdTime, t.taskName AS taskTypeName, jobName, workingDirectory
 FROM eas_task j
 INNER JOIN eas_task_types t ON t.taskTypeId = j.taskTypeId
 WHERE taskId = %s;
 """, (task_id,))
-        result = self.conn.fetchall()
+        result = self.db_handle.fetchall()
 
         # Return None if no match
         if len(result) != 1:
@@ -1352,7 +1397,7 @@ WHERE taskId = %s;
         task_type_id = self.task_list_fetch_id(task_name=task_type)
 
         # Insert record into the database
-        self.conn.execute("""
+        self.db_handle.parameterised_query("""
 INSERT INTO eas_task (parentTask, createdTime, taskTypeId, jobName, workingDirectory)
 VALUES (%s, %s, %s, %s, %s);
 """, (parent_id, created_time, task_type_id, job_name, working_directory))
@@ -1366,7 +1411,7 @@ VALUES (%s, %s, %s, %s, %s);
         if input_files is not None:
             for semantic_type, input_file in input_files.items():
                 semantic_type_id = self.semantic_type_get_id(name=semantic_type)
-                self.conn.execute("""
+                self.db_handle.parameterised_query("""
 REPLACE INTO eas_task_input (taskId, inputId, semanticType) VALUES (%s, %s, %s);
 """, (output_id, input_file.product_id, semantic_type_id))
 

@@ -11,16 +11,151 @@ from __future__ import annotations
 import gzip
 import logging
 import math
-import os
 
 import numpy as np
 
 from typing import Dict, Optional
 
-from .task_database import TaskDatabaseConnection
+
+class Lightcurve:
+    """
+    A class representing a lightcurve.
+    """
+
+    def __init__(self, metadata):
+        """
+        Create a lightcurve.
+        """
+
+        # Make an empty metadata dictionary if none was specified
+        if metadata is not None:
+            assert isinstance(metadata, dict)
+        else:
+            metadata = {}
+
+        # Store the data
+        self.metadata: dict = metadata
+        self.flags_set = False
+
+    def get_time_of_point(self, index: int):
+        """
+        Return the time associated with a particular data point in the lightcurve
+        """
+        raise NotImplementedError
+
+    def get_times(self):
+        """
+        Return an array of the times of the lightcurve samples
+        """
+        raise NotImplementedError
+
+    def get_fluxes(self):
+        """
+        Return an array of the fluxes of the lightcurve samples
+        """
+        raise NotImplementedError
+
+    def get_uncertainties(self):
+        """
+        Return an array of the uncertainties of the lightcurve samples
+        """
+        raise NotImplementedError
+
+    def get_flags(self):
+        """
+        Return an array of the flags of the lightcurve samples
+        """
+        raise NotImplementedError
+
+    def to_file(self, target_path: str, binary: bool = False, gzipped: bool = True):
+        """
+        Write a lightcurve out to a text data file. The time axis is multiplied by a factor 86400 to convert
+        from days into seconds.
+
+        :param target_path:
+            The target file path where we should create a file representing this lightcurve.
+        :param binary:
+            Boolean specifying whether we store lightcurve on disk in binary format or plain text.
+        :param gzipped:
+            Boolean specifying whether we gzip plain-text lightcurves.
+        :return:
+            Dict of metadata associated with the written file.
+        """
+
+        # Pick the writer for this lightcurve
+        if not gzipped:
+            opener = open
+        else:
+            opener = gzip.open
+
+        # Write this lightcurve output into lightcurve archive (store times in seconds)
+        output = np.transpose([self.get_times() * 86400, self.get_fluxes(), self.get_flags(), self.get_uncertainties])
+        if not binary:
+            with opener(target_path, "wt") as out:
+                # Output the lightcurve itself
+                np.savetxt(out, output)
+        else:
+            np.save(target_path, output)
+
+        # Metadata associated with this file
+        file_metadata = {
+            'binary': binary,
+            'gzipped': gzipped
+        }
+
+        return file_metadata
+
+    def __add__(self, other: Lightcurve):
+        """
+        Add two lightcurves together.
+
+        :type other:
+            Lightcurve
+        """
+        raise NotImplementedError
+
+    def __sub__(self, other: Lightcurve):
+        """
+        Subtract one lightcurve from another.
+
+        :type other:
+            Lightcurve
+        """
+        raise NotImplementedError
+
+    def __mul__(self, other: Lightcurve):
+        """
+        Multiply two lightcurves together.
+
+        :type other:
+            Lightcurve
+        """
+        raise NotImplementedError
+
+    def estimate_sampling_interval(self):
+        """
+        Estimate the time step on which this light curve is sampled, with robustness against missing points.
+
+        :return:
+            Time step
+        """
+        raise NotImplementedError
+
+    def check_fixed_step(self, verbose: bool = True, max_errors: int = 6):
+        """
+        Check that this light curve is sampled at a fixed time interval. Return the number of errors.
+
+        :param verbose:
+            Should we output a logging message about every missing time point?
+        :param max_errors:
+            The maximum number of errors we should show
+        :return:
+            int
+        """
+        raise NotImplementedError
 
 
-class LightcurveArbitraryRaster:
+class LightcurveArbitraryRaster(Lightcurve):
     """
     A class representing a lightcurve which is sampled on an arbitrary raster of times.
     """
@@ -28,19 +163,22 @@ class LightcurveArbitraryRaster:
     def __init__(self, times: np.ndarray, fluxes: np.ndarray, uncertainties: Optional[np.ndarray] = None,
                  flags: Optional[np.ndarray] = None, metadata: Dict = None):
         """
-        Create a lightcurve which is sampled on an arbitrary raster of times.
+        Create a lightcurve.
 
         :param times:
-            The times of the data points (days).
+            Time points [days]
         :param fluxes:
-            The light fluxes at each data point.
+            Flux points [arbitrary units]
         :param uncertainties:
-            The uncertainty in each data point.
+            Uncertainty in each flux point
         :param flags:
-            The flag associated with each data point.
+            Flags for each data point - 0 means good data; 1 means bad data
         :param metadata:
             The metadata associated with this lightcurve.
         """
+
+        # Call parent class creator method
+        super().__init__(metadata=metadata)
 
         # Check inputs
         assert isinstance(times, np.ndarray)
@@ -51,12 +189,6 @@ class LightcurveArbitraryRaster:
             assert isinstance(flags, np.ndarray)
         else:
             flags = np.zeros_like(times)
-
-        # Make an empty metadata dictionary if none was specified
-        if metadata is not None:
-            assert isinstance(metadata, dict)
-        else:
-            metadata = {}
 
         # Make uncertainty zero if not specified
         if uncertainties is not None:
@@ -70,69 +202,39 @@ class LightcurveArbitraryRaster:
         self.uncertainties: np.ndarray = uncertainties
         self.flags: np.ndarray = flags
         self.flags_set: bool = True
-        self.metadata: dict = metadata
 
-    def to_file(self, directory: str, filename: str, execution_id: int,
-                binary: bool = False, gzipped: bool = True):
+    def get_time_of_point(self, index: int):
         """
-        Write a lightcurve out to a text data file. The time axis is multiplied by a factor 86400 to convert
-        from days into seconds.
-
-        :param filename:
-            The filename of the lightcurve (within our local lightcurve archive).
-        :param directory:
-            The name of the directory inside the lightcurve archive where this lightcurve should be saved.
-        :param execution_id:
-            The integer ID of the task execution attempt id generating this file.
-        :param binary:
-            Boolean specifying whether we store lightcurve on disk in binary format or plain text.
-        :param gzipped:
-            Boolean specifying whether we gzip plain-text lightcurves.
+        Return the time associated with a particular data point in the lightcurve
         """
-
-        # Open a connection to the task database
-        task_db = TaskDatabaseConnection()
-
-        # Create temporary working directory
-        identifier = "eas_lc_writer"
-        id_string = "eas_{:d}_{}".format(os.getpid(), identifier)
-        tmp_dir = os.path.join("/tmp", id_string)
-        os.makedirs(name=tmp_dir, mode=0o700, exist_ok=True)
-
-        # Target path for this lightcurve
-        target_path = os.path.join(tmp_dir, filename)
-
-        # Pick the writer for this lightcurve
-        if not gzipped:
-            opener = open
+        if index < 0 or index >= len(self.times):
+            return np.nan
         else:
-            opener = gzip.open
+            return self.times[index]
 
-        # Write this lightcurve output into lightcurve archive (store times in seconds)
-        if not binary:
-            with opener(target_path, "wt") as out:
-                # Output the lightcurve itself
-                np.savetxt(out, np.transpose([self.times * 86400, self.fluxes, self.flags, self.uncertainties]))
-        else:
-            np.save(target_path, np.transpose([self.times * 86400, self.fluxes, self.flags, self.uncertainties]))
+    def get_times(self):
+        """
+        Return an array of the times of the lightcurve samples
+        """
+        return self.times
 
-        # Find out what file product this lightcurve corresponds to
-        product_ids = task_db.file_product_by_filename(directory=directory, filename=filename)
-        assert len(product_ids) > 0, \
-            ("This lightcurve <{}/{}> does not correspond to any file product in the database".
-             format(directory, filename))
-        product_id = product_ids[0]
+    def get_fluxes(self):
+        """
+        Return an array of the fluxes of the lightcurve samples
+        """
+        return self.fluxes
 
-        # Import lightcurve into the task database
-        task_db.file_version_register(product_id=product_id, generated_by_task_execution=execution_id,
-                                      file_path_input=target_path, preserve=False, metadata=self.metadata)
+    def get_uncertainties(self):
+        """
+        Return an array of the uncertainties of the lightcurve samples
+        """
+        return self.uncertainties
 
-        # Close database
-        task_db.commit()
-        task_db.close_db()
-
-        # Clean up temporary directory
-        os.rmdir(tmp_dir)
+    def get_flags(self):
+        """
+        Return an array of the flags of the lightcurve samples
+        """
+        return self.fluxes
 
     @classmethod
     def from_file(cls, directory: str, filename: str,
@@ -223,22 +325,22 @@ class LightcurveArbitraryRaster:
                     uncertainties.append(uncertainty)
 
         # Convert into a Lightcurve object
-        lightcurve = LightcurveArbitraryRaster(times=np.asarray(times),
-                                               fluxes=np.asarray(fluxes),
-                                               uncertainties=np.asarray(uncertainties),
-                                               flags=np.asarray(flags),
-                                               metadata=file_info.metadata
-                                               )
+        lightcurve = cls(times=np.asarray(times),
+                         fluxes=np.asarray(fluxes),
+                         uncertainties=np.asarray(uncertainties),
+                         flags=np.asarray(flags),
+                         metadata=file_info.metadata
+                         )
 
         # Return lightcurve
         return lightcurve
 
-    def __add__(self, other: LightcurveArbitraryRaster):
+    def __add__(self, other: Lightcurve):
         """
         Add two lightcurves together.
 
         :type other:
-            LightcurveArbitraryRaster
+            Lightcurve
         """
 
         # Avoid circular import
@@ -249,28 +351,28 @@ class LightcurveArbitraryRaster:
         other_resampled = resampler.match_to_other_lightcurve(other=self)
 
         # Take metadata from the lightcurve with the strongest transit signal
-        if self.metadata['mes'] > other.metadata['mes']:
+        if self.metadata.get('mes', 1e-20) > other.metadata.get('mes', 0):
             output_metadata = {**self.metadata}
         else:
             output_metadata = {**other.metadata}
 
         # Create output lightcurve
         result = LightcurveArbitraryRaster(
-            times=self.times,
-            fluxes=self.fluxes + other_resampled.fluxes,
-            uncertainties=np.hypot(self.uncertainties, other_resampled.uncertainties),
-            flags=np.hypot(self.flags, other_resampled.flags),
+            times=self.get_times(),
+            fluxes=self.get_fluxes() + other_resampled.get_fluxes(),
+            uncertainties=np.hypot(self.get_uncertainties(), other_resampled.get_uncertainties()),
+            flags=np.hypot(self.get_flags(), other_resampled.get_flags()),
             metadata=output_metadata
         )
 
         return result
 
-    def __sub__(self, other: LightcurveArbitraryRaster):
+    def __sub__(self, other: Lightcurve):
         """
         Subtract one lightcurve from another.
 
         :type other:
-            LightcurveArbitraryRaster
+            Lightcurve
         """
 
         # Avoid circular import
@@ -285,21 +387,21 @@ class LightcurveArbitraryRaster:
 
         # Create output lightcurve
         result = LightcurveArbitraryRaster(
-            times=self.times,
-            fluxes=self.fluxes - other_resampled.fluxes,
-            uncertainties=np.hypot(self.uncertainties, other_resampled.uncertainties),
-            flags=np.hypot(self.flags, other_resampled.flags),
+            times=self.get_times(),
+            fluxes=self.get_fluxes() - other_resampled.get_fluxes(),
+            uncertainties=np.hypot(self.get_uncertainties(), other_resampled.get_uncertainties()),
+            flags=np.hypot(self.get_flags(), other_resampled.get_flags()),
             metadata=output_metadata
         )
 
         return result
 
-    def __mul__(self, other: LightcurveArbitraryRaster):
+    def __mul__(self, other: Lightcurve):
         """
         Multiply two lightcurves together.
 
         :type other:
-            LightcurveArbitraryRaster
+            Lightcurve
         """
 
         # Avoid circular import
@@ -314,10 +416,10 @@ class LightcurveArbitraryRaster:
 
         # Create output lightcurve. Remove first and last data points due to edge effects
         result = LightcurveArbitraryRaster(
-            times=self.times[1:-1],
-            fluxes=(self.fluxes * other_resampled.fluxes)[1:-1],
-            uncertainties=np.hypot(self.uncertainties, other_resampled.uncertainties)[1:-1],
-            flags=np.hypot(self.flags, other_resampled.flags)[1:-1],
+            times=self.get_times()[1:-1],
+            fluxes=(self.get_fluxes() * other_resampled.get_fluxes())[1:-1],
+            uncertainties=np.hypot(self.get_uncertainties(), other_resampled.get_uncertainties())[1:-1],
+            flags=np.hypot(self.get_flags(), other_resampled.get_flags())[1:-1],
             metadata=output_metadata
         )
 
@@ -331,6 +433,7 @@ class LightcurveArbitraryRaster:
             Time step
         """
 
+        # Calculate the interquartile mean of the time spacing between samples. This excludes anomalous gaps.
         differences = np.diff(self.times)
         differences_sorted = np.sort(differences)
 
@@ -346,59 +449,6 @@ class LightcurveArbitraryRaster:
         return float(interquartile_mean)
 
     def check_fixed_step(self, verbose: bool = True, max_errors: int = 6):
-        """
-        Check that this light curve is sampled at a fixed time interval. Return the number of errors.
-
-        :param verbose:
-            Should we output a logging message about every missing time point?
-        :param max_errors:
-            The maximum number of errors we should show
-        :return:
-            int
-        """
-
-        abs_tol = 1e-4
-        rel_tol = 0
-
-        error_count = 0
-        spacing = self.estimate_sampling_interval()
-
-        if verbose:
-            logging.info("Time step is {:.15f}".format(spacing))
-
-        differences = np.diff(self.times)
-
-        for index, step in enumerate(differences):
-            # If this time point has the correct spacing, it is OK
-            if math.isclose(step, spacing, abs_tol=abs_tol, rel_tol=rel_tol):
-                continue
-
-            # We have found a problem
-            error_count += 1
-
-            # See if we have skipped some time points
-            points_missed = step / spacing - 1
-            if math.isclose(points_missed, round(points_missed), abs_tol=abs_tol, rel_tol=rel_tol):
-                if verbose and (max_errors is None or error_count <= max_errors):
-                    logging.info("index {:5d} - {:d} points missing at time {:.5f}".format(index,
-                                                                                           int(points_missed),
-                                                                                           self.times[index]))
-                continue
-
-            # Or is this an entirely unexpected time interval?
-            if verbose and (max_errors is None or error_count <= max_errors):
-                logging.info("index {:5d} - Unexpected time step {:.15f} at time {:.5f}".format(index,
-                                                                                                step,
-                                                                                                self.times[index]))
-
-        # Return total error count
-        if verbose and error_count > 0:
-            logging.info("Lightcurve had gaps at {}/{} time points.".format(error_count, len(self.times)))
-
-        # Return the verdict on this lightcurve
-        return error_count
-
-    def check_fixed_step_v2(self, verbose: bool = True, max_errors: int = 6):
         """
         Check that this light curve is sampled at a fixed time interval. Return the number of errors.
 
@@ -511,7 +561,7 @@ class LightcurveArbitraryRaster:
         )
 
 
-class LightcurveFixedStep:
+class LightcurveFixedStep(Lightcurve):
     """
     A class representing a lightcurve which is sampled on a fixed time step.
     """
@@ -527,14 +577,17 @@ class LightcurveFixedStep:
         :param time_step:
             The interval between the points in the lightcurve.
         :param fluxes:
-            The light fluxes at each data point.
+            Flux points [arbitrary units]
         :param uncertainties:
-            The uncertainty in each data point.
+            Uncertainty in each flux point
         :param flags:
-            The flag associated with each data point.
+            Flags for each data point - 0 means good data; 1 means bad data
         :param metadata:
             The metadata associated with this lightcurve.
         """
+
+        # Call creator method of the parent class
+        super().__init__(metadata=metadata)
 
         # Check inputs
         assert isinstance(fluxes, np.ndarray)
@@ -542,8 +595,10 @@ class LightcurveFixedStep:
         # Unset all flags if none were specified
         if flags is not None:
             assert isinstance(flags, np.ndarray)
+            flags_set = True
         else:
             flags = np.zeros_like(fluxes)
+            flags_set = False
 
         # Make an empty metadata dictionary if none was specified
         if metadata is not None:
@@ -563,10 +618,10 @@ class LightcurveFixedStep:
         self.fluxes = fluxes
         self.uncertainties = uncertainties
         self.flags = flags
-        self.flags_set = True
+        self.flags_set = flags_set
         self.metadata = metadata
 
-    def time_value(self, index: float):
+    def get_time_of_point(self, index: int):
         """
         Return the time value associated with a particular index in this lightcurve.
 
@@ -577,3 +632,143 @@ class LightcurveFixedStep:
         """
 
         return self.time_start + index * self.time_step
+
+    def get_times(self):
+        """
+        Return an array of the times of the lightcurve samples
+        """
+        length = len(self.fluxes)
+        return np.linspace(start=self.time_start, num=length, stop=self.time_start + (length + 0.1) * self.time_step)
+
+    def get_fluxes(self):
+        """
+        Return an array of the fluxes of the lightcurve samples
+        """
+        return self.fluxes
+
+    def get_uncertainties(self):
+        """
+        Return an array of the uncertainties of the lightcurve samples
+        """
+        return self.uncertainties
+
+    def get_flags(self):
+        """
+        Return an array of the flags of the lightcurve samples
+        """
+        return self.fluxes
+
+    def estimate_sampling_interval(self):
+        """
+        Estimate the time step on which this light curve is sampled, with robustness against missing points.
+
+        :return:
+            Time step
+        """
+        return self.time_step
+
+    def check_fixed_step(self, verbose: bool = True, max_errors: int = 6):
+        """
+        Check that this light curve is sampled at a fixed time interval. Return the number of errors.
+
+        :param verbose:
+            Should we output a logging message about every missing time point?
+        :param max_errors:
+            The maximum number of errors we should show
+        :return:
+            int
+        """
+        return 0
+
+    def __add__(self, other: Lightcurve):
+        """
+        Add two lightcurves together.
+
+        :type other:
+            Lightcurve
+        """
+
+        # Avoid circular import
+        from .lightcurve_resample import LightcurveResampler
+
+        # Resample other lightcurve onto same time raster as this
+        resampler = LightcurveResampler(input_lc=other)
+        other_resampled = resampler.match_to_other_lightcurve(other=self)
+
+        # Take metadata from the lightcurve with the strongest transit signal
+        if self.metadata.get('mes', 1e-20) > other.metadata.get('mes', 0):
+            output_metadata = {**self.metadata}
+        else:
+            output_metadata = {**other.metadata}
+
+        # Create output lightcurve
+        result = LightcurveFixedStep(
+            time_start=self.time_start,
+            time_step=self.time_step,
+            fluxes=self.get_fluxes() + other_resampled.get_fluxes(),
+            uncertainties=np.hypot(self.get_uncertainties(), other_resampled.get_uncertainties()),
+            flags=np.hypot(self.get_flags(), other_resampled.get_flags()),
+            metadata=output_metadata
+        )
+
+        return result
+
+    def __sub__(self, other: Lightcurve):
+        """
+        Subtract one lightcurve from another.
+
+        :type other:
+            Lightcurve
+        """
+
+        # Avoid circular import
+        from .lightcurve_resample import LightcurveResampler
+
+        # Resample other lightcurve onto same time raster as this
+        resampler = LightcurveResampler(input_lc=other)
+        other_resampled = resampler.match_to_other_lightcurve(other=self)
+
+        # Merge metadata from the two input lightcurves
+        output_metadata = {**self.metadata, **other.metadata}
+
+        # Create output lightcurve
+        result = LightcurveFixedStep(
+            time_start=self.time_start,
+            time_step=self.time_step,
+            fluxes=self.get_fluxes() - other_resampled.get_fluxes(),
+            uncertainties=np.hypot(self.get_uncertainties(), other_resampled.get_uncertainties()),
+            flags=np.hypot(self.get_flags(), other_resampled.get_flags()),
+            metadata=output_metadata
+        )
+
+        return result
+
+    def __mul__(self, other: Lightcurve):
+        """
+        Multiply two lightcurves together.
+
+        :type other:
+            Lightcurve
+        """
+
+        # Avoid circular import
+        from .lightcurve_resample import LightcurveResampler
+
+        # Resample other lightcurve onto same time raster as this
+        resampler = LightcurveResampler(input_lc=other)
+        other_resampled = resampler.match_to_other_lightcurve(other=self)
+
+        # Merge metadata from the two input lightcurves
+        output_metadata = {**self.metadata, **other.metadata}
+
+        # Create output lightcurve
+        result = LightcurveFixedStep(
+            time_start=self.time_start,
+            time_step=self.time_step,
+            fluxes=self.get_fluxes() * other_resampled.get_fluxes(),
+            uncertainties=np.hypot(self.get_uncertainties(), other_resampled.get_uncertainties()),
+            flags=np.hypot(self.get_flags(), other_resampled.get_flags()),
+            metadata=output_metadata
+        )
+
+        return result

@@ -2,7 +2,7 @@
 
 BEGIN;
 
--- Table of types of named tasks the testbench can run (e.g. synthesis_psls)
+-- Table of types of named tasks the EAS can run (e.g. synthesis_psls)
 CREATE TABLE eas_task_types
 (
     taskTypeId       INTEGER PRIMARY KEY AUTO_INCREMENT,

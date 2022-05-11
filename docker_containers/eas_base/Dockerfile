@@ -10,7 +10,7 @@ RUN apt-get update
 RUN apt-get install -y apt-utils dialog git vim net-tools wget rsync \
                        python3 python3-dev python3-virtualenv python3-mysqldb \
                        mysql-client libmysqlclient-dev make gcc g++ gfortran \
-                       libcfitsio-dev libgsl-dev \
+                       libcfitsio-dev libgsl-dev sqlite3 \
                        ; apt-get clean
 
 # Install Python requirements

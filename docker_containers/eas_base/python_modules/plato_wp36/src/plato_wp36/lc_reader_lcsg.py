@@ -10,18 +10,28 @@ import os
 import re
 import gzip
 
+from typing import Optional
+
 from .lightcurve import LightcurveArbitraryRaster
-from .settings import settings
+from .settings import Settings
 
 
-def read_lcsg_lightcurve(filename, gzipped=True, cut_off_time=None, directory="lightcurves_v2"):
+def read_lcsg_lightcurve(filename: str, gzipped: bool = True, cut_off_time: Optional[float] = None,
+                         directory: str = "lightcurves_v2"):
     """
     Read a lightcurve from an ASCII data file.
+
+    ASCII file should have three columns:
+    time [days] ; flux ; flag
 
     :param filename:
         The filename of the input data file.
     :type filename:
         str
+    :param gzipped:
+        Boolean flag indicating whether the input datafiles have been gzipped
+    :type gzipped:
+        bool
     :param cut_off_time:
         Only read lightcurve up to some cut off time
     :type cut_off_time:
@@ -34,7 +44,7 @@ def read_lcsg_lightcurve(filename, gzipped=True, cut_off_time=None, directory="l
         A <LightcurveArbitraryRaster> object.
     """
 
-    times = []
+    times = []  # days
     fluxes = []
     uncertainties = []
     flags = []
@@ -42,6 +52,9 @@ def read_lcsg_lightcurve(filename, gzipped=True, cut_off_time=None, directory="l
         'directory': directory,
         'filename': filename
     }
+
+    # Fetch EAS settings
+    settings = Settings().settings
 
     # Full path for this lightcurve
     file_path = os.path.join(settings['lcPath'], directory, filename)
@@ -73,7 +86,7 @@ def read_lcsg_lightcurve(filename, gzipped=True, cut_off_time=None, directory="l
 
             # Unpack data
             words = line.split(',')
-            time = float(words[0])
+            time = float(words[0])  # days
             flux = float(words[1])
             flag = float(words[2])
             uncertainty = 0
@@ -89,7 +102,7 @@ def read_lcsg_lightcurve(filename, gzipped=True, cut_off_time=None, directory="l
             uncertainties.append(uncertainty)
 
     # Convert into a Lightcurve object
-    lightcurve = LightcurveArbitraryRaster(times=np.asarray(times),
+    lightcurve = LightcurveArbitraryRaster(times=np.asarray(times),  # days
                                            fluxes=np.asarray(fluxes),
                                            uncertainties=np.asarray(uncertainties),
                                            flags=np.asarray(flags),

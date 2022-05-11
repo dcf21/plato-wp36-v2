@@ -3,7 +3,7 @@
 # init_schema.py
 
 """
-Create a set of empty database tables, initialising the schema of the results database.
+Create a set of empty database tables, initialising the schema of the task database.
 """
 
 import argparse
@@ -13,7 +13,7 @@ import os
 from plato_wp36 import connect_db, settings, task_database, task_types
 
 
-def init_schema(db_user: str, db_passwd: str, db_host: str, db_port: int, db_name: str):
+def init_schema(db_engine: str, db_user: str, db_passwd: str, db_host: str, db_port: int, db_name: str):
     """
     Create database tables, using schema defined in <schema.sql>.
 
@@ -22,44 +22,24 @@ def init_schema(db_user: str, db_passwd: str, db_host: str, db_port: int, db_nam
     """
 
     # Instantiate database connection class
-    db = connect_db.DatabaseConnector()
-
-    # Read database schema
-    pwd = os.path.split(os.path.abspath(__file__))[0]
-    sql = os.path.join(pwd, "schema.sql")
-    db_config = db.mysql_login_config_path()[0]
-
-    # Create mysql login config file
-    db.make_mysql_login_config(db_user=db_user, db_passwd=db_passwd,
-                               db_host=db_host, db_port=db_port, db_database=db_name)
-
-    # Recreate database from scratch
-    cmd = "echo 'DROP DATABASE IF EXISTS {:s};' | mysql --defaults-extra-file={:s}".format(db_name, db_config)
-    os.system(cmd)
-    cmd = ("echo 'CREATE DATABASE {:s} CHARACTER SET utf8mb4;' | mysql --defaults-extra-file={:s}".
-           format(db_name, db_config))
-    os.system(cmd)
-
-    # Create basic database schema
-    cmd = "cat {:s} | mysql --defaults-extra-file={:s} {:s}".format(sql, db_config, db_name)
-    os.system(cmd)
+    with connect_db.DatabaseConnector(db_engine=db_engine, db_database=db_name,
+                                      db_user=db_user, db_passwd=db_passwd,
+                                      db_host=db_host, db_port=db_port).connect_db() as db:
+        db.create_database()
 
     # Read list of known task types
     tasks = task_types.TaskTypeList.read_from_xml()
 
     # Write list of task types to the database
-    task_db = task_database.TaskDatabaseConnection()
-    task_db.task_list_to_db(task_list=tasks)
-
-    # Commit database
-    task_db.commit()
-    task_db.close_db()
+    with task_database.TaskDatabaseConnection() as task_db:
+        task_db.task_list_to_db(task_list=tasks)
 
 
 # Do it right away if we're run as a script
 if __name__ == "__main__":
     # Read command-line arguments
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--db_engine', default="mysql", type=str, dest='db_engine', help='Database engine')
     parser.add_argument('--db_user', default="root", type=str, dest='db_user', help='Database user')
     parser.add_argument('--db_passwd', default="plato", type=str, dest='db_passwd', help='Database password')
     parser.add_argument('--db_host', default="localhost", type=str, dest='db_host', help='Database host')
@@ -83,6 +63,7 @@ if __name__ == "__main__":
     logger.info(__doc__.strip())
 
     # Initialise schema
-    init_schema(db_user=args.db_user, db_passwd=args.db_passwd,
+    init_schema(db_engine=args.db_engine,
+                db_user=args.db_user, db_passwd=args.db_passwd,
                 db_host=args.db_host, db_port=args.db_port,
                 db_name=args.db_name)

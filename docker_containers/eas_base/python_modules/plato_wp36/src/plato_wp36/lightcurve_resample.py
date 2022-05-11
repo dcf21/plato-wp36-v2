@@ -2,7 +2,9 @@
 
 import numpy as np
 
-from .lightcurve import LightcurveArbitraryRaster
+from typing import Iterable
+
+from .lightcurve import Lightcurve, LightcurveArbitraryRaster
 
 
 class LightcurveResampler(object):
@@ -10,13 +12,13 @@ class LightcurveResampler(object):
     A class containing utility functions for resampling LCs onto different time rasters
     """
 
-    def __init__(self, input_lc):
-        assert isinstance(input_lc, LightcurveArbitraryRaster), \
-            "The LightcurveResampler class can only operate on LightcurveArbitraryRaster objects."
+    def __init__(self, input_lc: Lightcurve):
+        assert isinstance(input_lc, Lightcurve), \
+            "The LightcurveResampler class can only operate on Lightcurve objects."
         self._input = input_lc
 
     @staticmethod
-    def _pixel_start_times(raster):
+    def _pixel_start_times(raster: np.ndarray):
         """
         Turn a raster of the central times of pixels, into the start-time edge of each pixel.
 
@@ -44,7 +46,7 @@ class LightcurveResampler(object):
         return start_times
 
     @staticmethod
-    def _pixel_widths(start_times):
+    def _pixel_widths(start_times: np.ndarray):
         """
         Turn a raster of the central times of pixels, into the time durations of each pixel.
 
@@ -65,7 +67,7 @@ class LightcurveResampler(object):
         return pixel_widths
 
     @staticmethod
-    def _resample(x_new, x_in, y_in):
+    def _resample(x_new: np.ndarray, x_in: np.ndarray, y_in: np.ndarray):
         """
         Function which actually re-samples a lightcurve onto a new raster of times.
 
@@ -134,7 +136,7 @@ class LightcurveResampler(object):
         # Return output
         return y_new
 
-    def onto_raster(self, output_raster, resample_flags=True):
+    def onto_raster(self, output_raster: Iterable, resample_flags: bool = True):
         """
         Resample this lightcurve onto a user-specified time raster.
 
@@ -150,12 +152,12 @@ class LightcurveResampler(object):
         """
 
         new_values = self._resample(x_new=output_raster,
-                                    x_in=self._input.times,
-                                    y_in=self._input.fluxes)
+                                    x_in=self._input.get_times(),
+                                    y_in=self._input.get_fluxes())
 
         new_uncertainties = self._resample(x_new=output_raster,
-                                           x_in=self._input.times,
-                                           y_in=self._input.uncertainties)
+                                           x_in=self._input.get_times(),
+                                           y_in=self._input.get_uncertainties())
 
         output = LightcurveArbitraryRaster(times=output_raster,
                                            fluxes=new_values,
@@ -165,13 +167,13 @@ class LightcurveResampler(object):
 
         if resample_flags and self._input.flags_set:
             output.mask = self._resample(x_new=output_raster,
-                                         x_in=self._input.times,
-                                         y_in=self._input.flags) > 0.5
+                                         x_in=self._input.get_times(),
+                                         y_in=self._input.get_flags()) > 0.5
             output.mask_set = not np.all(output.mask)
 
         return output
 
-    def match_to_other_lightcurve(self, other, resample_flags=True):
+    def match_to_other_lightcurve(self, other: Lightcurve, resample_flags: bool = True):
         """
         Resample this lightcurve onto the same time raster of another LightcurveArbitraryRaster object.
 
@@ -187,5 +189,5 @@ class LightcurveResampler(object):
             New LightcurveArbitraryRaster object.
         """
 
-        return self.onto_raster(output_raster=other.times,
+        return self.onto_raster(output_raster=other.get_times(),
                                 resample_flags=resample_flags)

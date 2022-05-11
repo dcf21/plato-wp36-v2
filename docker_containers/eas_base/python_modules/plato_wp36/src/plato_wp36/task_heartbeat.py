@@ -42,7 +42,7 @@ class TaskHeartbeat:
         self.task_attempt_id = task_attempt_id
         self.heartbeat_cadence = heartbeat_cadence
 
-        # Fetch testbench settings
+        # Fetch EAS settings
         s = Settings()
 
         # Path to the subprocess script

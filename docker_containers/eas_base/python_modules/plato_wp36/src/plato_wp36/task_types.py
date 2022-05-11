@@ -84,7 +84,7 @@ class TaskTypeList:
             TaskTypeList instance
         """
 
-        # Fetch testbench settings
+        # Fetch EAS settings
         settings = Settings().settings
 
         # Default path for the XML file

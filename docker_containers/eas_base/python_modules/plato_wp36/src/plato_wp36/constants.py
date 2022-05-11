@@ -2,15 +2,15 @@
 # constants.py
 
 """
-Some constants which can be used in JSON files to specify tests
+Some constants which can be used in task descriptions
 """
 
 
 class EASConstants:
     def __init__(self):
-        self.day = 1
-        self.month = 28
-        self.year = 365.25
+        self.day = 1  # days
+        self.month = 28  # days
+        self.year = 365.25  # days
 
         self.sun_radius = 695500e3  # metres
         self.earth_radius = 6371e3  # metres
@@ -19,4 +19,4 @@ class EASConstants:
 
         self.Rearth = 0.08911486  # Jupiter radii
 
-        self.plato_noise = 0.000315  # noise in a 25-sec cadence pixel, from PSLS
+        self.plato_noise = 0.000315  # PLATO noise in a 25-sec cadence pixel, from PSLS

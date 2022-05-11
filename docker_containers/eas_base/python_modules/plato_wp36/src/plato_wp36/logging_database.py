@@ -23,7 +23,7 @@ class EasLoggingHandler(logging.StreamHandler):
         logging.StreamHandler.__init__(self)
         self.current_task_attempt_id = None
 
-        # Fetch testbench settings
+        # Fetch EAS settings
         self.settings = Settings()
 
     def set_task_attempt_id(self, attempt_id: Optional[int] = None):
@@ -46,21 +46,15 @@ class EasLoggingHandler(logging.StreamHandler):
             None
         """
         # Open connection to the database
-        db_connector = DatabaseConnector()
-        db, conn = db_connector.connect_db()
+        with DatabaseConnector().connect_db() as db_handle:
+            # Truncate log message if necessary
+            log_message = str(record.msg)
+            max_message_length = int(self.settings.installation_info['max_log_message_length'])
+            if len(log_message) > max_message_length:
+                log_message = "{}...".format(log_message[:max_message_length - 5])
 
-        # Truncate log message if necessary
-        log_message = str(record.msg)
-        max_message_length = int(self.settings.installation_info['max_log_message_length'])
-        if len(log_message) > max_message_length:
-            log_message = "{}...".format(log_message[:max_message_length - 5])
-
-        # File logging message
-        conn.execute("""
+            # File logging message
+            db_handle.parameterised_query("""
 INSERT INTO eas_log_messages (generatedByTaskExecution, timestamp, severity, message)
 VALUES (%s, %s, %s, %s);
 """, (self.current_task_attempt_id, time.time(), record.levelno, log_message))
-
-        # Commit changes to the database
-        db.commit()
-        db.close()

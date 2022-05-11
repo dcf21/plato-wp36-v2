@@ -26,7 +26,7 @@ def get_container_name(container_name_filename: Optional[str] = None):
         Name of container
     """
 
-    # Fetch testbench settings
+    # Fetch EAS settings
     settings = Settings().settings
 
     # Default path for name of container
