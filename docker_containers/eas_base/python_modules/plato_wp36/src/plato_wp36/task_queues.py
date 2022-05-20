@@ -342,7 +342,7 @@ class TaskQueueAmqp(TaskQueue):
         if received_item:
             if acknowledge:
                 self.channel.basic_ack(delivery_tag=method_frame.delivery_tag)
-            output_id = int(method_frame)
+            output_id = int(body)
         else:
             output_id = None
 

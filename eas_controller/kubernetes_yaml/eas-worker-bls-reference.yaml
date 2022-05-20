@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: plato-bls-reference
+  name: eas-worker-bls-reference
 spec:
   selector:
     matchLabels:
-      app: plato-bls-reference
+      app: eas-worker-bls-reference
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: plato-bls-reference
+        app: eas-worker-bls-reference
     spec:
       containers:
         - image: plato/eas_worker_bls_reference:v1

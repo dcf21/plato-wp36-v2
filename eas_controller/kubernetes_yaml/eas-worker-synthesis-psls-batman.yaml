@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: eas-worker-base
+  name: eas-worker-synthesis-psls-batman
 spec:
   selector:
     matchLabels:
-      app: eas-worker-base
+      app: eas-worker-synthesis-psls-batman
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: eas-worker-base
+        app: eas-worker-synthesis-psls-batman
     spec:
       containers:
-        - image: plato/eas_base:v1
+        - image: plato/eas_worker_synthesis_psls_batman:v1
           name: plato
           command: [ './launch_service_mode.py' ]
           args: [  ]

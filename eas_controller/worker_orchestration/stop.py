@@ -16,7 +16,8 @@ import sys
 def delete_all(namespace: str):
     # List of components in the order in which we create them
     components = ["input-pv", "input-pvc", "output-pv", "output-pvc", "mysql-pv-minikube", "mysql-pvc-minikube",
-                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service", "eas-debugging",
+                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service",
+                  "eas-worker-base", "eas-worker-synthesis-psls-batman", "eas-worker-tls", "eas-worker-bls-reference",
                   "web-interface", "web-interface-service"]
 
     # Delete components in the opposite order to which they are created

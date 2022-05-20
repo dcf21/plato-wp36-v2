@@ -29,7 +29,8 @@ def deploy_all(namespace: str, worker_types: Iterable):
 
     # List of components in the order in which we create them
     components = ["input-pv", "input-pvc", "output-pv", "output-pvc", "mysql-pv-minikube", "mysql-pvc-minikube",
-                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service", "eas-worker-base",
+                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service",
+                  "eas-worker-base", "eas-worker-synthesis-psls-batman", "eas-worker-tls", "eas-worker-bls-reference",
                   "web-interface", "web-interface-service"]
 
     # Create components in order
@@ -89,5 +90,10 @@ if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     logger.info(__doc__.strip())
 
+    # Build list of workers we are to deploy
+    worker_types = args.worker
+    if worker_types is None:
+        worker_types = ()
+
     # Do deployment
-    deploy_all(namespace=args.namespace, worker_types=args.worker)
+    deploy_all(namespace=args.namespace, worker_types=worker_types)

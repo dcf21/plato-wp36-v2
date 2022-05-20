@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: plato-tls
+  name: eas-worker-tls
 spec:
   selector:
     matchLabels:
-      app: plato-tls
+      app: eas-worker-tls
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: plato-tls
+        app: eas-worker-tls
     spec:
       containers:
         - image: plato/eas_worker_tls:v1

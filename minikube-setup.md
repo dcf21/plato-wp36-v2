@@ -31,7 +31,7 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
 2. **Start minikube**
 
     ```
-    minikube start --cpus=12 --memory='16g' --mount=true
+    minikube start --cpus=12 --memory='20g' --mount=true
     ```
 
    The command-line options really matter here. The memory you allocate to minikube will cease to be available on your host machine, so don't allocate too much, but you need at least 4-8 GB if you want to synthesise two-year lightcurves at 25-second cadence.
@@ -118,8 +118,15 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
    ./init_schema.py --db_port 30036 --db_host 192.168.59.101
    ./init_queues.py --mq_port 30672 --mq_host 192.168.59.101
    ```
-   
-10. **Start some worker nodes**
+
+10. **Port-forward the web interface**
+
+    This step is only required if you want to be able to access the web interface to the pipeline externally. If so, you need to set up a port-forward so that an external port on your host machine (in this example, 8080) is bound to the Kubernetes web interface service. The command below does not return, so you probably want to run it in a `screen` session:
+   ```
+   kubectl port-forward -n=plato service/eas-web-interface-service 8080:5000  --address='0.0.0.0'
+   ```
+
+11. **Start some worker nodes**
 
     Now that the database has been initialised, it's possible to start some workers:
 
@@ -128,7 +135,7 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
     ./deploy.py --worker eas-worker-base
     ```
    
-11. **Restart**
+12. **Restart**
 
     To restart the prototype, for example after changing the code:
 
@@ -137,7 +144,7 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
      ./restart_workers.sh
      ```
 
-12. **Stop the prototype**
+13. **Stop the prototype**
 
     To close the EAS pipeline down:
 
@@ -147,7 +154,7 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
     
      This stops all of the running containers and services, but does not delete the persistent storage volumes.
 
-13. **Stop minikube**
+14. **Stop minikube**
 
     To close minikube down:
 
@@ -161,7 +168,7 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
      minikube delete
      ```
 
-14. **Clear out results**
+15. **Clear out results**
 
     To clear out the output results and start again afresh:
 
