@@ -6,11 +6,8 @@ Module for reading the list of all known pipeline tasks, and the list of which D
 of running each type of task.
 """
 
-import os
+from typing import Dict, Set
 
-from typing import Dict, Optional, Set
-
-from .settings import Settings
 from .vendor import xmltodict
 
 
@@ -72,27 +69,20 @@ class TaskTypeList:
         return self.container_capabilities[container_name]
 
     @classmethod
-    def read_from_xml(cls, xml_filename: Optional[str] = None):
+    def read_from_xml(cls, input_xml_filename: str):
         """
         Read the contents of an XML file specifying the list of all known pipeline tasks.
 
-        :param xml_filename:
+        :param input_xml_filename:
             The filename of the XML file specifying the list of all known pipeline tasks.
-        :type xml_filename:
+        :type input_xml_filename:
             str
         :return:
             TaskTypeList instance
         """
 
-        # Fetch EAS settings
-        settings = Settings().settings
-
-        # Default path for the XML file
-        if xml_filename is None:
-            xml_filename = os.path.join(settings['pythonPath'], 'task_type_registry.xml')
-
         # Read contents of XML file
-        with open(xml_filename, "rb") as in_stream:
+        with open(input_xml_filename, "rb") as in_stream:
             xml_structure = xmltodict.parse(xml_input=in_stream)['task_type_registry']
 
         # Start building task list

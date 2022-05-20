@@ -56,7 +56,7 @@ def start_heartbeat(parent_pid: int, task_attempt_id: int, heartbeat_cadence: in
                 sys.exit(0)
 
             # Open connection to the database
-            with connect_db.DatabaseConnector().connect_db() as db_handle:
+            with connect_db.DatabaseConnector().interface() as db_handle:
                 # Log heartbeat
                 logging.info("Heartbeat for <{}>".format(task_attempt_id))
 

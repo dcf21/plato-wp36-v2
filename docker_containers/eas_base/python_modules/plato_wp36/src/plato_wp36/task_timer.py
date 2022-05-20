@@ -70,7 +70,7 @@ class TaskTimer:
 
         # Open connection to the database
         db_connector = DatabaseConnector()
-        db, conn = db_connector.connect_db()
+        db, conn = db_connector.interface()
 
         # File task execution time in the database
         conn.execute("""
@@ -109,7 +109,7 @@ WHERE schedulingAttemptId=%s;
 
         # Open connection to the database
         db_connector = DatabaseConnector()
-        db, conn = db_connector.connect_db()
+        db, conn = db_connector.interface()
 
         # File task execution time in the database
         conn.execute("""

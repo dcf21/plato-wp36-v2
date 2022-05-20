@@ -150,7 +150,7 @@ class DatabaseInterfaceMySql(DatabaseInterface):
 
     def __init__(self, db_user: Optional[str] = None, db_passwd: Optional[str] = None,
                  db_host: Optional[str] = None, db_port: Optional[int] = None,
-                 db_database: Optional[str] = None):
+                 db_database: Optional[str] = None, connect: bool = True):
         """
         Initialise a connection to the SQL database.
 
@@ -164,6 +164,9 @@ class DatabaseInterfaceMySql(DatabaseInterface):
             The host on which the database server is running
         :param db_port:
             The port on which the database server is running
+        :param connect:
+            Flag indicating whether we immediately open connection to database, or whether the user will subsequently
+            open a database connection explicitly.
         """
 
         # Run constructor of parent class
@@ -190,6 +193,10 @@ class DatabaseInterfaceMySql(DatabaseInterface):
             self.db_port = db_port
         if db_database is not None:
             self.db_database = db_database
+
+        # Connect to database
+        if connect:
+            self.connect()
 
     def test_database_exists(self):
         """
@@ -327,9 +334,15 @@ class DatabaseInterfaceSqlite(DatabaseInterface):
     Class defining an interface for interacting with sqlite3 databases.
     """
 
-    def __init__(self, db_database: Optional[str] = None):
+    def __init__(self, db_database: Optional[str] = None, connect: bool = True):
         """
         Initialise a connection to the SQL database.
+
+        :param db_database:
+            The name of the database we should connect to
+        :param connect:
+            Flag indicating whether we immediately open connection to database, or whether the user will subsequently
+            open a database connection explicitly.
         """
 
         # Run constructor of parent class
@@ -344,6 +357,10 @@ class DatabaseInterfaceSqlite(DatabaseInterface):
         # Substitute manually-overridden connection details
         if db_database is not None:
             self.db_database = db_database
+
+        # Connect to database
+        if connect:
+            self.connect()
 
     def _sqlite3_database_path(self):
         """
@@ -547,10 +564,13 @@ class DatabaseConnector:
         """
         pass
 
-    def connect_db(self):
+    def interface(self, connect: bool = True):
         """
         Return a new connection to the database as a DatabaseInterface object.
 
+        :param connect:
+            Flag indicating whether we immediately open connection to database, or whether the user will subsequently
+            open a database connection explicitly.
         :return:
             Instance of DatabaseInterface
         """
@@ -558,8 +578,8 @@ class DatabaseConnector:
         if self.db_engine == "mysql":
             return DatabaseInterfaceMySql(db_user=self.db_user, db_passwd=self.db_password,
                                           db_host=self.db_host, db_port=self.db_port,
-                                          db_database=self.db_database)
+                                          db_database=self.db_database, connect=connect)
         elif self.db_engine == "sqlite3":
-            return DatabaseInterfaceSqlite(db_database=self.db_database)
+            return DatabaseInterfaceSqlite(db_database=self.db_database, connect=connect)
         else:
             raise ValueError("Unknown database engine <{}>".format(self.db_engine))

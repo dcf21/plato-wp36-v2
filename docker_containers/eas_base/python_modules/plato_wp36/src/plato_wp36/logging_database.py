@@ -46,7 +46,7 @@ class EasLoggingHandler(logging.StreamHandler):
             None
         """
         # Open connection to the database
-        with DatabaseConnector().connect_db() as db_handle:
+        with DatabaseConnector().interface() as db_handle:
             # Truncate log message if necessary
             log_message = str(record.msg)
             max_message_length = int(self.settings.installation_info['max_log_message_length'])

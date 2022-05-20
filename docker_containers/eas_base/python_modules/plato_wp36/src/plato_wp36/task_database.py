@@ -45,7 +45,7 @@ class TaskDatabaseConnection:
         self.file_store_path = file_store_path
 
         # Open connection to the database
-        self.db_handle = DatabaseConnector().connect_db()
+        self.db_handle = DatabaseConnector().interface()
         self.db_handle.connect()
 
     def __del__(self):

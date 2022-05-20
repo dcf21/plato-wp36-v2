@@ -24,11 +24,12 @@ def init_schema(db_engine: str, db_user: str, db_passwd: str, db_host: str, db_p
     # Instantiate database connection class
     with connect_db.DatabaseConnector(db_engine=db_engine, db_database=db_name,
                                       db_user=db_user, db_passwd=db_passwd,
-                                      db_host=db_host, db_port=db_port).connect_db() as db:
+                                      db_host=db_host, db_port=db_port).interface(connect=False) as db:
         db.create_database()
 
     # Read list of known task types
-    tasks = task_types.TaskTypeList.read_from_xml()
+    input_xml_filename = os.path.join(os.path.dirname(__file__), "task_type_registry.xml")
+    tasks = task_types.TaskTypeList.read_from_xml(input_xml_filename=input_xml_filename)
 
     # Write list of task types to the database
     with task_database.TaskDatabaseConnection() as task_db:
