@@ -16,7 +16,7 @@ class TemporaryDirectory:
     """
 
     def __init__(self):
-        # Create a random hex id
+        # Create a random hex id to use in the filename of the temporary directory
         key_string = str(time.time())
         uid = hashlib.md5(key_string.encode()).hexdigest()
 
@@ -29,16 +29,27 @@ class TemporaryDirectory:
         self.tmp_dir = tmp_dir
 
     def __enter__(self):
-        pass
+        """
+        Called at the start of a with block
+        """
+        return self
 
     def __del__(self):
+        """
+        Destructor
+        """
         self.clean_up()
 
     def clean_up(self):
-        # Clean up temporary directory
+        """
+        Clean up temporary directory
+        """
         if self.tmp_dir is not None:
             os.rmdir(self.tmp_dir)
             self.tmp_dir = None
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Called at the end of a with block
+        """
         self.clean_up()
