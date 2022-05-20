@@ -1,6 +1,7 @@
-# This Dockerfile creates a generic Docker image containing the WP36 algorithm
-# test-bench code, and with various useful libraries installed. From this image
-# are derived various containers which run specific codes.
+# This Dockerfile creates a generic Docker image containing the WP36 EAS pipeline,
+# with various useful libraries installed. The containers which run the specific
+# science codes which make up the pipeline should be derived from this base
+# container.
 
 # Use a Ubuntu base image
 FROM ubuntu:latest

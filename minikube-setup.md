@@ -1,6 +1,6 @@
 # Installing the EAS pipeline via minikube
 
-The prerequisites to deploy the test-bench via minikube are as follows:
+The prerequisites to deploy the EAS pipeline via minikube are as follows:
 
 1. **Install minikube**
 
@@ -31,7 +31,7 @@ The prerequisites to deploy the test-bench via minikube are as follows:
 2. **Start minikube**
 
     ```
-    minikube start --cpus=12 --memory='9g' --mount=true
+    minikube start --cpus=12 --memory='16g' --mount=true
     ```
 
    The command-line options really matter here. The memory you allocate to minikube will cease to be available on your host machine, so don't allocate too much, but you need at least 4-8 GB if you want to synthesise two-year lightcurves at 25-second cadence.
@@ -64,7 +64,16 @@ The prerequisites to deploy the test-bench via minikube are as follows:
    ```
    The resulting Python environment is built in `data/datadir_local`. All of the EAS Control Python scripts include shebang lines which automatically use this virtual environment.
 
-5. **Build the Docker containers**
+5. **Prepare third-party vendor code required by the web interface**
+
+   The EAS pipeline web interface requires several standard Javascript libraries. A configuration is provided to download and install them via the bower package-management system, but since bower depends on node-js (widely used by web developers but not so much by astronomers), I also include a simple tarball of all the required files:
+
+   ```
+   cd docker_containers/eas_web_interface/web_interface/static
+   tar xvfz vendor_code.tar.gz
+   ```
+
+6. **Build the Docker containers**
 
    The Docker containers that comprise the EAS pipeline need to be built within the minikube Docker environment (which is a virtual machine):
 
@@ -75,23 +84,25 @@ The prerequisites to deploy the test-bench via minikube are as follows:
    
    This Python script can also be used to build the Docker containers within the local Docker environment on your host machine, if you wish to push them to an image repository, by specifying the `--target local` option.
 
-6. **Deploy the test-bench Docker containers within Kubernetes**
+7. **Deploy the EAS Docker containers within Kubernetes**
+
+    The commands below launch the core infrastructure for the EAS pipeline, but doesn't start any worker nodes yet.
 
     ```
     cd ../eas_controller/worker_orchestration
     ./deploy.py
     ```
 
-7. **Watch the pods start up**
+8. **Watch the pods start up**
 
     ```
-    watch kubectl get pods
+    watch kubectl get pods -n=plato
     ```
 
    This will show a live list of the containers running within Kubernetes. It often takes a minute or two for them to
    reach the `Running` state.
 
-8. **Initialise the databases**
+9. **Initialise the databases**
 
    Before you can connect to the database, you need to find out the port and host on which minikube is exposing the MySQL and RabbitMQ services on the host machine. There is a convenience function for doing this as follows:
 
@@ -107,19 +118,28 @@ The prerequisites to deploy the test-bench via minikube are as follows:
    ./init_schema.py --db_port 30036 --db_host 192.168.59.101
    ./init_queues.py --mq_port 30672 --mq_host 192.168.59.101
    ```
+   
+10. **Start some worker nodes**
 
-9. **Restart**
-
-   To restart the prototype, for example after changing the code:
+    Now that the database has been initialised, it's possible to start some workers:
 
     ```
     cd ../eas_controller/worker_orchestration
-    ./restart_workers.sh
+    ./deploy.py --worker eas-worker-base
     ```
+   
+11. **Restart**
 
-10. **Stop the prototype**
+    To restart the prototype, for example after changing the code:
 
-    To close the test-bench down:
+     ```
+     cd ../eas_controller/worker_orchestration
+     ./restart_workers.sh
+     ```
+
+12. **Stop the prototype**
+
+    To close the EAS pipeline down:
 
      ```
      ./stop.py
@@ -127,7 +147,7 @@ The prerequisites to deploy the test-bench via minikube are as follows:
     
      This stops all of the running containers and services, but does not delete the persistent storage volumes.
 
-11. **Stop minikube**
+13. **Stop minikube**
 
     To close minikube down:
 
@@ -141,7 +161,7 @@ The prerequisites to deploy the test-bench via minikube are as follows:
      minikube delete
      ```
 
-12. **Clear out results**
+14. **Clear out results**
 
     To clear out the output results and start again afresh:
 

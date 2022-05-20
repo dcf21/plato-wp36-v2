@@ -833,6 +833,27 @@ WHERE productId = %s;
             metadata=metadata
         )
 
+    def hostname_get_id(self, name: str):
+        """
+        Fetch the numerical ID associated with a particular worker node's hostname.
+
+        :param name:
+            String hostname of worker node
+        :return:
+            Integer ID
+        """
+
+        while True:
+            # Lookup ID from database
+            self.db_handle.parameterised_query("SELECT hostId FROM eas_worker_host WHERE hostname=%s;", (name,))
+
+            result = self.db_handle.fetchall()
+            if len(result) > 0:
+                return result[0]['hostId']
+
+            # Create new ID
+            self.db_handle.parameterised_query("INSERT INTO eas_worker_host (hostname) VALUES (%s);", (name,))
+
     def semantic_type_get_id(self, name: str):
         """
         Fetch the numerical ID associated with a semantic type name.

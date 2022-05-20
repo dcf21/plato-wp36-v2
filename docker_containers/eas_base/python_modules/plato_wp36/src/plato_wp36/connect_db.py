@@ -523,8 +523,6 @@ class DatabaseConnector:
             The host on which the database server is running (not used by sqlite3)
         :param db_port:
             The port on which the database server is running (not used by sqlite3)
-        :return:
-            List of [database handle, connection handle]
         """
 
         # Fetch EAS settings

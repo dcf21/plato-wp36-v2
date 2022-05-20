@@ -16,7 +16,7 @@ import time
 
 from typing import Optional
 
-from .connect_db import DatabaseConnector
+from .task_database import TaskDatabaseConnection
 
 
 class TaskTimer:
@@ -69,19 +69,17 @@ class TaskTimer:
         self.start_time = self.measure_time()
 
         # Open connection to the database
-        db_connector = DatabaseConnector()
-        db, conn = db_connector.interface()
+        with TaskDatabaseConnection as task_db:
+            # Look up integer ID for this worker node's hostname
+            my_hostname = platform.node()
+            hostname_id = task_db.hostname_get_id(name=my_hostname)
 
-        # File task execution time in the database
-        conn.execute("""
+            # File task execution time in the database
+            task_db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
-SET startTime=%s, latestHeartbeat=%s, hostname=%s
+SET startTime=%s, latestHeartbeat=%s, hostId=%s
 WHERE schedulingAttemptId=%s;
-""", (self.start_time['wall_clock'], self.start_time['wall_clock'], platform.node(), self.task_attempt_id))
-
-        # Commit changes to the database
-        db.commit()
-        db.close()
+""", (self.start_time['wall_clock'], self.start_time['wall_clock'], hostname_id, self.task_attempt_id))
 
         # Finished
         return self
@@ -108,19 +106,14 @@ WHERE schedulingAttemptId=%s;
             run_times[key] = self.end_time[key] - self.start_time[key]
 
         # Open connection to the database
-        db_connector = DatabaseConnector()
-        db, conn = db_connector.interface()
-
-        # File task execution time in the database
-        conn.execute("""
+        with TaskDatabaseConnection() as task_db:
+            # File task execution time in the database
+            task_db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
 SET endTime=%s, runTimeWallClock=%s, runTimeCpu=%s, runTimeCpuIncChildren=%s
 WHERE schedulingAttemptId=%s;
 """,
-                     (time.time(),
-                      run_times['wall_clock'], run_times['cpu'], run_times['cpu_inc_children'],
-                      self.task_attempt_id))
-
-        # Commit changes to the database
-        db.commit()
-        db.close()
+                                                  (time.time(),
+                                                   run_times['wall_clock'], run_times['cpu'],
+                                                   run_times['cpu_inc_children'],
+                                                   self.task_attempt_id))

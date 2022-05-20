@@ -22,31 +22,20 @@ def flush_queues():
     """
 
     # Read list of task types from the database
-    task_db = task_database.TaskDatabaseConnection()
-    tasks = task_db.task_list_from_db()
+    with task_database.TaskDatabaseConnection() as task_db:
+        tasks = task_db.task_list_from_db()
 
     # Open connection to the message queue
-    message_bus = task_queues.TaskQueue()
+    with task_queues.TaskQueueConnector().interface() as message_bus:
+        # Query each queue in turn
+        for queue_name in tasks.task_names():
+            # Fetch messages from queue, one by one, until no more messages are found
+            while True:
+                task_id = message_bus.queue_fetch_and_acknowledge(queue_name=queue_name)
 
-    # Query each queue in turn
-    for queue_name in tasks.task_names():
-        # Fetch messages from queue, one by one, until no more messages are found
-        while True:
-            method_frame, header_frame, body = message_bus.queue_fetch(queue_name=queue_name)
-
-            if method_frame is None or method_frame.NAME == 'Basic.GetEmpty':
-                # Message queue was empty
-                break
-            else:
-                # Received a message
-                message_bus.message_ack(method_frame=method_frame)
-
-    # Close connection
-    message_bus.close()
-
-    # Commit database
-    task_db.commit()
-    task_db.close_db()
+                if task_id is None:
+                    # Message queue was empty
+                    break
 
 
 if __name__ == "__main__":
@@ -54,7 +43,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     args = parser.parse_args()
 
-    # Fetch testbench settings
+    # Fetch EAS pipeline settings
     settings = settings.Settings()
 
     # Set up logging

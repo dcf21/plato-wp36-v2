@@ -72,7 +72,7 @@ if __name__ == "__main__":
     else:
         containers = sorted([os.path.join(path_to_containers, item) for item in args.containers])
 
-    # Fetch testbench settings
+    # Fetch EAS pipeline settings
     settings = settings.Settings()
 
     # Set up logging

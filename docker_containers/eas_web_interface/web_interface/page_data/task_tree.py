@@ -18,7 +18,7 @@ def fetch_job_tree(job_name: Optional[str] = None, status: str = 'any'):
 
     output: List[Dict] = []
 
-    # Fetch testbench settings
+    # Fetch EAS pipeline settings
     s = settings.Settings()
 
     def search_children(parent_id: int = None):

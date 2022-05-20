@@ -1,4 +1,4 @@
-# Testbench job descriptors
+# EAS pipeline job descriptors
 
 This directory contains JSON descriptors of some demonstration tasks which can be executed within the prototype pipeline.
 

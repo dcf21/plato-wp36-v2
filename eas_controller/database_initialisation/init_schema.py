@@ -28,8 +28,7 @@ def init_schema(db_engine: str, db_user: str, db_passwd: str, db_host: str, db_p
         db.create_database()
 
     # Read list of known task types
-    input_xml_filename = os.path.join(os.path.dirname(__file__), "task_type_registry.xml")
-    tasks = task_types.TaskTypeList.read_from_xml(input_xml_filename=input_xml_filename)
+    tasks = task_types.TaskTypeList.read_from_xml()
 
     # Write list of task types to the database
     with task_database.TaskDatabaseConnection() as task_db:
@@ -48,7 +47,7 @@ if __name__ == "__main__":
     parser.add_argument('--db_name', default="plato", type=str, dest='db_name', help='Database name')
     args = parser.parse_args()
 
-    # Fetch testbench settings
+    # Fetch EAS pipeline settings
     settings = settings.Settings()
 
     # Set up logging

@@ -38,7 +38,7 @@ class Settings:
         ]
 
         # Add all local configuration files
-        for item in glob.glob("../../data/datadir_local/local_settings*.conf"):
+        for item in glob.glob(os.path.join(root_path, "../../data/datadir_local/local_settings*.conf")):
             local_settings_files.append(
                 (item, False)
             )

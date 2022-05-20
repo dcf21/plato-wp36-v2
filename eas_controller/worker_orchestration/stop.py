@@ -3,7 +3,7 @@
 # stop.py
 
 """
-Stops a Kubernetes deployment of the test-bench. Currently fork the kubectl commandline tool rather than using the
+Stops a Kubernetes deployment of the EAS pipeline. Currently, we fork the kubectl commandline tool rather than using the
 Python API because it's massively less verbose.
 """
 

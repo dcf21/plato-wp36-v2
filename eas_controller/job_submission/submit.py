@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Fetch testbench settings
+    # Fetch EAS pipeline settings
     settings = settings.Settings()
 
     # Set up logging

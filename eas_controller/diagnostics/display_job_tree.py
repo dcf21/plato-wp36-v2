@@ -24,7 +24,7 @@ def display_job_tree(job_name: Optional[str] = None, status: str = 'any'):
         None
     """
 
-    # Fetch testbench settings
+    # Fetch EAS pipeline settings
     s = settings.Settings()
 
     # Function to iteratively search for child jobs
@@ -122,7 +122,7 @@ if __name__ == "__main__":
                         help='Display only jobs with a particular status')
     args = parser.parse_args()
 
-    # Fetch testbench settings
+    # Fetch EAS pipeline settings
     s = settings.Settings()
 
     # Set up logging
