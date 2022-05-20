@@ -31,7 +31,7 @@ def flush_queues():
         for queue_name in tasks.task_names():
             # Fetch messages from queue, one by one, until no more messages are found
             while True:
-                task_id = message_bus.queue_fetch_and_acknowledge(queue_name=queue_name)
+                task_id = message_bus.queue_fetch_and_acknowledge(queue_name=queue_name, set_running=False)
 
                 if task_id is None:
                     # Message queue was empty

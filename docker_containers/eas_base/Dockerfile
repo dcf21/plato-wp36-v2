@@ -45,6 +45,3 @@ RUN mkdir -p /plato-wp36-v2/data/datadir_output
 
 # Move into the directory where the launch script lives
 WORKDIR /plato-wp36-v2/docker_containers/eas_base/launch_worker
-
-# *** Write name of the Docker container into its root
-RUN echo 'eas_base' > /plato-wp36-v2/container_name.txt

@@ -69,7 +69,7 @@ class TaskTimer:
         self.start_time = self.measure_time()
 
         # Open connection to the database
-        with TaskDatabaseConnection as task_db:
+        with TaskDatabaseConnection() as task_db:
             # Look up integer ID for this worker node's hostname
             my_hostname = platform.node()
             hostname_id = task_db.hostname_get_id(name=my_hostname)
@@ -110,7 +110,7 @@ WHERE schedulingAttemptId=%s;
             # File task execution time in the database
             task_db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
-SET endTime=%s, runTimeWallClock=%s, runTimeCpu=%s, runTimeCpuIncChildren=%s
+SET endTime=%s, runTimeWallClock=%s, runTimeCpu=%s, runTimeCpuIncChildren=%s, isRunning=0
 WHERE schedulingAttemptId=%s;
 """,
                                                   (time.time(),

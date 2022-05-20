@@ -7,11 +7,13 @@ Start working on tasks in service mode.
 """
 
 import argparse
+import glob
 import logging
 import os
+import re
 import time
 
-from plato_wp36 import container_name, logging_database, settings, task_database, task_queues
+from plato_wp36 import logging_database, settings, task_database, task_queues
 
 EasLoggingHandlerInstance = logging_database.EasLoggingHandler()
 
@@ -25,13 +27,15 @@ def enter_service_mode():
         None
     """
 
-    # Read list of task types from the database
-    with task_database.TaskDatabaseConnection() as task_db:
-        tasks = task_db.task_list_from_db()
+    # Read list of task types that we are capable of performing, by looking at what Python scripts are
+    # available in the <task_implementations> directory
+    available_tasks = glob.glob(os.path.join(os.path.dirname(__file__), "../task_implementations/task_*.py"))
+    container_capabilities = []
 
-    # Read list of task types that we are capable of performing
-    container_name_string = container_name.get_container_name()
-    container_capabilities = tasks.tasks_for_container(container_name=container_name_string)
+    # Extract the name of each available task in turn
+    for item in available_tasks:
+        task_name = re.search(r"task_([^/]*).py", item).group(1)
+        container_capabilities.append(task_name)
 
     # Fetch EAS pipeline settings
     s = settings.Settings()
@@ -56,7 +60,7 @@ def enter_service_mode():
 
                 # Read execution attempt details from the database
                 with task_database.TaskDatabaseConnection() as task_db:
-                    attempt_info = task_db.execution_attempt_lookup(attempt_id=attempt_id)
+                    attempt_info = task_db.execution_attempt_lookup(attempt_id=attempt_id, embed_task_object=False)
 
                     # Check that execution attempt exists in the database
                     if attempt_info is None:

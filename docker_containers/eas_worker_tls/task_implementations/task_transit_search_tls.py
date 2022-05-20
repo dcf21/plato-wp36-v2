@@ -26,8 +26,8 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     # Perform the transit detection task
 
     # Read specification for the lightcurve we are to verify
-    filename_in = execution_attempt.task_info.task_description['inputs']['lightcurve']
-    lc_duration = float(execution_attempt.task_info.task_description['lc_duration'])
+    filename_in = execution_attempt.task_object.task_description['inputs']['lightcurve']
+    lc_duration = float(execution_attempt.task_object.task_description['lc_duration'])
 
     logging.info("Running <{filename}> through TLS with duration {lc_days:.1f}.".format(
         filename=filename_in, lc_days=lc_duration)
@@ -36,7 +36,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     # Read input lightcurve
     with task_database.TaskDatabaseConnection() as task_db:
         lc_in_file_handle, lc_in_metadata = task_db.task_open_file_input(
-            task=execution_attempt.task_info,
+            task=execution_attempt.task_object,
             input_name="lightcurve"
         )
     lc_in = lightcurve.LightcurveArbitraryRaster.from_file(
@@ -45,7 +45,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     )
 
     # Search for transits in this lightcurve
-    transit_search_settings = execution_attempt.task_info.task_description.get('search_settings', {})
+    transit_search_settings = execution_attempt.task_object.task_description.get('search_settings', {})
     x = tls.process_lightcurve(lc=lc_in, lc_duration=lc_duration, search_settings=transit_search_settings)
 
     # Extract output returned by TLS

@@ -24,6 +24,3 @@ RUN ln -s /plato-wp36-v2/docker_containers/eas_worker_bls_kovacs/task_qc_impleme
 
 # Move into the directory where the launch script lives
 WORKDIR /plato-wp36-v2/docker_containers/eas_base/launch_worker
-
-# *** Write name of the Docker container into its root
-RUN echo 'eas_worker_bls_kovacs' > /plato-wp36-v2/container_name.txt

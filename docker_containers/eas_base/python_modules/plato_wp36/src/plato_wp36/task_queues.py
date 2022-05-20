@@ -182,14 +182,19 @@ class TaskQueue:
         """
         raise NotImplementedError
 
-    def queue_fetch_and_acknowledge(self, queue_name: str):
+    def queue_fetch_and_acknowledge(self, queue_name: str, acknowledge: bool = True, set_running: bool = True):
         """
-        Fetch an item from the task queue, without blocking.
+        Fetch a message from a queue, without blocking.
 
         :param queue_name:
             The name of the queue to query
+        :param acknowledge:
+            Flag indicating whether we acknowledge receipt of this item from the queue, preventing it from being
+            delivered again.
+        :param set_running:
+            Flag indicating whether we mark this task as being running.
         :return:
-            None
+            Scheduling attempt ID, or None if the queue is empty
         """
         raise NotImplementedError
 
@@ -309,12 +314,17 @@ class TaskQueueAmqp(TaskQueue):
         # logging.info("Sending message <{}>".format(json_message))
         self.channel.basic_publish(exchange='', routing_key=queue_name, body=string_message)
 
-    def queue_fetch_and_acknowledge(self, queue_name: str):
+    def queue_fetch_and_acknowledge(self, queue_name: str, acknowledge: bool = True, set_running: bool = True):
         """
         Fetch a message from a queue, without blocking.
 
         :param queue_name:
             The name of the queue to query
+        :param acknowledge:
+            Flag indicating whether we acknowledge receipt of this item from the queue, preventing it from being
+            delivered again.
+        :param set_running:
+            Flag indicating whether we mark this task as being running.
         :return:
             Scheduling attempt ID, or None if the queue is empty
         """
@@ -330,7 +340,8 @@ class TaskQueueAmqp(TaskQueue):
 
         # If we received an item, acknowledge it now so it will not be sent to other workers
         if received_item:
-            self.channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+            if acknowledge:
+                self.channel.basic_ack(delivery_tag=method_frame.delivery_tag)
             output_id = int(method_frame)
         else:
             output_id = None
@@ -436,7 +447,7 @@ SELECT COUNT(*)
 FROM eas_scheduling_attempt s
 INNER JOIN eas_task t ON t.taskId = s.taskId
 INNER JOIN eas_task_types ty ON ty.taskTypeId = t.taskTypeId
-WHERE ty.taskName=%s AND s.is_queued;
+WHERE ty.taskName=%s AND s.isQueued;
 """, (queue_name,))
         results = self.db.db_handle.fetchall()
 
@@ -460,19 +471,24 @@ WHERE ty.taskName=%s AND s.is_queued;
         # Publish task into the job queue
         self.db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
-SET is_queued=1, is_running=0, hostId=NULL
+SET isQueued=1, isRunning=0, hostId=NULL
 WHERE schedulingAttemptId=%s;
 """, (item_id,))
         self.db.commit()
 
-    def queue_fetch_and_acknowledge(self, queue_name: str):
+    def queue_fetch_and_acknowledge(self, queue_name: str, acknowledge: bool = True, set_running: bool = True):
         """
         Fetch a message from a queue, without blocking.
 
         :param queue_name:
             The name of the queue to query
+        :param acknowledge:
+            Flag indicating whether we acknowledge receipt of this item from the queue, preventing it from being
+            delivered again.
+        :param set_running:
+            Flag indicating whether we mark this task as being running.
         :return:
-            None
+            Scheduling attempt ID, or None if the queue is empty
         """
 
         # Check that we are connected to the message queue
@@ -485,19 +501,19 @@ WHERE schedulingAttemptId=%s;
         # We are not currently run any tasks
         self.db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
-SET is_running=0
+SET isRunning=0
 WHERE hostId=%s;
 """, (host_id,))
 
         # Fetch an item from the job queue
         self.db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
-SET is_queued=0, is_running=1, hostId=%s
+SET isQueued=0, isRunning=1, hostId=%s
 WHERE schedulingAttemptId = (
     SELECT schedulingAttemptId FROM eas_scheduling_attempt s
     INNER JOIN eas_task t ON t.taskId = s.taskId
     INNER JOIN eas_task_types ty ON ty.taskTypeId = t.taskTypeId
-    WHERE ty.taskName=%s AND s.is_queued
+    WHERE ty.taskName=%s AND s.isQueued
     ORDER BY s.queuedTime LIMIT 1
 );
 """, (host_id, queue_name))
@@ -507,15 +523,27 @@ WHERE schedulingAttemptId = (
         self.db.db_handle.parameterised_query("""
 SELECT schedulingAttemptId
 FROM eas_scheduling_attempt
-WHERE is_running AND hostId=%s;
+WHERE isRunning AND hostId=%s;
 """, (host_id,))
         results = self.db.db_handle.fetchall()
 
         # Return the item we fetched
         if len(results) < 1:
-            return None
+            item_id = None
         else:
-            return results[0]['schedulingAttemptId']
+            item_id = results[0]['schedulingAttemptId']
+
+        # If the user didn't want this item acknowledged and/or set running, put the item back into the queue
+        if (item_id is not None) and ((not acknowledge) or (not set_running)):
+            self.db.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt
+SET isQueued=%s, isRunning=0, errorFail=%s, hostId=NULL
+WHERE schedulingAttemptId = %s;
+""", (int(not acknowledge), acknowledge, item_id))
+        self.db.commit()
+
+        # Return item
+        return item_id
 
     def queue_fetch_list(self, queue_name: str):
         """
@@ -536,7 +564,7 @@ SELECT s.schedulingAttemptId
 FROM eas_scheduling_attempt s
 INNER JOIN eas_task t ON t.taskId = s.taskId
 INNER JOIN eas_task_types ty ON ty.taskTypeId = t.taskTypeId
-WHERE ty.taskName=%s AND s.is_queued;
+WHERE ty.taskName=%s AND s.isQueued;
 """, (queue_name,))
         results = self.db.db_handle.fetchall()
 

@@ -27,8 +27,8 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     # Open a connection to the task database
     with task_database.TaskDatabaseConnection() as task_db:
         # Read specification for the lightcurve we are to synthesise
-        lc_specs = execution_attempt.task_info.task_description.get('specs', {})
-        filename = execution_attempt.task_info.task_description['outputs']['lightcurve']
+        lc_specs = execution_attempt.execution_attempt.task_object.execution_attempt.task_object.task_description.get('specs', {})
+        filename = execution_attempt.execution_attempt.task_object.execution_attempt.task_object.task_description['outputs']['lightcurve']
 
         logging.info("Running PSLS synthesis of <{}>".format(filename))
 

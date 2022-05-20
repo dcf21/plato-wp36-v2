@@ -9,24 +9,16 @@ Implementation of the EAS pipeline task <binning>.
 import logging
 import numpy as np
 
-from typing import Dict
-
 from plato_wp36 import lightcurve, lightcurve_resample, task_database, task_execution
 
 
 @task_execution.eas_pipeline_task
-def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
-                 task_info: task_database.Task,
-                 task_description: Dict):
+def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     """
     Implementation of the EAS pipeline task <binning>.
 
     :param execution_attempt:
         Object describing this attempt by the job scheduler to run this task.
-    :param task_info:
-        Object describing the task we are to execute.
-    :param task_description:
-        A dictionary of metadata containing all the configuration options supplied by the user for this task.
     :return:
         None
     """
@@ -37,16 +29,23 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
     task_db = task_database.TaskDatabaseConnection()
 
     # Read specification for the lightcurve we are to verify
-    directory = task_info.working_directory
-    filename_in = task_description['inputs']['lightcurve']
-    filename_out = task_description['outputs']['lightcurve']
-    cadence = float(task_description['cadence'])
+    directory = execution_attempt.task_object.working_directory
+    filename_in = execution_attempt.task_object.task_description['inputs']['lightcurve']
+    filename_out = execution_attempt.task_object.task_description['outputs']['lightcurve']
+    cadence = float(execution_attempt.task_object.task_description['cadence'])
 
     logging.info("Running rebinning of <{}/{}> to <{}/{}>".format(directory, filename_in, directory, filename_out))
 
     # Read input lightcurve
-    lc_in = lightcurve.LightcurveArbitraryRaster.from_file(directory=directory, filename=filename_in,
-                                                           must_have_passed_qc=True)
+    with task_database.TaskDatabaseConnection() as task_db:
+        lc_in_file_handle, lc_in_metadata = task_db.task_open_file_input(
+            task=execution_attempt.task_object,
+            input_name="lightcurve"
+        )
+    lc_in = lightcurve.LightcurveArbitraryRaster.from_file(
+        file_handle=lc_in_file_handle,
+        file_metadata=lc_in_metadata
+    )
 
     # Re-bin lightcurve
     start_time = np.min(lc_in.times)

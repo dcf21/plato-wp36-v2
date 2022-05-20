@@ -109,10 +109,14 @@ def do_pipeline_task(job_id: int,
                 # Open a connection to the EasControl task database
                 with task_database.TaskDatabaseConnection() as task_db:
                     # Fetch the task description for the job we are to work on
-                    attempt_info = task_db.execution_attempt_lookup(attempt_id=job_id)
+                    attempt_info = task_db.execution_attempt_lookup(attempt_id=job_id, embed_task_object=True)
+
+                    if attempt_info is None:
+                        logging.warning("Scheduling attempt <{}> has disappeared from the database!".format(job_id))
+                        return
 
                     # Extract the JSON code describing the task to execute
-                    task_description_json = attempt_info.task_info.metadata.get('task_description', None)
+                    task_description_json = attempt_info.task_object.metadata.get('task_description', None)
 
                     # Check we have a task description specified
                     if type(task_description_json) != task_objects.MetadataItem:
@@ -123,20 +127,20 @@ def do_pipeline_task(job_id: int,
 
                     # Evaluate any metadata expressions within our task description
                     expression_evaluator = task_expression_evaluation.TaskExpressionEvaluation(
-                        metadata=attempt_info.task_info.metadata
+                        metadata=attempt_info.task_object.metadata
                     )
                     task_description = expression_evaluator.evaluate_in_structure(structure=task_description_raw)
 
                     # Set task description within Task object
-                    attempt_info.task_info.task_description = task_description
+                    attempt_info.task_object.task_description = task_description
 
                     # If an explicit job name is specified in the task description, update the job name of this task
                     if 'job_name' in task_description:
-                        attempt_info.task_info.job_name = task_description['job_name']
+                        attempt_info.task_object.job_name = task_description['job_name']
 
                     # If an explicit working directory is specified in the task description, update the task descriptor
                     if 'working_directory' in task_description:
-                        attempt_info.task_info.working_directory = task_description['working_directory']
+                        attempt_info.task_object.working_directory = task_description['working_directory']
 
                 # Launch task handler
                 task_handler(attempt_info)
