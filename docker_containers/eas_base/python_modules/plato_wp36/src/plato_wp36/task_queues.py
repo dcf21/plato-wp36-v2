@@ -102,7 +102,7 @@ class TaskQueue:
 
     def message_ack(self, method_frame):
         """
-        Acknowledge a message, so that it will not be resent to any other workers.
+        Acknowledge a message, so that it will not be re-sent to any other workers.
 
         :param method_frame:
             The frame of the message to be acknowledged.

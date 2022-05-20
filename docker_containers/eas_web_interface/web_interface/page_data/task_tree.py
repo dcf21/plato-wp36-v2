@@ -21,12 +21,6 @@ def fetch_job_tree(job_name: Optional[str] = None, status: str = 'any'):
     # Fetch testbench settings
     s = settings.Settings()
 
-    # Open connection to the database
-    task_db = task_database.TaskDatabaseConnection()
-
-    # Stack of parent tasks
-    parents = []
-
     def search_children(parent_id: int = None):
         # Build an SQL query for all tasks with the selected parent
         if parent_id is not None:
@@ -38,7 +32,7 @@ def fetch_job_tree(job_name: Optional[str] = None, status: str = 'any'):
         threshold_heartbeat_time = time.time() - s.installation_info['max_heartbeat_age']
 
         # Search for all tasks with a given parent
-        task_db.conn.execute("""
+        task_db.db_handle.parameterised_query("""
 SELECT t.taskId, t.jobName, ett.taskName,
    (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NULL) AS runs_queued,
    (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NOT NULL AND
@@ -52,7 +46,7 @@ INNER JOIN eas_task_types ett on t.taskTypeId = ett.taskTypeId
 WHERE {constraint} ORDER BY taskId;
 """.format(constraint=constraint, min_heartbeat=threshold_heartbeat_time))
 
-        task_list = task_db.conn.fetchall()
+        task_list = task_db.db_handle.fetchall()
 
         # Display each task in turn, complete with subtasks
         for item in task_list:
@@ -114,12 +108,13 @@ WHERE {constraint} ORDER BY taskId;
             # Pop this task from the hierarchy
             parents.pop()
 
-    # Fetch job tree
-    search_children()
+    # Open connection to the database
+    with task_database.TaskDatabaseConnection() as task_db:
+        # Stack of parent tasks
+        parents = []
 
-    # Commit database
-    task_db.commit()
-    task_db.close_db()
+        # Fetch job tree
+        search_children()
 
     # Return results
     return output

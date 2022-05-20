@@ -46,6 +46,7 @@ class TaskDatabaseConnection:
 
         # Open connection to the database
         self.db_handle = DatabaseConnector().connect_db()
+        self.db_handle.connect()
 
     def __del__(self):
         """
@@ -57,6 +58,7 @@ class TaskDatabaseConnection:
         """
         Called at the start of a with block
         """
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
@@ -606,7 +608,7 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
                                            (product_id, generated_by_task_execution, repository_fname,
                                             created_time, modified_time,
                                             file_md5, file_size_bytes, passed_qc))
-        product_version_id = self.db_handle.lastrowid
+        product_version_id = self.db_handle.lastrowid()
 
         # Physically move file into our file archive
         target_file_directory = os.path.join(self.file_store_path, file_product_obj.directory)
@@ -891,7 +893,7 @@ VALUES (%s, %s, %s, %s, %s, %s);
 """,
                                            (generator_task, planned_time, directory, filename, semantic_type_id,
                                             mime_type))
-        product_id = self.db_handle.lastrowid
+        product_id = self.db_handle.lastrowid()
 
         # Register file metadata
         if metadata is not None:
@@ -1129,7 +1131,7 @@ WHERE schedulingAttemptId = %s;
 INSERT INTO eas_scheduling_attempt (taskId, queuedTime)
 VALUES (%s, %s);
 """, (task_id, queued_time))
-        output_id = self.db_handle.lastrowid
+        output_id = self.db_handle.lastrowid()
 
         # Register execution attempt metadata
         if metadata is not None:
@@ -1504,7 +1506,7 @@ WHERE taskId = %s;
 INSERT INTO eas_task (parentTask, createdTime, taskTypeId, jobName, workingDirectory)
 VALUES (%s, %s, %s, %s, %s);
 """, (parent_id, created_time, task_type_id, job_name, working_directory))
-        output_id = self.db_handle.lastrowid
+        output_id = self.db_handle.lastrowid()
 
         # Register task metadata
         if metadata is not None:

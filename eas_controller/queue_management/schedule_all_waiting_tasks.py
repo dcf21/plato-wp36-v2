@@ -31,7 +31,7 @@ def schedule_jobs():
     # Fetch list of all the tasks to schedule
     # This is all tasks which do not have an existing scheduling attempt, and which also do not require any file
     # products which have not passed QC.
-    task_db.conn.execute("""
+    task_db.db_handle.parameterised_query("""
 SELECT t.taskId, ett.taskName
 FROM eas_task t
 INNER JOIN eas_task_types ett on t.taskTypeId = ett.taskTypeId
@@ -43,7 +43,7 @@ WHERE
               NOT EXISTS (SELECT 1 FROM eas_product_version v WHERE v.productId=z.productId AND v.passedQc))
 ORDER BY t.taskId;
 """)
-    tasks = task_db.conn.fetchall()
+    tasks = task_db.db_handle.fetchall()
 
     # Schedule each job in turn
     for item in tasks:

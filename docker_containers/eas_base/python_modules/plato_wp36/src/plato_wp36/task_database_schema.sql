@@ -20,10 +20,11 @@ CREATE TABLE eas_task
     jobName          VARCHAR(256),
     workingDirectory VARCHAR(1024) NOT NULL,
     FOREIGN KEY (parentTask) REFERENCES eas_task (taskId) ON DELETE CASCADE,
-    FOREIGN KEY (taskTypeId) REFERENCES eas_task_types (taskTypeId) ON DELETE CASCADE,
-    INDEX (parentTask),
-    INDEX (jobName)
+    FOREIGN KEY (taskTypeId) REFERENCES eas_task_types (taskTypeId) ON DELETE CASCADE
 );
+
+CREATE INDEX eas_task_parent ON eas_task(parentTask);
+CREATE INDEX eas_task_job ON eas_task(jobName);
 
 -- Table of each time a task is scheduled on the cluster (a task may execute more than once if it fails)
 CREATE TABLE eas_scheduling_attempt
@@ -51,19 +52,21 @@ CREATE TABLE eas_log_messages
     timestamp                REAL    NOT NULL,
     severity                 INTEGER NOT NULL,
     message                  VARCHAR(4096),
-    FOREIGN KEY (generatedByTaskExecution) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE,
-    INDEX (severity, generatedByTaskExecution, timestamp),
-    INDEX (generatedByTaskExecution, severity, timestamp),
-    INDEX (generatedByTaskExecution, timestamp)
+    FOREIGN KEY (generatedByTaskExecution) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE
 );
+
+CREATE INDEX eas_log_1 ON eas_log_messages(severity, generatedByTaskExecution, timestamp);
+CREATE INDEX eas_log_2 ON eas_log_messages(generatedByTaskExecution, severity, timestamp);
+CREATE INDEX eas_log_3 ON eas_log_messages(generatedByTaskExecution, timestamp);
 
 -- Table of semantic types of intermediate file products (e.g. lightcurve, periodogram, etc)
 CREATE TABLE eas_semantic_type
 (
     semanticTypeId INTEGER PRIMARY KEY AUTO_INCREMENT,
-    name           VARCHAR(256) UNIQUE NOT NULL,
-    INDEX (name)
+    name           VARCHAR(256) UNIQUE NOT NULL
 );
+
+CREATE INDEX eas_semantic_type_name ON eas_semantic_type(name);
 
 -- Table of all intermediate file products, each associated with the task which generated / will generate them.
 -- Note that multiple versions of the same file product may exist on disk, if a task runs multiple times.
@@ -77,10 +80,11 @@ CREATE TABLE eas_product
     semanticType  INTEGER      NOT NULL,
     mimeType      VARCHAR(64),
     FOREIGN KEY (generatorTask) REFERENCES eas_task (taskId) ON DELETE CASCADE,
-    FOREIGN KEY (semanticType) REFERENCES eas_semantic_type (semanticTypeId) ON DELETE CASCADE,
-    UNIQUE (directoryName, filename),
-    UNIQUE (generatorTask, semanticType)
+    FOREIGN KEY (semanticType) REFERENCES eas_semantic_type (semanticTypeId) ON DELETE CASCADE
 );
+
+CREATE UNIQUE INDEX eas_product_1 ON eas_product(directoryName, filename);
+CREATE UNIQUE INDEX eas_product_2 ON eas_product(generatorTask, semanticType);
 
 -- Table of all intermediate file product versions stored on disk.
 -- Note that multiple versions of the same file product may exist on disk, if a task runs multiple times.
@@ -96,17 +100,19 @@ CREATE TABLE eas_product_version
     fileSize                 INTEGER,
     passedQc                 BOOLEAN,
     FOREIGN KEY (productId) REFERENCES eas_product (productId) ON DELETE CASCADE,
-    FOREIGN KEY (generatedByTaskExecution) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE,
-    UNIQUE (productId, generatedByTaskExecution)
+    FOREIGN KEY (generatedByTaskExecution) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE
 );
+
+CREATE UNIQUE INDEX eas_product_version_1 ON eas_product_version(productId, generatedByTaskExecution);
 
 -- Table of metadata association with tasks or scheduling attempts, or file products
 CREATE TABLE eas_metadata_keys
 (
     keyId INTEGER PRIMARY KEY AUTO_INCREMENT,
-    name  VARCHAR(64) UNIQUE NOT NULL,
-    INDEX (name)
+    name  VARCHAR(64) UNIQUE NOT NULL
 );
+
+CREATE INDEX eas_metadata_keys_1 ON eas_metadata_keys(name);
 
 CREATE TABLE eas_metadata_item
 (
@@ -122,12 +128,13 @@ CREATE TABLE eas_metadata_item
     FOREIGN KEY (schedulingAttemptId) REFERENCES eas_scheduling_attempt (schedulingAttemptId) ON DELETE CASCADE,
     FOREIGN KEY (productId) REFERENCES eas_product (productId) ON DELETE CASCADE,
     FOREIGN KEY (productVersionId) REFERENCES eas_product_version (productVersionId) ON DELETE CASCADE,
-    FOREIGN KEY (metadataKey) REFERENCES eas_metadata_keys (keyId) ON DELETE CASCADE,
-    UNIQUE (taskId, metadataKey),
-    UNIQUE (schedulingAttemptId, metadataKey),
-    UNIQUE (productId, metadataKey),
-    UNIQUE (productVersionId, metadataKey)
+    FOREIGN KEY (metadataKey) REFERENCES eas_metadata_keys (keyId) ON DELETE CASCADE
 );
+
+CREATE UNIQUE INDEX eas_metadata_item_1 ON eas_metadata_item(taskId, metadataKey);
+CREATE UNIQUE INDEX eas_metadata_item_2 ON eas_metadata_item(schedulingAttemptId, metadataKey);
+CREATE UNIQUE INDEX eas_metadata_item_3 ON eas_metadata_item(productId, metadataKey);
+CREATE UNIQUE INDEX eas_metadata_item_4 ON eas_metadata_item(productVersionId, metadataKey);
 
 -- Table of intermediate products required by each task
 CREATE TABLE eas_task_input
@@ -141,21 +148,6 @@ CREATE TABLE eas_task_input
     UNIQUE (taskId, semanticType)
 );
 
--- Trigger to propagate QC from individual file products to the tasks that created them
-DELIMITER //
-CREATE TRIGGER qc_propagation
-    AFTER UPDATE
-    ON eas_product_version
-    FOR EACH ROW
-BEGIN
-    UPDATE eas_scheduling_attempt s
-    SET s.allProductsPassedQc = NOT EXISTS(
-            SELECT 1
-            FROM eas_product_version p
-            WHERE p.generatedByTaskExecution = s.schedulingAttemptId
-              AND NOT p.passedQc)
-    WHERE s.schedulingAttemptId = new.generatedByTaskExecution;
-END;
-//
+CREATE UNIQUE INDEX eas_task_input_1 ON eas_task_input(taskId, semanticType);
 
 COMMIT;

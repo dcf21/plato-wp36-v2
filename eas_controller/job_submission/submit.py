@@ -24,17 +24,14 @@ def create_task(from_file: str):
     """
 
     # Open a connection to the database
-    task_db = task_database.TaskDatabaseConnection()
-    task_db.task_register(
-        task_type="execution_chain",
-        metadata={
-            "task_description": task_objects.MetadataItem(keyword="task_description", value=open(from_file).read())
-        }
-    )
-
-    # Commit database
-    task_db.commit()
-    task_db.close_db()
+    with task_database.TaskDatabaseConnection() as task_db:
+        # Register new task to be performed
+        task_db.task_register(
+            task_type="execution_chain",
+            metadata={
+                "task_description": task_objects.MetadataItem(keyword="task_description", value=open(from_file).read())
+            }
+        )
 
 
 # Do it right away if we're run as a script

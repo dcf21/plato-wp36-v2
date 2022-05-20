@@ -125,7 +125,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt,
             semantic_type_id = task_db.semantic_type_get_id(name=subtask_file_input[0])
             required_product_id = subtask_file_input[1]
 
-            task_db.conn.execute("""
+            task_db.db_handle.parameterised_query("""
 INSERT INTO eas_task_input (taskId, inputId, semanticType) VALUES (%s, %s, %s);
 """, (subtask_id, required_product_id, semantic_type_id))
 

@@ -35,7 +35,7 @@ class DatabaseInterface:
         """
         Allow this class to be used within a with block.
         """
-        pass
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
@@ -86,7 +86,7 @@ class DatabaseInterface:
         mysql_config = os.path.join(settings['pythonPath'],
                                     "../../data/datadir_local/{}_sql_login.cfg".format(engine_name))
         python_config = os.path.join(settings['pythonPath'],
-                                     "../../data/datadir_local/local_sql_settings.conf")
+                                     "../../data/datadir_local/local_settings_sql.conf")
 
         return mysql_config, python_config
 
@@ -112,13 +112,13 @@ class DatabaseInterface:
         """
         raise NotImplementedError
 
-    def parameterised_query(self, sql: str, parameters: Optional[tuple]=None):
+    def parameterised_query(self, sql: str, parameters: Optional[tuple] = None):
         """
         Execute a database query with a single set of input parameters.
         """
         raise NotImplementedError
 
-    def parameterised_query_many(self, sql: str, parameters: Optional[tuple]=None):
+    def parameterised_query_many(self, sql: str, parameters: Optional[tuple] = None):
         """
         Execute a database query with multiple sets of input parameters.
         """
@@ -153,6 +153,17 @@ class DatabaseInterfaceMySql(DatabaseInterface):
                  db_database: Optional[str] = None):
         """
         Initialise a connection to the SQL database.
+
+        :param db_database:
+            The name of the database we should connect to
+        :param db_user:
+            The name of the database user
+        :param db_passwd:
+            The password for the database user
+        :param db_host:
+            The host on which the database server is running
+        :param db_port:
+            The port on which the database server is running
         """
 
         # Run constructor of parent class
@@ -207,7 +218,7 @@ class DatabaseInterfaceMySql(DatabaseInterface):
 
         # Read database schema
         pwd = os.path.split(os.path.abspath(__file__))[0]
-        sql = os.path.join(pwd, "schema.sql")
+        sql = os.path.join(pwd, "task_database_schema.sql")
         db_config_filename = self.sql_login_config_path(engine_name="mysql")[0]
 
         # Create mysql login config file
@@ -298,13 +309,13 @@ db_database: {:s}
             self.db = None
             self.db_cursor = None
 
-    def parameterised_query(self, sql: str, parameters: Optional[tuple]=None):
+    def parameterised_query(self, sql: str, parameters: Optional[tuple] = None):
         """
         Execute a database query with a single set of input parameters.
         """
         self.db_cursor.execute(sql, parameters)
 
-    def parameterised_query_many(self, sql: str, parameters: Optional[tuple]=None):
+    def parameterised_query_many(self, sql: str, parameters: Optional[tuple] = None):
         """
         Execute a database query with multiple sets of input parameters.
         """
@@ -361,7 +372,7 @@ class DatabaseInterfaceSqlite(DatabaseInterface):
 
         # Read database schema
         pwd = os.path.split(os.path.abspath(__file__))[0]
-        sql_schema_file = os.path.join(pwd, "schema.sql")
+        sql_schema_file = os.path.join(pwd, "task_database_schema.sql")
         sql_schema = open(sql_schema_file).read()
 
         # Create sql login config file
@@ -369,7 +380,8 @@ class DatabaseInterfaceSqlite(DatabaseInterface):
 
         # Recreate database from scratch
         db_file_path = self._sqlite3_database_path()
-        os.unlink(path=db_file_path)
+        if os.path.exists(db_file_path):
+            os.unlink(path=db_file_path)
 
         # Create basic database schema
         # SQLite databases work faster if primary keys don't auto increment, so remove keyword from schema
@@ -385,11 +397,21 @@ class DatabaseInterfaceSqlite(DatabaseInterface):
         Open a connection to the SQL database.
         """
 
+        # Return results as an associative array
+        def dict_factory(cursor, row):
+            d = {}
+            for idx, col in enumerate(cursor.description):
+                d[col[0]] = row[idx]
+            return d
+
+        # Close any pre-existing database connection
         if self.db is not None:
             self.db.close()
 
+        # Open new database connection, and use custom row factory to get results as associative array
         db_file_path = self._sqlite3_database_path()
         self.db = sqlite3.connect(db_file_path)
+        self.db.row_factory = dict_factory
         self.db_cursor = self.db.cursor()
 
     def make_sql_login_config(self):
@@ -437,22 +459,26 @@ db_database: {:s}
             self.db = None
             self.db_cursor = None
 
-    def parameterised_query(self, sql: str, parameters: Optional[tuple]=None):
+    def parameterised_query(self, sql: str, parameters: Optional[tuple] = None):
         """
         Execute a database query with a single set of input parameters.
         """
 
+        # Keep sqlite3 happy, even if there are no parameters
+        if parameters is None:
+            parameters = ()
+
         # sqlite3 uses ? as a placeholder for SQL parameters, not %s
-        sql = re.sub(r"%s", r"\?", sql)
+        sql = re.sub(r"%s", r"?", sql)
         self.db_cursor.execute(sql, parameters)
 
-    def parameterised_query_many(self, sql, parameters: Optional[tuple]=None):
+    def parameterised_query_many(self, sql, parameters: Optional[tuple] = None):
         """
         Execute a database query with multiple sets of input parameters.
         """
 
         # sqlite3 uses ? as a placeholder for SQL parameters, not %s
-        sql = re.sub(r"%s", r"\?", sql)
+        sql = re.sub(r"%s", r"?", sql)
         self.db_cursor.executemany(sql, parameters)
 
 
@@ -461,12 +487,25 @@ class DatabaseConnector:
     Factory class for creating connections to SQL databases.
     """
 
-    def __init__(self, engine=None, database=None):
+    def __init__(self, db_engine: Optional[str] = None,
+                 db_user: Optional[str] = None, db_passwd: Optional[str] = None,
+                 db_host: Optional[str] = None, db_port: Optional[int] = None,
+                 db_database: Optional[str] = None):
         """
         Factory for new connections to the database as DatabaseInterface objects.
 
-        :param database:
+        :param db_engine:
+            The name of the SQL database engine we are using. Either <mysql> or <sqlite3>.
+        :param db_database:
             The name of the database we should connect to
+        :param db_user:
+            The name of the database user (not used by sqlite3)
+        :param db_passwd:
+            The password for the database user (not used by sqlite3)
+        :param db_host:
+            The host on which the database server is running (not used by sqlite3)
+        :param db_port:
+            The port on which the database server is running (not used by sqlite3)
         :return:
             List of [database handle, connection handle]
         """
@@ -477,12 +516,36 @@ class DatabaseConnector:
         # Look up default SQL database connection details
         self.db_database = settings.installation_info['db_database']
         self.db_engine = settings.installation_info['db_engine']
+        self.db_host = settings.installation_info['db_host']
+        self.db_port = int(settings.installation_info['db_port'])
+        self.db_user = settings.installation_info['db_user']
+        self.db_password = settings.installation_info['db_password']
 
         # Override defaults
-        if engine is None:
-            self.db_engine = self.db_engine
-        if database is None:
-            self.db_database = self.db_database
+        if db_engine is not None:
+            self.db_engine = db_engine
+        if db_user is not None:
+            self.db_user = db_user
+        if db_passwd is not None:
+            self.db_password = db_passwd
+        if db_host is not None:
+            self.db_host = db_host
+        if db_port is not None:
+            self.db_port = db_port
+        if db_database is not None:
+            self.db_database = db_database
+
+    def __enter__(self):
+        """
+        Called at the start of a with block
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Called at the end of a with block
+        """
+        pass
 
     def connect_db(self):
         """
@@ -493,7 +556,9 @@ class DatabaseConnector:
         """
 
         if self.db_engine == "mysql":
-            return DatabaseInterfaceMySql(db_database=self.db_database)
+            return DatabaseInterfaceMySql(db_user=self.db_user, db_passwd=self.db_password,
+                                          db_host=self.db_host, db_port=self.db_port,
+                                          db_database=self.db_database)
         elif self.db_engine == "sqlite3":
             return DatabaseInterfaceSqlite(db_database=self.db_database)
         else:
