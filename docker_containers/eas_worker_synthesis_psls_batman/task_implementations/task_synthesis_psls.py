@@ -39,8 +39,8 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
         synthesiser.close()
 
         # Create a temporary directory to store the LC in, until it is imported into the file repository
-        with temporary_directory.TemporaryDirectory as tmp_dir:
-            tmp_path = os.path.join(tmp_dir, filename)
+        with temporary_directory.TemporaryDirectory() as tmp_dir:
+            tmp_path = os.path.join(tmp_dir.tmp_dir, filename)
             file_metadata = lc_object.to_file(target_path=tmp_path)
 
             # Import lightcurve into the task database
@@ -49,7 +49,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
                 output_name="lightcurve",
                 file_path=tmp_path,
                 preserve=False,
-                metadata={**lc_object.metadata, **file_metadata}
+                file_metadata={**lc_object.metadata, **file_metadata}
             )
 
         # Associate lightcurve metadata to the synthesis task in the task database
