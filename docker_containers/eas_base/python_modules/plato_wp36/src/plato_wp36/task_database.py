@@ -1363,9 +1363,9 @@ ORDER BY p.inputId;
 
         # Fetch filename for this file product
         directory = task.working_directory
-        filename = task_description['outputs'][input_name]
+        filename = task_description['inputs'][input_name]
 
-        # Find out what file product this output file corresponds to
+        # Find out what file product this input file corresponds to
         product_ids = self.file_product_by_filename(directory=directory, filename=filename)
         assert len(product_ids) > 0, \
             ("This file product <{}/{}> does not correspond to any file product entry in the database".
@@ -1384,8 +1384,11 @@ ORDER BY p.inputId;
         file_info = self.file_version_lookup(product_version_id=version_id)
         file_location = self.file_version_path_for_id(product_version_id=version_id, full_path=True)
         file_metadata = file_info.metadata
+
+        # Open a file handle to this input file
         file_handle = open(file_location, "r")
 
+        # Return file handle and file metadata
         return file_handle, file_metadata
 
     def task_fetch_execution_attempts(self, task_id: int, successful: Optional[bool] = None):

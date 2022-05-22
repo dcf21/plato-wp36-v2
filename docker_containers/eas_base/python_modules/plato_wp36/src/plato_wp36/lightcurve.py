@@ -89,7 +89,7 @@ class Lightcurve:
             opener = gzip.open
 
         # Write this lightcurve output into lightcurve archive (store times in seconds)
-        output = np.transpose([self.get_times() * 86400, self.get_fluxes(), self.get_flags(), self.get_uncertainties])
+        output = np.transpose([self.get_times() * 86400, self.get_fluxes(), self.get_flags(), self.get_uncertainties()])
         if not binary:
             with opener(target_path, "wt") as out:
                 # Output the lightcurve itself
@@ -253,9 +253,9 @@ class LightcurveArbitraryRaster(Lightcurve):
 
         # Read file format of lightcurve from metadata
         assert 'binary' in file_metadata
-        binary = bool(file_metadata['binary'])
+        binary = bool(file_metadata['binary'].value)
         assert 'gzipped' in file_metadata
-        gzipped = bool(file_metadata['gzipped'])
+        gzipped = bool(file_metadata['gzipped'].value)
 
         # Initialise structures to hold lightcurve data
         times = []  # Times stored as days, but data files contain seconds

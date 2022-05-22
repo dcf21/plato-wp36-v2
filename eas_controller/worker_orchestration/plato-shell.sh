@@ -4,4 +4,4 @@
 
 kubectl exec -it -n=plato \
  `kubectl get pods -n=plato --field-selector="status.phase=Running" --no-headers -o custom-columns=":metadata.name" \
-  | grep plato | head -n 1` -- /bin/bash
+  | grep "eas-worker-" | head -n 1` -- /bin/bash

@@ -7,6 +7,7 @@ Class to create a temporary working directory, and clean up its contents afterwa
 
 import hashlib
 import os
+import shutil
 import time
 
 
@@ -44,8 +45,9 @@ class TemporaryDirectory:
         """
         Clean up temporary directory
         """
+        # Iteratively delete temporary directory and all its contents
         if self.tmp_dir is not None:
-            os.rmdir(self.tmp_dir)
+            shutil.rmtree(self.tmp_dir)
             self.tmp_dir = None
 
     def __exit__(self, exc_type, exc_val, exc_tb):
