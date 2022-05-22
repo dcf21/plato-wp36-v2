@@ -482,7 +482,7 @@ class LightcurveArbitraryRaster(Lightcurve):
         spacing = self.estimate_sampling_interval()
 
         if verbose:
-            logging.info("Time step is {:.15f}".format(spacing))
+            logging.info("Time step is {:.15f} days".format(spacing))
 
         start_time = self.times[0]
         end_time = self.times[-1]
@@ -532,7 +532,7 @@ class LightcurveArbitraryRaster(Lightcurve):
         spacing = self.estimate_sampling_interval()
 
         if verbose:
-            logging.info("Time step is {:.15f}".format(spacing))
+            logging.info("Time step is {:.15f} days".format(spacing))
 
         start_time = self.times[0]
         end_time = self.times[-1]

@@ -41,6 +41,7 @@ CREATE TABLE eas_scheduling_attempt
     queuedTime            REAL             DEFAULT NULL,
     isQueued              BOOLEAN          DEFAULT FALSE,
     isRunning             BOOLEAN          DEFAULT FALSE,
+    isFinished            BOOLEAN          DEFAULT FALSE,
     hostId                INTEGER          DEFAULT NULL,
     startTime             REAL             DEFAULT NULL,
     latestHeartbeat       REAL             DEFAULT NULL,

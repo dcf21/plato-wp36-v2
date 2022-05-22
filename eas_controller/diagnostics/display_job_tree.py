@@ -41,13 +41,13 @@ def display_job_tree(job_name: Optional[str] = None, status: str = 'any'):
         # Search for all tasks with a given parent
         task_db.db_handle.parameterised_query("""
 SELECT t.taskId, t.jobName, ett.taskName,
-   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NULL) AS runs_queued,
-   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NOT NULL AND
-                    (x.errorFail OR (x.endTime IS NULL AND x.latestHeartbeat < {min_heartbeat:f}))) AS runs_stalled,
-   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.startTime IS NOT NULL AND
-                    x.endTime IS NULL AND NOT x.errorFail AND x.latestHeartbeat > {min_heartbeat:f}) AS runs_running,
-   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.endTime IS NOT NULL AND
-                    NOT x.errorFail) AS runs_done
+   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.isQueued) AS runs_queued,
+   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND
+                    (x.errorFail OR (x.isRunning AND x.latestHeartbeat < {min_heartbeat:f}))) AS runs_stalled,
+   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND
+                    x.isRunning AND NOT x.errorFail AND x.latestHeartbeat > {min_heartbeat:f}) AS runs_running,
+   (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND
+                    x.isFinished AND NOT x.errorFail) AS runs_done
 FROM eas_task t
 INNER JOIN eas_task_types ett on t.taskTypeId = ett.taskTypeId
 WHERE {constraint} ORDER BY taskId;

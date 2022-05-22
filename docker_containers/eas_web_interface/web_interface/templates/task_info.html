@@ -3,37 +3,112 @@
 {% block head %}
 {% endblock %}
 {% block content %}
-<h1>Pipeline task information</h1>
+    <h1>Pipeline task information &ndash; task {{ task_id }}</h1>
 
-<div class="alert alert-info" role="alert">
-    Showing task logs
-</div>
+    <div class="alert alert-info" role="alert">
+        Showing task status
+    </div>
 
-<table class="library_list bordered bordered_compact">
-    <thead>
-    <tr>
-        <td>Task id</td>
-        <td>Timestamp</td>
-        <td>Message</td>
-    </tr>
-    </thead>
-    <tbody>
-    {% for log_item in log_table %}
-    <tr class="log_item_{{log_item.class}}">
-        <td>{{ log_item.attempt_id }}</td>
-        <td style="white-space: nowrap">{{ log_item.time }}</td>
-        <td><pre style="font-size: 12px; margin-bottom:0;">{{ log_item.message }}</pre></td>
-    </tr>
-    {% else %}
-    <tr>
-        <td>
-            There are no log messages currently in the database.
-        </td>
-        <td>
+    {% for task_run in task_info %}
 
-        </td>
-    </tr>
+        <h3>Task execution attempt {{ task_run.run_id }}</h3>
+
+        <h5>Run statistics</h5>
+        <table class="library_list bordered bordered_compact stripy">
+            <thead>
+            <tr>
+                <td>Parameter</td>
+                <td>Value</td>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Is queued</td>
+                <td>{{ task_run.isQueued }}</td>
+            </tr>
+            <tr>
+                <td>Is running</td>
+                <td>{{ task_run.isRunning }}</td>
+            </tr>
+            <tr>
+                <td>Is finished</td>
+                <td>{{ task_run.isFinished }}</td>
+            </tr>
+            <tr>
+                <td>Error fail</td>
+                <td>{{ task_run.errorFail }}</td>
+            </tr>
+            <tr>
+                <td>Worker hostname</td>
+                <td>{{ task_run.hostname }}</td>
+            </tr>
+            <tr>
+                <td>Queued at</td>
+                <td>{{ task_run.queuedTime|safe }}</td>
+            </tr>
+            <tr>
+                <td>Start time</td>
+                <td>{{ task_run.startTime|safe }}</td>
+            </tr>
+            <tr>
+                <td>End time</td>
+                <td>{{ task_run.endTime|safe }}</td>
+            </tr>
+            <tr>
+                <td>Latest heartbeat</td>
+                <td>{{ task_run.latestHeartbeat|safe }}</td>
+            </tr>
+            <tr>
+                <td>Run time (wall clock)</td>
+                <td>{{ task_run.runTimeWallClock|safe }}</td>
+            </tr>
+            <tr>
+                <td>Run time (CPU)</td>
+                <td>{{ task_run.runTimeCpu|safe }}</td>
+            </tr>
+            <tr>
+                <td>Run time (inc child processes)</td>
+                <td>{{ task_run.runTimeCpuIncChildren|safe }}</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h5>Input files</h5>
+
+        <h5>Output files</h5>
+
+        <h5>Log messages</h5>
+
+        <table class="library_list bordered bordered_compact">
+            <thead>
+            <tr>
+                <td>Task id</td>
+                <td>Timestamp</td>
+                <td>Message</td>
+            </tr>
+            </thead>
+            <tbody>
+            {% for log_item in task_run.log_table %}
+                <tr class="log_item_{{ log_item.class }}">
+                    <td>{{ log_item.attempt_id }}</td>
+                    <td style="white-space: nowrap">{{ log_item.time }}</td>
+                    <td>
+                        <pre style="font-size: 12px; margin-bottom:0;">{{ log_item.message }}</pre>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td>
+                        There are no log messages currently in the database.
+                    </td>
+                    <td>
+
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <hr />
     {% endfor %}
-    </tbody>
-</table>
 {% endblock %}

@@ -244,7 +244,7 @@ class TaskQueueAmqp(TaskQueue):
         # Fetch EAS settings
         self.settings = Settings()
 
-        # Look up MySQL database log in details
+        # Look up message queue log-in details
         self.mq_host = self.settings.installation_info['mq_host']
         self.mq_port = int(self.settings.installation_info['mq_port'])
         self.mq_user = self.settings.installation_info['mq_user']
@@ -258,6 +258,9 @@ class TaskQueueAmqp(TaskQueue):
         # Connect to message queue
         self.connection = pika.BlockingConnection(pika.URLParameters(url=self.url))
         self.channel = self.connection.channel()
+
+        # Connect to the task database
+        self.db = TaskDatabaseConnection()
         self.connected = True
 
     def queue_declare(self, queue_name: str):
@@ -313,6 +316,14 @@ class TaskQueueAmqp(TaskQueue):
         string_message = str(item_id).encode('utf-8')
         # logging.info("Sending message <{}>".format(json_message))
         self.channel.basic_publish(exchange='', routing_key=queue_name, body=string_message)
+
+        # Update database to indicate that this task has been queued
+        self.db.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt
+SET isQueued=1, isRunning=0, isFinished=0, hostId=NULL
+WHERE schedulingAttemptId=%s;
+""", (item_id,))
+        self.db.commit()
 
     def queue_fetch_and_acknowledge(self, queue_name: str, acknowledge: bool = True, set_running: bool = True):
         """
@@ -392,6 +403,9 @@ class TaskQueueAmqp(TaskQueue):
             self.connection.close()
             self.connection = None
             self.channel = None
+            self.db.commit()
+            self.db.close_db()
+            self.db = None
         self.connected = False
 
 
@@ -471,7 +485,7 @@ WHERE ty.taskName=%s AND s.isQueued;
         # Publish task into the job queue
         self.db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
-SET isQueued=1, isRunning=0, hostId=NULL
+SET isQueued=1, isRunning=0, isFinished=0, hostId=NULL
 WHERE schedulingAttemptId=%s;
 """, (item_id,))
         self.db.commit()
@@ -580,6 +594,7 @@ WHERE ty.taskName=%s AND s.isQueued;
         if self.connected:
             self.db.commit()
             self.db.close_db()
+            self.db = None
         self.connected = False
 
 

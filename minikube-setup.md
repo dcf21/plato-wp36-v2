@@ -122,9 +122,10 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
 10. **Port-forward the web interface**
 
     This step is only required if you want to be able to access the web interface to the pipeline externally. If so, you need to set up a port-forward so that an external port on your host machine (in this example, 8080) is bound to the Kubernetes web interface service. The command below does not return, so you probably want to run it in a `screen` session:
-   ```
-   kubectl port-forward -n=plato service/eas-web-interface-service 8080:5000  --address='0.0.0.0'
-   ```
+
+    ```
+    kubectl port-forward -n=plato service/eas-web-interface-service 8080:5000  --address='0.0.0.0'
+    ```
 
 11. **Start some worker nodes**
 

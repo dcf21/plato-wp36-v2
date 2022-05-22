@@ -52,9 +52,8 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
         'verification_flux_max': np.max(lc_in.fluxes)
     }
 
-    logging.info("Lightcurve <{}/{}> time span {:.1f} to {:.1f}".format(directory, filename,
-                                                                        output['verification_time_min'],
-                                                                        output['verification_time_max']))
+    logging.info("Lightcurve <{}/{}> time span {:.1f} to {:.1f} days".format(
+        directory, filename, output['verification_time_min'], output['verification_time_max']))
 
     logging.info("Lightcurve <{}/{}> flux range {:.6f} to {:.6f}".format(directory, filename,
                                                                          output['verification_flux_min'],

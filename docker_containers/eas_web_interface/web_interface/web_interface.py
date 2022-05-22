@@ -6,7 +6,7 @@
 from flask import Flask, render_template, url_for
 import argparse
 
-from page_data import file_explorer, task_tree, log_messages
+from page_data import file_explorer, task_status, task_tree, log_messages
 
 # Instantiate flask http server
 app = Flask(__name__)
@@ -25,11 +25,11 @@ def task_index():
 # Index of all the tasks in the database
 @app.route("/task/<taskId>", methods=("GET", "POST"))
 def task_info(taskId):
-    # Fetch a list of all the log messages in the database
-    log_list = log_messages.fetch_log_messages(task_id=int(taskId))
+    # Fetch a list of information about all the attempts to run this task
+    task_info = task_status.task_status(task_id=int(taskId))
 
     # Render task information into HTML
-    return render_template('task_info.html', log_table=log_list)
+    return render_template('task_info.html', task_id=int(taskId), task_info=task_info)
 
 
 # Index of all the file directories in the database

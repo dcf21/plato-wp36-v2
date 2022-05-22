@@ -77,7 +77,7 @@ class TaskTimer:
             # File task execution time in the database
             task_db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
-SET startTime=%s, latestHeartbeat=%s, hostId=%s
+SET startTime=%s, latestHeartbeat=%s, hostId=%s, isQueued=0, isRunning=1
 WHERE schedulingAttemptId=%s;
 """, (self.start_time['wall_clock'], self.start_time['wall_clock'], hostname_id, self.task_attempt_id))
 
@@ -110,7 +110,7 @@ WHERE schedulingAttemptId=%s;
             # File task execution time in the database
             task_db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
-SET endTime=%s, runTimeWallClock=%s, runTimeCpu=%s, runTimeCpuIncChildren=%s, isRunning=0
+SET endTime=%s, runTimeWallClock=%s, runTimeCpu=%s, runTimeCpuIncChildren=%s, isRunning=0, isFinished=1
 WHERE schedulingAttemptId=%s;
 """,
                                                   (time.time(),
