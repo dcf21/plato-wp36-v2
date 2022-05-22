@@ -31,11 +31,15 @@ def call_subprocess_and_log_output(arguments: Iterable):
         A list of the command-line arguments to run in the shell.
     """
 
-    process_output = subprocess.run(arguments, capture_output=True)
+    # Run subprocess
+    string_arguments = [str(item) for item in arguments]
+    process_output = subprocess.run(string_arguments, capture_output=True)
 
+    # Check if subprocess exited with non-zero status, and log it
     if process_output.returncode != 0:
         logging.error("Executed subprocess returned error code {:d}".format(process_output.returncode))
 
+    # Check if subprocess produced any output on stderr
     stderr_string = process_output.stderr.decode('utf-8').strip()
     if len(stderr_string) > 0:
         logging.warning("Executed subprocess produced stderr output:\n{:s}".format(stderr_string))
