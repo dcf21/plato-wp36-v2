@@ -14,12 +14,31 @@ import json
 import logging
 import os
 import sys
+import subprocess
 import traceback
 
-from typing import Callable
+from typing import Callable, Iterable
 
 from plato_wp36 import logging_database, task_database, task_expression_evaluation
 from plato_wp36 import task_heartbeat, task_objects, task_timer
+
+
+def call_subprocess_and_log_output(arguments: Iterable):
+    """
+    Execute a shell command, and capture any error messages sent to stderr, storing them in the logging database.
+    
+    :param arguments:
+        A list of the command-line arguments to run in the shell.
+    """
+
+    process_output = subprocess.run(arguments, capture_output=True)
+
+    if process_output.returncode != 0:
+        logging.error("Executed subprocess returned error code {:d}".format(process_output.returncode))
+
+    stderr_string = process_output.stderr.decode('utf-8').strip()
+    if len(stderr_string) > 0:
+        logging.warning("Executed subprocess produced stderr output:\n{:s}".format(stderr_string))
 
 
 def eas_pipeline_task(

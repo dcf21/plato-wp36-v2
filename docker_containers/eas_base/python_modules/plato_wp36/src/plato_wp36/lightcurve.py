@@ -237,12 +237,12 @@ class LightcurveArbitraryRaster(Lightcurve):
         return self.fluxes
 
     @classmethod
-    def from_file(cls, file_handle: IO, file_metadata: Dict, cut_off_time: Optional[float] = None):
+    def from_file(cls, file_path: str, file_metadata: Dict, cut_off_time: Optional[float] = None):
         """
         Read a lightcurve from a data file in our lightcurve archive.
 
-        :param file_handle:
-            An open file handle connected to the input data file.
+        :param file_path:
+            The path to the input data file.
         :param file_metadata:
             A dictionary of metadata associated with the input file.
         :param cut_off_time:
@@ -265,14 +265,14 @@ class LightcurveArbitraryRaster(Lightcurve):
 
         if binary:
             # Read binary lightcurve file
-            time, flux, flag, uncertainties = np.load(file=file_handle)
+            time, flux, flag, uncertainties = np.load(file_path)
             time /= 86400  # Times stored in seconds; but Lightcurve objects use days
         else:
             # Textual lightcurve: loop over lines of input file
             if gzipped:
-                file = gzip.GzipFile(fileobj=file_handle)
+                file = gzip.open(file_path, "rt")
             else:
-                file = file_handle
+                file = open(file_path, "rt")
 
             for line in file:
                 # Ignore blank lines and comment lines

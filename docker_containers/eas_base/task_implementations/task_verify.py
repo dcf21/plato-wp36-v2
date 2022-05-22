@@ -9,9 +9,7 @@ Implementation of the EAS pipeline task <verify>.
 import logging
 import numpy as np
 
-from typing import Dict
-
-from plato_wp36 import lightcurve, task_database, task_execution
+from plato_wp36 import lightcurve, task_database, task_execution, temporary_directory
 
 
 @task_execution.eas_pipeline_task
@@ -34,15 +32,17 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     logging.info("Running verification of <{}/{}>".format(directory, filename))
 
     # Read input lightcurve
-    with task_database.TaskDatabaseConnection() as task_db:
-        lc_in_file_handle, lc_in_metadata = task_db.task_open_file_input(
-            task=execution_attempt.task_object,
-            input_name="lightcurve"
+    with temporary_directory.TemporaryDirectory() as tmp_dir:
+        with task_database.TaskDatabaseConnection() as task_db:
+            lc_in_filename, lc_in_metadata = task_db.task_open_file_input(
+                task=execution_attempt.task_object,
+                tmp_dir=tmp_dir,
+                input_name="lightcurve"
+            )
+        lc_in = lightcurve.LightcurveArbitraryRaster.from_file(
+            file_path=lc_in_filename,
+            file_metadata=lc_in_metadata
         )
-    lc_in = lightcurve.LightcurveArbitraryRaster.from_file(
-        file_handle=lc_in_file_handle,
-        file_metadata=lc_in_metadata
-    )
 
     # Verify lightcurve
     output = {
@@ -83,11 +83,8 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
         output['verification_v2'] = False
 
     # Log lightcurve metadata to the database
-    task_db.execution_attempt_update(attempt_id=execution_attempt.attempt_id, metadata=output)
-
-    # Close database
-    task_db.commit()
-    task_db.close_db()
+    with task_database.TaskDatabaseConnection() as task_db:
+        task_db.execution_attempt_update(attempt_id=execution_attempt.attempt_id, metadata=output)
 
 
 if __name__ == "__main__":

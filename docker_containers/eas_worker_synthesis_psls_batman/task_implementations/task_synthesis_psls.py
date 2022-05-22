@@ -33,10 +33,9 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
         logging.info("Running PSLS synthesis of <{}>".format(filename))
 
         # Do synthesis
-        synthesiser = PslsWrapper()
-        synthesiser.configure(**lc_specs)
-        lc_object = synthesiser.synthesise()
-        synthesiser.close()
+        with PslsWrapper() as synthesiser:
+            synthesiser.configure(**lc_specs)
+            lc_object = synthesiser.synthesise()
 
         # Create a temporary directory to store the LC in, until it is imported into the file repository
         with temporary_directory.TemporaryDirectory() as tmp_dir:

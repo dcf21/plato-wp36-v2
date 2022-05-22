@@ -13,7 +13,7 @@ import os
 import re
 import time
 
-from plato_wp36 import logging_database, settings, task_database, task_queues
+from plato_wp36 import logging_database, settings, task_database, task_execution, task_queues
 
 EasLoggingHandlerInstance = logging_database.EasLoggingHandler()
 
@@ -89,7 +89,9 @@ def enter_service_mode():
                     logging.error("Task implementation <{}> is not an executable.".format(task_implementation))
 
                 # Launch task handler
-                os.system("{} --job-id {}".format(task_implementation, attempt_id))
+                task_execution.call_subprocess_and_log_output(
+                    arguments=(task_implementation, "--job-id", attempt_id)
+                )
 
                 # Announce that we're moving onto post-execution QC
                 logging.info("Starting QC on task execution attempt <{} - {}>".format(attempt_id, task_name))
@@ -106,7 +108,9 @@ def enter_service_mode():
                     logging.error("Task QC implementation <{}> is not an executable.".format(task_implementation))
 
                 # Launch task QC handler
-                os.system("{} --job-id {}".format(task_qc_implementation, attempt_id))
+                task_execution.call_subprocess_and_log_output(
+                    arguments=(task_qc_implementation, "--job-id", attempt_id)
+                )
 
                 # Announce that we've finished a task
                 logging.info("Finished task execution attempt <{} - {}>".format(attempt_id, task_name))

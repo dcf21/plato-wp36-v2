@@ -5,6 +5,7 @@
 Class for synthesising lightcurves using PSLS.
 """
 
+import glob
 import hashlib
 import os
 import random
@@ -15,7 +16,7 @@ from typing import Optional
 
 import numpy as np
 from eas_batman_wrapper.batman_wrapper import BatmanWrapper
-from plato_wp36 import settings, lightcurve
+from plato_wp36 import settings, lightcurve, task_execution, temporary_directory
 from plato_wp36.constants import EASConstants
 
 
@@ -39,9 +40,9 @@ class PslsWrapper:
                  sampling_cadence: Optional[float] = None,
                  mask_updates: Optional[bool] = None,
                  enable_systematics: Optional[bool] = None,
-                  enable_random_noise: Optional[bool] = None,
-                  number_camera_groups: Optional[int] = None,
-                  number_cameras_per_group: Optional[int] = None
+                 enable_random_noise: Optional[bool] = None,
+                 number_camera_groups: Optional[int] = None,
+                 number_cameras_per_group: Optional[int] = None
                  ):
         """
         Instantiate wrapper for synthesising lightcurves using PSLS.
@@ -120,9 +121,26 @@ class PslsWrapper:
         # Create temporary working directory
         identifier = "eas_psls"
         self.id_string = "eas_{:d}_{}".format(os.getpid(), identifier)
-        self.tmp_dir = os.path.join("/tmp", self.id_string)
-        os.system("mkdir -p {}".format(self.tmp_dir))
+        self.tmp_dir = temporary_directory.TemporaryDirectory()
         self.active = True
+
+    def __enter__(self):
+        """
+        Called at the start of a with block
+        """
+        return self
+
+    def __del__(self):
+        """
+        Destructor
+        """
+        self.close()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Called at the end of a with block
+        """
+        self.close()
 
     def close(self):
         """
@@ -130,13 +148,15 @@ class PslsWrapper:
         """
 
         # Remove temporary directory
-        os.system("rm -Rf {}".format(self.tmp_dir))
+        if self.tmp_dir is not None:
+            self.tmp_dir.clean_up()
+            self.tmp_dir = None
         self.active = False
 
     def configure(self,
                   mode: Optional[str] = None,
                   duration: Optional[float] = None,
-                 t0: Optional[float] = None,
+                  t0: Optional[float] = None,
                   enable_transits: Optional[bool] = None,
                   star_radius: Optional[float] = None,
                   planet_radius: Optional[float] = None,
@@ -234,9 +254,11 @@ class PslsWrapper:
         Synthesise a lightcurve using PSLS
         """
 
+        assert self.active, "This synthesiser instance has been closed."
+
         # Switch into our temporary working directory where PSLS can find all its input files
         cwd = os.getcwd()
-        os.chdir(self.tmp_dir)
+        os.chdir(self.tmp_dir.tmp_dir)
 
         # Create unique ID for this run
         utc = time.time()
@@ -311,8 +333,9 @@ class PslsWrapper:
         psls_binary = os.path.join(self.settings['datadir_local'], "virtualenv/bin/psls.py")
 
         # Run PSLS
-        command = "{} {}".format(psls_binary, yaml_filename)
-        os.system(command)
+        task_execution.call_subprocess_and_log_output(
+            arguments=(psls_binary, yaml_filename)
+        )
 
         # Filename of the output that PSLS produced
         psls_output = "0012069449"
@@ -377,7 +400,8 @@ class PslsWrapper:
         )
 
         # Make sure there aren't any old data files lying around
-        os.system("rm -Rf *.modes *.yaml *.dat")
+        for dead_file in glob.glob("*.modes") + glob.glob("*.yaml") + glob.glob("*.dat"):
+            os.unlink(dead_file)
 
         # Switch back into the user's cwd
         os.chdir(cwd)

@@ -101,6 +101,24 @@ class BatmanWrapper:
 
         self.active = True
 
+    def __enter__(self):
+        """
+        Called at the start of a with block
+        """
+        return self
+
+    def __del__(self):
+        """
+        Destructor
+        """
+        self.close()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Called at the end of a with block
+        """
+        self.close()
+
     def close(self):
         """
         Clean up temporary working data.
@@ -192,6 +210,8 @@ class BatmanWrapper:
         """
         Synthesise a lightcurve using Batman
         """
+
+        assert self.active, "This synthesiser instance has been closed."
 
         # Create configuration for this run
         params = batman.TransitParams()

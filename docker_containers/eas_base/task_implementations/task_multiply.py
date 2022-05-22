@@ -8,7 +8,7 @@ Implementation of the EAS pipeline task <multiply>.
 
 import logging
 
-from plato_wp36 import lightcurve, task_database, task_execution
+from plato_wp36 import lightcurve, task_database, task_execution, temporary_directory
 
 
 @task_execution.eas_pipeline_task
@@ -33,25 +33,28 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     logging.info("Running multiplication of <{}/{}> and <{}/{}>".format(directory, filename_1, directory, filename_2))
 
     # Read input lightcurve
-    with task_database.TaskDatabaseConnection() as task_db:
-        lc_in_file_handle, lc_in_metadata = task_db.task_open_file_input(
-            task=execution_attempt.task_object,
-            input_name="lightcurve_1"
+    with temporary_directory.TemporaryDirectory() as tmp_dir:
+        with task_database.TaskDatabaseConnection() as task_db:
+            lc_in_filename, lc_in_metadata = task_db.task_open_file_input(
+                task=execution_attempt.task_object,
+                tmp_dir=tmp_dir,
+                input_name="lightcurve_1"
+            )
+        lc_in_1 = lightcurve.LightcurveArbitraryRaster.from_file(
+            file_path=lc_in_filename,
+            file_metadata=lc_in_metadata
         )
-    lc_in_1 = lightcurve.LightcurveArbitraryRaster.from_file(
-        file_handle=lc_in_file_handle,
-        file_metadata=lc_in_metadata
-    )
 
-    with task_database.TaskDatabaseConnection() as task_db:
-        lc_in_file_handle, lc_in_metadata = task_db.task_open_file_input(
-            task=execution_attempt.task_object,
-            input_name="lightcurve_2"
+        with task_database.TaskDatabaseConnection() as task_db:
+            lc_in_filename, lc_in_metadata = task_db.task_open_file_input(
+                task=execution_attempt.task_object,
+                tmp_dir=tmp_dir,
+                input_name="lightcurve_2"
+            )
+        lc_in_2 = lightcurve.LightcurveArbitraryRaster.from_file(
+            file_path=lc_in_filename,
+            file_metadata=lc_in_metadata
         )
-    lc_in_2 = lightcurve.LightcurveArbitraryRaster.from_file(
-        file_handle=lc_in_file_handle,
-        file_metadata=lc_in_metadata
-    )
 
     # Multiply lightcurves together
     lc_result = lc_in_1 * lc_in_2
@@ -60,11 +63,8 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     lc_result.to_file(directory=directory, filename=filename_out, execution_id=execution_attempt.attempt_id)
 
     # Log lightcurve metadata to the database
-    task_db.execution_attempt_update(attempt_id=execution_attempt.attempt_id, metadata=lc_result.metadata)
-
-    # Close database
-    task_db.commit()
-    task_db.close_db()
+    with task_database.TaskDatabaseConnection() as task_db:
+        task_db.execution_attempt_update(attempt_id=execution_attempt.attempt_id, metadata=lc_result.metadata)
 
 
 if __name__ == "__main__":
