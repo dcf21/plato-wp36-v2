@@ -3,17 +3,19 @@
 
 from plato_wp36.lightcurve import LightcurveArbitraryRaster
 
+from typing import Optional
 
-def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: float, search_settings: dict):
+
+def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[float], search_settings: dict):
     """
-    Perform a transit search on a light curve, using the bls_kovacs code.
+    Perform a transit search on a light curve, using the exotrans code.
 
     :param lc:
         The lightcurve object containing the input lightcurve.
     :type lc:
         LightcurveArbitraryRaster
     :param lc_duration:
-        The duration of the lightcurve, in units of days.
+        If set, then the input lightcurve is truncated to a certain number of days before being processed.
     :type lc_duration:
         float
     :param search_settings:
@@ -24,6 +26,11 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: float, search
         dict containing the results of the transit search.
     """
 
+    # If requested, truncate the input lightcurve before we start processing it
+    if lc_duration is not None:
+        lc = lc.truncate_to_length(maximum_time=lc_duration)
+
+    # Extract an array of times and fluxes from the lightcurve object
     time = lc.times
     flux = lc.fluxes
 

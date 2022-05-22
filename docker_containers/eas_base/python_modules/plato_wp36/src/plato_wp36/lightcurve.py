@@ -14,7 +14,7 @@ import math
 
 import numpy as np
 
-from typing import Dict, Optional, IO
+from typing import Dict, Optional
 
 
 class Lightcurve:
@@ -39,13 +39,21 @@ class Lightcurve:
 
     def get_time_of_point(self, index: int):
         """
-        Return the time associated with a particular data point in the lightcurve
+        Return the time associated with a particular data point in the lightcurve [days]
         """
         raise NotImplementedError
 
+    def duration(self):
+        """
+        Return the duration of the lightcurve [days]
+        """
+        times = self.get_times()
+        duration = times[-1] - times[0]
+        return duration
+
     def get_times(self):
         """
-        Return an array of the times of the lightcurve samples
+        Return an array of the times of the lightcurve samples [days]
         """
         raise NotImplementedError
 
@@ -134,10 +142,23 @@ class Lightcurve:
 
     def estimate_sampling_interval(self):
         """
-        Estimate the time step on which this light curve is sampled, with robustness against missing points.
+        Estimate the time step on which this light curve is sampled, with robustness against missing points [days]
 
         :return:
             Time step
+        """
+        raise NotImplementedError
+
+    def truncate_to_length(self, maximum_time: float, minimum_time: float = 0):
+        """
+        Truncate a lightcurve to only contain data points within a certain time range [days]
+
+        :param minimum_time:
+            The lowest time value for which flux points should be included [days]
+        :param maximum_time:
+            The highest time value for which flux points should be included [days]
+        :return:
+            A new Lightcurve object.
         """
         raise NotImplementedError
 
@@ -205,7 +226,7 @@ class LightcurveArbitraryRaster(Lightcurve):
 
     def get_time_of_point(self, index: int):
         """
-        Return the time associated with a particular data point in the lightcurve
+        Return the time associated with a particular data point in the lightcurve [days]
         """
         if index < 0 or index >= len(self.times):
             return np.nan
@@ -214,7 +235,7 @@ class LightcurveArbitraryRaster(Lightcurve):
 
     def get_times(self):
         """
-        Return an array of the times of the lightcurve samples
+        Return an array of the times of the lightcurve samples [days]
         """
         return self.times
 
@@ -399,13 +420,13 @@ class LightcurveArbitraryRaster(Lightcurve):
 
     def estimate_sampling_interval(self):
         """
-        Estimate the time step on which this light curve is sampled, with robustness against missing points.
+        Estimate the time step on which this light curve is sampled, with robustness against missing points [days]
 
         :return:
             Time step
         """
 
-        # Calculate the interquartile mean of the time spacing between samples. This excludes anomalous gaps.
+        # Calculate the inter-quartile mean of the time spacing between samples. This excludes anomalous gaps.
         differences = np.diff(self.times)
         differences_sorted = np.sort(differences)
 
@@ -419,6 +440,29 @@ class LightcurveArbitraryRaster(Lightcurve):
         interquartile_mean = round(interquartile_mean * 86400) / 86400
 
         return float(interquartile_mean)
+
+    def truncate_to_length(self, maximum_time: float, minimum_time: float = 0):
+        """
+        Truncate a lightcurve to only contain data points within a certain time range [days]
+
+        :param minimum_time:
+            The lowest time value for which flux points should be included [days]
+        :param maximum_time:
+            The highest time value for which flux points should be included [days]
+        :return:
+            A new Lightcurve object.
+        """
+
+        times = self.get_times()
+        mask = (times >= minimum_time) * (times < maximum_time)
+
+        return LightcurveArbitraryRaster(
+            times=times[mask],
+            fluxes=self.get_fluxes()[mask],
+            uncertainties=self.get_uncertainties()[mask],
+            flags=self.get_flags()[mask],
+            metadata=self.metadata
+        )
 
     def check_fixed_step(self, verbose: bool = True, max_errors: int = 6):
         """
@@ -545,9 +589,9 @@ class LightcurveFixedStep(Lightcurve):
         Create a lightcurve which is sampled on an arbitrary raster of times.
 
         :param time_start:
-            The time at the start of the lightcurve.
+            The time at the start of the lightcurve [days]
         :param time_step:
-            The interval between the points in the lightcurve.
+            The interval between the points in the lightcurve [days]
         :param fluxes:
             Flux points [arbitrary units]
         :param uncertainties:
@@ -595,7 +639,7 @@ class LightcurveFixedStep(Lightcurve):
 
     def get_time_of_point(self, index: int):
         """
-        Return the time value associated with a particular index in this lightcurve.
+        Return the time value associated with a particular index in this lightcurve [days]
 
         :param index:
             The index of the time point within the lightcurve
@@ -607,7 +651,7 @@ class LightcurveFixedStep(Lightcurve):
 
     def get_times(self):
         """
-        Return an array of the times of the lightcurve samples
+        Return an array of the times of the lightcurve samples [days]
         """
         length = len(self.fluxes)
         return np.linspace(start=self.time_start, num=length, stop=self.time_start + (length + 0.1) * self.time_step)
@@ -632,7 +676,7 @@ class LightcurveFixedStep(Lightcurve):
 
     def estimate_sampling_interval(self):
         """
-        Estimate the time step on which this light curve is sampled, with robustness against missing points.
+        Estimate the time step on which this light curve is sampled, with robustness against missing points [days]
 
         :return:
             Time step
@@ -651,6 +695,30 @@ class LightcurveFixedStep(Lightcurve):
             int
         """
         return 0
+
+    def truncate_to_length(self, maximum_time: float, minimum_time: float = 0):
+        """
+        Truncate a lightcurve to only contain data points within a certain time range [days]
+
+        :param minimum_time:
+            The lowest time value for which flux points should be included [days]
+        :param maximum_time:
+            The highest time value for which flux points should be included [days]
+        :return:
+            A new Lightcurve object.
+        """
+
+        times = self.get_times()
+        mask = (times >= minimum_time) * (times < maximum_time)
+
+        return LightcurveFixedStep(
+            time_start=times[mask][0],
+            time_step=self.time_step,
+            fluxes=self.get_fluxes()[mask],
+            uncertainties=self.get_uncertainties()[mask],
+            flags=self.get_flags()[mask],
+            metadata=self.metadata
+        )
 
     def __add__(self, other: Lightcurve):
         """

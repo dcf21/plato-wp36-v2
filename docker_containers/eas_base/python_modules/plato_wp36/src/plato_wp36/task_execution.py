@@ -34,6 +34,20 @@ def call_subprocess_and_log_output(arguments: Iterable):
     """
 
     # Run subprocess
+    return call_subprocess_and_catch_stdout(arguments=arguments)[0]
+
+
+def call_subprocess_and_catch_stdout(arguments: Iterable):
+    """
+    Execute a shell command, and capture any error messages sent to stderr, storing them in the logging database.
+
+    :param arguments:
+        A list of the command-line arguments to run in the shell.
+    :return:
+        Boolean indicating whether the process exited with no error reported
+    """
+
+    # Run subprocess
     string_arguments = [str(item) for item in arguments]
     process_output = subprocess.run(string_arguments, capture_output=True)
 
@@ -47,7 +61,7 @@ def call_subprocess_and_log_output(arguments: Iterable):
         logging.warning("Executed subprocess produced stderr output:\n{:s}".format(stderr_string))
 
     # Return True is no error
-    return process_output.returncode == 0
+    return process_output.returncode == 0, process_output.stdout
 
 
 def eas_pipeline_task(

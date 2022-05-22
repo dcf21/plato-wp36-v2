@@ -32,7 +32,7 @@ def transit_detection_quality_control(lc: LightcurveArbitraryRaster, metadata: d
     outcome = "UNDEFINED"
     target_period = np.nan
     if ('orbital_period' in lc.metadata) and ('period' in metadata):
-        target_period = lc.metadata['orbital_period']
+        target_period = lc.metadata['orbital_period'].value
         observed_period = metadata['period']
         period_offset = target_period / observed_period
 

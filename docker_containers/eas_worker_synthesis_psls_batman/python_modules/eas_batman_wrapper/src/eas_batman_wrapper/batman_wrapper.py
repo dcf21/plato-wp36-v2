@@ -12,7 +12,7 @@ from typing import Optional
 
 import batman
 import numpy as np
-from plato_wp36 import settings, lightcurve
+from plato_wp36 import lightcurve
 from plato_wp36.constants import EASConstants
 
 
@@ -71,8 +71,7 @@ class BatmanWrapper:
             DO NOT SET != 1 (why??)
         """
 
-        # Look up settings
-        self.settings = settings.Settings()
+        # Look up EAS table of constants
         self.constants = EASConstants()
 
         # Create dictionary of default settings

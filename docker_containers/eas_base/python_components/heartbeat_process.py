@@ -57,8 +57,8 @@ def start_heartbeat(parent_pid: int, task_attempt_id: int, heartbeat_cadence: in
 
             # Open connection to the database
             with connect_db.DatabaseConnector().interface() as db_handle:
-                # Log heartbeat
-                logging.info("Heartbeat for <{}>".format(task_attempt_id))
+                # Log heartbeat (this can produce a lot of logs!)
+                # logging.info("Heartbeat for <{}>".format(task_attempt_id))
 
                 # Send heartbeat to the database
                 db_handle.parameterised_query("""
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format='[%(asctime)s] %(levelname)s:%(filename)s:%(message)s',
                         datefmt='%d/%m/%Y %H:%M:%S',
-                        handlers=[EasLoggingHandlerInstance, logging.StreamHandler()]
+                        handlers=[EasLoggingHandlerInstance, logging.StreamHandler(stream=sys.stdout)]
                         )
     logger = logging.getLogger(__name__)
 
