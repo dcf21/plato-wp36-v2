@@ -18,6 +18,25 @@ from plato_wp36 import logging_database, settings, task_database, task_execution
 EasLoggingHandlerInstance = logging_database.EasLoggingHandler()
 
 
+def error_fail(attempt_id: int, error_message: str):
+    """
+    Report that a task execution attempt failed.
+
+    :param attempt_id:
+        The integer ID of the task execution attempt which failed
+    :param error_message:
+        The error message associated with this task failure
+    """
+
+    # Log an error message
+    logging.error(error_message)
+
+    # Open a connection to the EasControl task database
+    with task_database.TaskDatabaseConnection() as task_db:
+        # Record the failure of this task
+        task_db.execution_attempt_update(attempt_id=attempt_id, error_fail=True, error_text=error_message)
+
+
 def enter_service_mode():
     """
     Start working on tasks in an infinite loop in service mode, listening to the message bus to receive the integer
@@ -84,14 +103,26 @@ def enter_service_mode():
 
                 # Check that task implementation exists
                 if not os.path.exists(path=task_implementation):
-                    logging.error("Could not find task implementation <{}>.".format(task_implementation))
+                    error_fail(
+                        attempt_id=attempt_id,
+                        error_message="Could not find task implementation <{}>.".format(task_implementation)
+                    )
+                    continue
                 if not os.access(task_implementation, os.X_OK):
-                    logging.error("Task implementation <{}> is not an executable.".format(task_implementation))
+                    error_fail(
+                        attempt_id=attempt_id,
+                        error_message="Task implementation <{}> is not an executable.".format(task_implementation)
+                    )
+                    continue
 
                 # Launch task handler
-                task_execution.call_subprocess_and_log_output(
+                task_executed_ok = task_execution.call_subprocess_and_log_output(
                     arguments=(task_implementation, "--job-id", attempt_id)
                 )
+
+                if not task_executed_ok:
+                    error_fail(attempt_id=attempt_id, error_message="Task implementation returned non-zero status")
+                    continue
 
                 # Announce that we're moving onto post-execution QC
                 logging.info("Starting QC on task execution attempt <{} - {}>".format(attempt_id, task_name))
@@ -104,8 +135,17 @@ def enter_service_mode():
                 # Check that task implementation exists
                 if not os.path.exists(path=task_qc_implementation):
                     logging.error("Could not find task QC implementation <{}>.".format(task_implementation))
+                    error_fail(
+                        attempt_id=attempt_id,
+                        error_message="Could not find task QC implementation <{}>.".format(task_implementation)
+                    )
+                    continue
                 if not os.access(task_qc_implementation, os.X_OK):
-                    logging.error("Task QC implementation <{}> is not an executable.".format(task_implementation))
+                    error_fail(
+                        attempt_id=attempt_id,
+                        error_message="Task QC implementation <{}> is not an executable.".format(task_implementation)
+                    )
+                    continue
 
                 # Launch task QC handler
                 task_execution.call_subprocess_and_log_output(

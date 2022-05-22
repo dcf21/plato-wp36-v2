@@ -29,6 +29,8 @@ def call_subprocess_and_log_output(arguments: Iterable):
     
     :param arguments:
         A list of the command-line arguments to run in the shell.
+    :return:
+        Boolean indicating whether the process exited with no error reported
     """
 
     # Run subprocess
@@ -43,6 +45,9 @@ def call_subprocess_and_log_output(arguments: Iterable):
     stderr_string = process_output.stderr.decode('utf-8').strip()
     if len(stderr_string) > 0:
         logging.warning("Executed subprocess produced stderr output:\n{:s}".format(stderr_string))
+
+    # Return True is no error
+    return process_output.returncode == 0
 
 
 def eas_pipeline_task(
@@ -71,10 +76,13 @@ def eas_pipeline_task(
         # Set up logging, so that log messages are recorded in the EasControl database
         EasLoggingHandlerInstance = logging_database.EasLoggingHandler()
 
+        # Output all logging messages - even errors - to stdout, not stderr
+        # If we output them to stderr, then the end up in the logging database twice, as the calling process will
+        # pick them up.
         logging.basicConfig(level=logging.INFO,
                             format='[%(asctime)s] %(levelname)s:%(filename)s:%(message)s',
                             datefmt='%d/%m/%Y %H:%M:%S',
-                            handlers=[EasLoggingHandlerInstance, logging.StreamHandler()]
+                            handlers=[EasLoggingHandlerInstance, logging.StreamHandler(stream=sys.stdout)]
                             )
 
         # Is this a QC task?

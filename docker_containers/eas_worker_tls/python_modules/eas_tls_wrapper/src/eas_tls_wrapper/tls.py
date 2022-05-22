@@ -3,7 +3,6 @@
 
 import logging
 import numpy as np
-from astropy import units as u
 from transitleastsquares import transitleastsquares
 
 from plato_wp36.lightcurve import LightcurveArbitraryRaster

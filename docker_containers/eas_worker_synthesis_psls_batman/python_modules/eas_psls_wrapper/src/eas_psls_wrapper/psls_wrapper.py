@@ -333,9 +333,10 @@ class PslsWrapper:
         psls_binary = os.path.join(self.settings['datadir_local'], "virtualenv/bin/psls.py")
 
         # Run PSLS
-        task_execution.call_subprocess_and_log_output(
+        psls_executed_ok = task_execution.call_subprocess_and_log_output(
             arguments=(psls_binary, yaml_filename)
         )
+        assert psls_executed_ok, "PSLS reported failure"
 
         # Filename of the output that PSLS produced
         psls_output = "0012069449"

@@ -60,27 +60,16 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
                                                                          output['verification_flux_min'],
                                                                          output['verification_flux_max']))
 
-    # Run first code for checking LCs
+    # Run code for checking LCs have a fixed step
     error_count = lc_in.check_fixed_step(verbose=True, max_errors=4)
 
     if error_count == 0:
-        logging.info("V1: Lightcurve <{}/{}> has fixed step".format(directory, filename))
-        output['verification_v1'] = True
+        logging.info("Lightcurve <{}/{}> has fixed step".format(directory, filename))
+        output['verification'] = True
     else:
-        logging.info("V1: Lightcurve <{}/{}> doesn't have fixed step ({:d} errors)".
+        logging.info("Lightcurve <{}/{}> doesn't have fixed step ({:d} errors)".
                      format(directory, filename, error_count))
-        output['verification_v1'] = False
-
-    # Run second code for checking LCs
-    error_count = lc_in.check_fixed_step_v2(verbose=True, max_errors=4)
-
-    if error_count == 0:
-        logging.info("V2: Lightcurve <{}/{}> has fixed step".format(directory, filename))
-        output['verification_v2'] = True
-    else:
-        logging.info("V2: Lightcurve <{}/{}> doesn't have fixed step ({:d} errors)".
-                     format(directory, filename, error_count))
-        output['verification_v2'] = False
+        output['verification'] = False
 
     # Log lightcurve metadata to the database
     with task_database.TaskDatabaseConnection() as task_db:
