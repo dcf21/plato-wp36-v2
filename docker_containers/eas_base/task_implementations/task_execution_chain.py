@@ -33,6 +33,9 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
         # Check that this execution chain is a list of task descriptors
         assert isinstance(task_list, list), "Execution chain has incorrect type of <{}>".format(type(task_list))
 
+        # Create a lookup table for previously generated subtasks, indexed by the task name
+        previous_task_names: dict = {}
+
         # Schedule each task in turn
         for subtask_info in task_list:
             # Check that this task descriptor is a dictionary, and specifies a task type
@@ -52,6 +55,11 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
             job_name = execution_attempt.task_object.job_name
             if 'job_name' in subtask_info:
                 job_name = expression_evaluator.evaluate_expression(expression=subtask_info['job_name'])
+
+            # Determine the task name of the subtask
+            task_name = ""
+            if 'name' in subtask_info:
+                task_name = expression_evaluator.evaluate_expression(expression=subtask_info['task_name'])
 
             # Determine the working directory for the subtask
             working_directory = execution_attempt.task_object.working_directory
@@ -79,6 +87,20 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
 
                     # Add this required file input to the list of dependencies
                     subtask_file_inputs.append([item_semantic_type, matching_file_products[0]])
+
+            # Identify all the preceding tasks whose metadata this task depends on
+            subtask_metadata_inputs = []
+            if 'requires_metadata_from' in subtask_info:
+                assert isinstance(subtask_info['requires_metadata_from'], list)
+                for subtask_metadata_input_item_raw in subtask_info['requires_metadata_from']:
+                    subtask_metadata_input_item = expression_evaluator.evaluate_expression(
+                        expression=subtask_metadata_input_item_raw
+                    )
+
+                    assert subtask_metadata_input_item in previous_task_names, \
+                        "Task requires metadata from unknown previous task <{}>".format(subtask_metadata_input_item)
+
+                    subtask_metadata_inputs.append(previous_task_names[subtask_metadata_input_item])
 
             # Identify all the file products that this task will create, and make sure they don't already exist
             subtask_file_outputs = []
@@ -112,9 +134,14 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
             # Create entry for this task
             subtask_id = task_db.task_register(parent_id=execution_attempt.task_object.task_id,
                                                job_name=job_name,
+                                               task_name=task_name,
                                                working_directory=working_directory,
                                                task_type=subtask_type,
                                                metadata=subtask_metadata)
+
+            # Register this task by name
+            if task_name:
+                previous_task_names[task_name] = subtask_id
 
             # Create entries declaring all the required file inputs
             for subtask_file_input in subtask_file_inputs:
@@ -124,6 +151,12 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
                 task_db.db_handle.parameterised_query("""
 INSERT INTO eas_task_input (taskId, inputId, semanticType) VALUES (%s, %s, %s);
 """, (subtask_id, required_product_id, semantic_type_id))
+
+            # Create entries declaring all the required metadata inputs
+            for required_task_id in subtask_metadata_inputs:
+                task_db.db_handle.parameterised_query("""
+INSERT INTO eas_task_metadata_input (taskId, inputId) VALUES (%s, %s);
+""", (subtask_id, required_task_id))
 
             # Create entries for all the file products this task will create
             for subtask_file_output in subtask_file_outputs:

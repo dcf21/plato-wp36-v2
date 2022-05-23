@@ -67,10 +67,13 @@ WHERE t.taskId = %s;
                     task_db.commit()
                     message_bus.queue_publish(queue_name=queue_name, item_id=attempt_id)
 
-    def schedule_all_waiting_jobs(self):
+    def schedule_jobs_based_on_criterion(self, task_selection_criteria: str):
         """
-        Schedule all tasks in the database which have not yet been queued.
+        Schedule all tasks in the database which don't have any unfulfilled dependencies, and which don't have
+        any previous run attempts which meet the database search criterion.
 
+        :param task_selection_criteria:
+            SQL criteria used to decide whether a previous run of a task means it shouldn't be run again.
         :return:
             None
         """
@@ -84,18 +87,32 @@ WHERE t.taskId = %s;
 SELECT t.taskId
 FROM eas_task t
 WHERE
-  NOT EXISTS (SELECT 1 FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId)
+  NOT EXISTS (SELECT 1 FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND {})
     AND
-  NOT EXISTS (SELECT 1 FROM eas_task_input y INNER JOIN eas_product z on y.inputId = z.productId
-              WHERE y.taskId = t.taskId AND
-              NOT EXISTS (SELECT 1 FROM eas_product_version v WHERE v.productId=z.productId AND v.passedQc))
+  NOT EXISTS (SELECT 1 FROM eas_task_input y WHERE y.taskId = t.taskId
+              AND NOT EXISTS (SELECT 1 FROM eas_product_version v WHERE v.productId = y.inputId AND v.passedQc))
+    AND
+  NOT EXISTS (SELECT 1 FROM eas_task_metadata_input z WHERE z.taskId = t.taskId
+              AND NOT EXISTS
+                (SELECT 1 FROM eas_scheduling_attempt a WHERE a.taskId = z.inputId AND a.allProductsPassedQc))
 ORDER BY t.taskId;
-""")
+""".format(task_selection_criteria))
             tasks = task_db.db_handle.fetchall()
 
             # Schedule each job in turn
             for item in tasks:
                 self.schedule_a_task(task_id=item['taskId'])
+
+    def schedule_all_waiting_jobs(self):
+        """
+        Schedule all tasks in the database which have not yet been queued.
+
+        :return:
+            None
+        """
+
+        # Don't re-run any task that we've run before
+        self.schedule_jobs_based_on_criterion(task_selection_criteria="1")
 
     def reschedule_all_unfinished_jobs(self):
         """
@@ -105,28 +122,8 @@ ORDER BY t.taskId;
             None
         """
 
-        # Read list of task types from the database
-        with TaskDatabaseConnection() as task_db:
-            # Fetch list of all the tasks to schedule
-            # This is all tasks which do not have a scheduling attempt which has already completed without error, and which
-            # also do not require any file products which have not passed QC.
-            task_db.db_handle.parameterised_query("""
-SELECT t.taskId
-FROM eas_task t
-WHERE
-  NOT EXISTS (SELECT 1 FROM eas_scheduling_attempt x
-              WHERE x.taskId = t.taskId AND x.endTime IS NOT NULL AND NOT x.errorFail)
-    AND
-  NOT EXISTS (SELECT 1 FROM eas_task_input y INNER JOIN eas_product z on y.inputId = z.productId
-              WHERE y.taskId = t.taskId AND
-              NOT EXISTS (SELECT 1 FROM eas_product_version v WHERE v.productId=z.productId AND v.passedQc))
-ORDER BY t.taskId;
-""")
-            tasks = task_db.db_handle.fetchall()
-
-            # Schedule each job in turn
-            for item in tasks:
-                self.schedule_a_task(task_id=item['taskId'])
+        # Don't re-run any task that we've run before, where the task is still running and didn't have an error
+        self.schedule_jobs_based_on_criterion(task_selection_criteria="x.isFinished AND NOT x.errorFail")
 
 
 class TaskQueue:

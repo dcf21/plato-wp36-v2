@@ -8,7 +8,7 @@ FROM ubuntu:latest
 
 # Install various useful Ubuntu packages
 RUN apt-get update
-RUN apt-get install -y apt-utils dialog git vim net-tools wget rsync \
+RUN apt-get install -y apt-utils dialog file git vim net-tools wget rsync \
                        python3 python3-dev python3-virtualenv python3-mysqldb \
                        mysql-client libmysqlclient-dev make gcc g++ gfortran \
                        libcfitsio-dev libgsl-dev sqlite3 \
@@ -16,13 +16,12 @@ RUN apt-get install -y apt-utils dialog git vim net-tools wget rsync \
 
 # Install Python requirements
 WORKDIR /plato-wp36-v2/docker_containers/eas_base/
+ADD build build
 ADD requirements.txt requirements.txt
 
 # We install all Python dependencies into a virtual environment
-RUN mkdir -p /plato-wp36-v2/data/datadir_local
-RUN virtualenv -p python3 /plato-wp36-v2/data/datadir_local/virtualenv
-RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install numpy  # Required by batman installer
-RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install -r requirements.txt
+RUN /plato-wp36-v2/docker_containers/eas_base/build/create_virtual_environment.sh
+RUN /plato-wp36-v2/docker_containers/eas_base/build/install_python_dependencies.sh
 
 # Copy configuration into container
 ADD configuration configuration
@@ -36,8 +35,7 @@ ADD task_qc_implementations task_qc_implementations
 ADD launch_worker launch_worker
 
 # Build and install plato_wp36 modules
-RUN /plato-wp36-v2/data/datadir_local/virtualenv/bin/pip install --editable \
-    python_modules/plato_wp36 --no-binary :all:
+RUN /plato-wp36-v2/docker_containers/eas_base/build/install_custom_packages.sh
 
 # Create placeholders for input and output data
 RUN mkdir -p /plato-wp36-v2/data/datadir_input
