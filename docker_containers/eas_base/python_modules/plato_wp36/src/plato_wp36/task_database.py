@@ -858,7 +858,7 @@ WHERE productId = %s;
 
             # Create new ID
             self.db_handle.parameterised_query("INSERT INTO eas_worker_host (hostname) VALUES (%s);", (name,),
-                                               ignore_error=allow_errors)
+                                               allow_errors=allow_errors)
             allow_errors = False
 
     def semantic_type_get_id(self, name: str):
@@ -884,7 +884,7 @@ WHERE productId = %s;
 
             # Create new ID
             self.db_handle.parameterised_query("INSERT INTO eas_semantic_type (name) VALUES (%s);", (name,),
-                                               ignore_error=allow_errors)
+                                               allow_errors=allow_errors)
             allow_errors = False
 
     def file_product_register(self, generator_task: int, directory: str, filename: str,
