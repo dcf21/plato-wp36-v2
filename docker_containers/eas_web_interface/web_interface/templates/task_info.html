@@ -9,6 +9,27 @@
         Showing task status
     </div>
 
+    <h5>Task info</h5>
+
+    <table class="library_list bordered bordered_compact stripy">
+        <thead>
+        <tr>
+            <td>Parameter</td>
+            <td>Value</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Task type</td>
+            <td>{{ task_info.task_type_name }}</td>
+        </tr>
+        <tr>
+            <td>Task name</td>
+            <td>{{ task_info.task_name }}</td>
+        </tr>
+        </tbody>
+    </table>
+
     <h5>Input metadata</h5>
 
     <table class="library_list bordered bordered_compact stripy">

@@ -6,7 +6,7 @@ BEGIN;
 CREATE TABLE eas_task_types
 (
     taskTypeId       INTEGER PRIMARY KEY AUTO_INCREMENT,
-    taskTypeName         VARCHAR(64) UNIQUE NOT NULL,
+    taskTypeName     VARCHAR(64) UNIQUE NOT NULL,
     workerContainers JSON               NOT NULL
 );
 
@@ -165,8 +165,8 @@ CREATE UNIQUE INDEX eas_task_input_1 ON eas_task_input (taskId, semanticType);
 -- Table of metadata from siblings required by each task
 CREATE TABLE eas_task_metadata_input
 (
-    taskId       INTEGER NOT NULL,
-    inputId      INTEGER NOT NULL,
+    taskId  INTEGER NOT NULL,
+    inputId INTEGER NOT NULL,
     FOREIGN KEY (taskId) REFERENCES eas_task (taskId) ON DELETE CASCADE,
     FOREIGN KEY (inputId) REFERENCES eas_task (taskId) ON DELETE CASCADE,
     UNIQUE (taskId, inputId)

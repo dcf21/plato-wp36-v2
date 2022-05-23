@@ -39,12 +39,18 @@ def task_status(task_id: int):
         Dict
     """
 
-    output = {
-        'runs': []
-    }
-
     # Open connection to the database
     with task_database.TaskDatabaseConnection() as task_db:
+        # Fetch task information
+        task_info = task_db.task_lookup(task_id=task_id)
+
+        # Start building output data structure
+        output = {
+            'runs': [],
+            'task_type_name': task_info.task_type,
+            'task_name': task_info.task_name
+        }
+
         # Search for input metadata for this task
         input_metadata = task_db.metadata_fetch_all(task_id=task_id)
         output['input_metadata_list'] = metadata_list_from_dict(input_metadata=input_metadata)

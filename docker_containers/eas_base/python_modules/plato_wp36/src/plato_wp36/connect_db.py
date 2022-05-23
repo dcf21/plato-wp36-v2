@@ -112,7 +112,7 @@ class DatabaseInterface:
         """
         raise NotImplementedError
 
-    def parameterised_query(self, sql: str, parameters: Optional[tuple] = None):
+    def parameterised_query(self, sql: str, parameters: Optional[tuple] = None, allow_errors: bool = False):
         """
         Execute a database query with a single set of input parameters.
         """
@@ -316,11 +316,15 @@ db_database: {:s}
             self.db = None
             self.db_cursor = None
 
-    def parameterised_query(self, sql: str, parameters: Optional[tuple] = None):
+    def parameterised_query(self, sql: str, parameters: Optional[tuple] = None, allow_errors: bool = False):
         """
         Execute a database query with a single set of input parameters.
         """
-        self.db_cursor.execute(sql, parameters)
+        try:
+            self.db_cursor.execute(sql, parameters)
+        except MySQLdb.IntegrityError:
+            if not allow_errors:
+                raise
 
     def parameterised_query_many(self, sql: str, parameters: Optional[tuple] = None):
         """
@@ -476,7 +480,7 @@ db_database: {:s}
             self.db = None
             self.db_cursor = None
 
-    def parameterised_query(self, sql: str, parameters: Optional[tuple] = None):
+    def parameterised_query(self, sql: str, parameters: Optional[tuple] = None, allow_errors: bool = False):
         """
         Execute a database query with a single set of input parameters.
         """
@@ -487,7 +491,12 @@ db_database: {:s}
 
         # sqlite3 uses ? as a placeholder for SQL parameters, not %s
         sql = re.sub(r"%s", r"?", sql)
-        self.db_cursor.execute(sql, parameters)
+
+        try:
+            self.db_cursor.execute(sql, parameters)
+        except sqlite3.IntegrityError:
+            if not allow_errors:
+                raise
 
     def parameterised_query_many(self, sql, parameters: Optional[tuple] = None):
         """

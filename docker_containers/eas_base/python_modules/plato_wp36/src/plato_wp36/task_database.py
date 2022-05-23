@@ -845,6 +845,9 @@ WHERE productId = %s;
             Integer ID
         """
 
+        # On first pass, allow SQL insertion errors to pass, because another worker may have updated table
+        allow_errors = True
+
         while True:
             # Lookup ID from database
             self.db_handle.parameterised_query("SELECT hostId FROM eas_worker_host WHERE hostname=%s;", (name,))
@@ -854,7 +857,9 @@ WHERE productId = %s;
                 return result[0]['hostId']
 
             # Create new ID
-            self.db_handle.parameterised_query("INSERT INTO eas_worker_host (hostname) VALUES (%s);", (name,))
+            self.db_handle.parameterised_query("INSERT INTO eas_worker_host (hostname) VALUES (%s);", (name,),
+                                               ignore_error=allow_errors)
+            allow_errors = False
 
     def semantic_type_get_id(self, name: str):
         """
@@ -866,6 +871,9 @@ WHERE productId = %s;
             Integer ID
         """
 
+        # On first pass, allow SQL insertion errors to pass, because another worker may have updated table
+        allow_errors = True
+
         while True:
             # Lookup ID from database
             self.db_handle.parameterised_query("SELECT semanticTypeId FROM eas_semantic_type WHERE name=%s;", (name,))
@@ -875,7 +883,9 @@ WHERE productId = %s;
                 return result[0]['semanticTypeId']
 
             # Create new ID
-            self.db_handle.parameterised_query("INSERT INTO eas_semantic_type (name) VALUES (%s);", (name,))
+            self.db_handle.parameterised_query("INSERT INTO eas_semantic_type (name) VALUES (%s);", (name,),
+                                               ignore_error=allow_errors)
+            allow_errors = False
 
     def file_product_register(self, generator_task: int, directory: str, filename: str,
                               semantic_type: str,
