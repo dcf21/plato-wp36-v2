@@ -531,6 +531,7 @@ class Task:
         self.created_time: Optional[float] = None
         self.task_type: Optional[str] = None
         self.job_name: Optional[str] = None
+        self.task_name: Optional[str] = None
         self.working_directory: Optional[str] = None
         self.input_files: Dict[str, FileProduct] = {}
         self.execution_attempts_passed: Dict[int, TaskExecutionAttempt] = {}
@@ -547,6 +548,7 @@ class Task:
     def configure(self, task_id: Optional[int] = None, parent_id: Optional[int] = None,
                   created_time: Optional[float] = None,
                   task_type: Optional[str] = None, job_name: Optional[str] = None,
+                  task_name: Optional[str] = None,
                   working_directory: Optional[str] = None,
                   input_files: Optional[Dict[str, FileProduct]] = None,
                   execution_attempts_passed: List[TaskExecutionAttempt] = None,
@@ -565,6 +567,8 @@ class Task:
             The string name of this type of task, as defined in <task_type_registry.xml>
         :param job_name:
             The human-readable name of the top-level job (requested by a user) that this task of part of
+        :param task_name:
+            The human-readable name of a task; used by its siblings to identify metadata coming from a task
         :param working_directory:
             The directory in the file store where this job should write its output file products
         :param input_files:
@@ -591,6 +595,8 @@ class Task:
             self.task_type = task_type
         if job_name is not None:
             self.job_name = job_name
+        if task_name is not None:
+            self.task_name = task_name
         if working_directory is not None:
             self.working_directory = working_directory
         if input_files is not None:
@@ -643,6 +649,7 @@ class Task:
             "created_time": self.created_time,
             "task_type": self.task_type,
             "job_name": self.job_name,
+            "task_name": self.task_name,
             "working_directory": self.working_directory,
             "input_files": [(keyword, item.as_dict()) for keyword, item in self.input_files.items()],
             "execution_attempts_passed": [item.as_dict() for item in self.execution_attempts_passed.values()],
@@ -668,6 +675,7 @@ class Task:
             created_time=d['created_time'],
             task_type=d['task_type'],
             job_name=d['job_name'],
+            task_name=d['task_name'],
             working_directory=d['working_directory']
         )
 

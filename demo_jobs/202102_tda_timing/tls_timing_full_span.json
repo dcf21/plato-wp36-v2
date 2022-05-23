@@ -4,7 +4,7 @@
   "task_list": [
     {
       "task": "execution_for_loop",
-      "name": "cadence",
+      "parameter": "cadence",
       "values": [
         25,
         50,
@@ -13,7 +13,7 @@
       "task_list": [
         {
           "task": "execution_for_loop",
-          "name": "lc_length",
+          "parameter": "lc_length",
           "values": [
             "(7 * constants.day)",
             "(10 * constants.day)",

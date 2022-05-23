@@ -23,12 +23,12 @@ def flush_queues():
 
     # Read list of task types from the database
     with task_database.TaskDatabaseConnection() as task_db:
-        tasks = task_db.task_list_from_db()
+        tasks = task_db.task_type_list_from_db()
 
     # Open connection to the message queue
     with task_queues.TaskQueueConnector().interface() as message_bus:
         # Query each queue in turn
-        for queue_name in tasks.task_names():
+        for queue_name in tasks.task_type_names():
             # Fetch messages from queue, one by one, until no more messages are found
             while True:
                 task_id = message_bus.queue_fetch_and_acknowledge(queue_name=queue_name, set_running=False)

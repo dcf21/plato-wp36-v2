@@ -6,7 +6,7 @@ BEGIN;
 CREATE TABLE eas_task_types
 (
     taskTypeId       INTEGER PRIMARY KEY AUTO_INCREMENT,
-    taskName         VARCHAR(64) UNIQUE NOT NULL,
+    taskTypeName         VARCHAR(64) UNIQUE NOT NULL,
     workerContainers JSON               NOT NULL
 );
 
@@ -18,6 +18,7 @@ CREATE TABLE eas_task
     createdTime      REAL,
     taskTypeId       INTEGER       NOT NULL,
     jobName          VARCHAR(256),
+    taskName         VARCHAR(256),
     workingDirectory VARCHAR(1024) NOT NULL,
     FOREIGN KEY (parentTask) REFERENCES eas_task (taskId) ON DELETE CASCADE,
     FOREIGN KEY (taskTypeId) REFERENCES eas_task_types (taskTypeId) ON DELETE CASCADE
@@ -147,7 +148,7 @@ CREATE UNIQUE INDEX eas_metadata_item_2 ON eas_metadata_item (schedulingAttemptI
 CREATE UNIQUE INDEX eas_metadata_item_3 ON eas_metadata_item (productId, metadataKey);
 CREATE UNIQUE INDEX eas_metadata_item_4 ON eas_metadata_item (productVersionId, metadataKey);
 
--- Table of intermediate products required by each task
+-- Table of intermediate file products required by each task
 CREATE TABLE eas_task_input
 (
     taskId       INTEGER NOT NULL,
@@ -160,5 +161,17 @@ CREATE TABLE eas_task_input
 );
 
 CREATE UNIQUE INDEX eas_task_input_1 ON eas_task_input (taskId, semanticType);
+
+-- Table of metadata from siblings required by each task
+CREATE TABLE eas_task_metadata_input
+(
+    taskId       INTEGER NOT NULL,
+    inputId      INTEGER NOT NULL,
+    FOREIGN KEY (taskId) REFERENCES eas_task (taskId) ON DELETE CASCADE,
+    FOREIGN KEY (inputId) REFERENCES eas_task (taskId) ON DELETE CASCADE,
+    UNIQUE (taskId, inputId)
+);
+
+CREATE UNIQUE INDEX eas_task_metadata_input_1 ON eas_task_metadata_input (taskId, inputId);
 
 COMMIT;

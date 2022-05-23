@@ -4,7 +4,7 @@
   "task_list": [
     {
       "task": "execution_for_loop",
-      "name": "tda",
+      "parameter": "tda",
       "values": [
         "tls",
         "bls_reference"
@@ -12,7 +12,7 @@
       "task_list": [
         {
           "task": "execution_for_loop",
-          "name": "cadence",
+          "parameter": "cadence",
           "values": [
             900,
             25
@@ -20,7 +20,7 @@
           "task_list": [
             {
               "task": "execution_for_loop",
-              "name": "size",
+              "parameter": "size",
               "log_range": [
                 "(constants.Rearth / 4)",
                 "(constants.Rearth * 4)",

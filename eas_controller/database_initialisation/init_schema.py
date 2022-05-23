@@ -32,7 +32,7 @@ def init_schema(db_engine: str, db_user: str, db_passwd: str, db_host: str, db_p
 
     # Write list of task types to the database
     with task_database.TaskDatabaseConnection() as task_db:
-        task_db.task_list_to_db(task_list=tasks)
+        task_db.task_type_list_to_db(task_list=tasks)
 
 
 # Do it right away if we're run as a script

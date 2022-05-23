@@ -21,6 +21,13 @@ def render_run_time(input):
         return "{:.2f} sec".format(input)
 
 
+def metadata_list_from_dict(input_metadata):
+    input_metadata_list_keys = sorted(input_metadata.keys())
+    input_metadata_list_values = [input_metadata[key].value for key in input_metadata_list_keys]
+    input_metadata_list = zip(input_metadata_list_keys, input_metadata_list_values)
+    return input_metadata_list
+
+
 def task_status(task_id: int):
     """
     Show the status of a task
@@ -40,10 +47,32 @@ def task_status(task_id: int):
     with task_database.TaskDatabaseConnection() as task_db:
         # Search for input metadata for this task
         input_metadata = task_db.metadata_fetch_all(task_id=task_id)
-        input_metadata_list_keys = sorted(input_metadata.keys())
-        input_metadata_list_values = [input_metadata[key].value for key in input_metadata_list_keys]
-        input_metadata_list = zip(input_metadata_list_keys, input_metadata_list_values)
-        output['input_metadata_list'] = input_metadata_list
+        output['input_metadata_list'] = metadata_list_from_dict(input_metadata=input_metadata)
+
+        # Search for input files for this task
+        file_inputs = task_db.task_fetch_file_inputs(task_id=task_id)
+        file_input_info = []
+        for semantic_type in sorted(file_inputs.keys()):
+            item_parent = file_inputs[semantic_type]
+
+            # Find out which version of this file we should use
+            version_ids = task_db.file_version_by_product(product_id=item_parent.product_id,
+                                                          must_have_passed_qc=True)
+            if len(version_ids) == 0:
+                repository_id = "-- Not generated yet --"
+                item_metadata = item_parent.metadata
+            else:
+                item = task_db.file_version_lookup(product_version_id=version_ids[-1])
+                repository_id = item.repository_id
+                item_metadata = item.metadata
+            file_input_info.append({
+                'name': semantic_type,
+                'filename': item_parent.filename,
+                'directory': item_parent.directory,
+                'id': repository_id,
+                'metadata': metadata_list_from_dict(item_metadata)
+            })
+        output['file_input_info'] = file_input_info
 
         # Search for all attempts to execute this task
         task_db.db_handle.parameterised_query("""
@@ -58,11 +87,26 @@ ORDER BY queuedTime;
         run_list = task_db.db_handle.fetchall()
 
         for task_run in run_list:
+            # Fetch output metadata from this scheduling attempt
             output_metadata = task_db.metadata_fetch_all(scheduling_attempt_id=task_run['schedulingAttemptId'])
-            output_metadata_list_keys = sorted(output_metadata.keys())
-            output_metadata_list_values = [output_metadata[key].value for key in output_metadata_list_keys]
-            output_metadata_list = zip(output_metadata_list_keys, output_metadata_list_values)
+            output_metadata_list = metadata_list_from_dict(input_metadata=output_metadata)
 
+            # Fetch file outputs from this scheduling attempt
+            file_outputs = task_db.execution_attempt_fetch_output_files(attempt_id=task_run['schedulingAttemptId'])
+            file_output_info = []
+            for semantic_type in sorted(file_outputs.keys()):
+                item = file_outputs[semantic_type]
+                item_parent = task_db.file_product_lookup(product_id=item.product_id)
+                file_output_info.append({
+                    'name': semantic_type,
+                    'filename': item_parent.filename,
+                    'directory': item_parent.directory,
+                    'passed_qc': item.passed_qc,
+                    'id': item.repository_id,
+                    'metadata': metadata_list_from_dict(item.metadata)
+                })
+
+            # Create a dictionary of data about this scheduling attempt
             run_info = {
                 'run_id': task_run['schedulingAttemptId'],
                 'queuedTime': render_time(timestamp=task_run['queuedTime']),
@@ -78,6 +122,7 @@ ORDER BY queuedTime;
                 'isFinished': task_run['isFinished'],
                 'errorFail': task_run['errorFail'],
                 'output_metadata': output_metadata_list,
+                'file_output_info': file_output_info,
                 'log_table': fetch_log_messages(attempt_id=task_run['schedulingAttemptId'])
             }
 

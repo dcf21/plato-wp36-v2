@@ -4,7 +4,7 @@
   "task_list": [
     {
       "task": "execution_for_loop",
-      "name": "size",
+      "parameter": "size",
       "linear_range": [
         "(constants.Rearth * 0.25)",
         "(constants.Rearth * 2)",
@@ -13,7 +13,7 @@
       "task_list": [
         {
           "task": "execution_for_loop",
-          "name": "period",
+          "parameter": "period",
           "linear_range": [
             0.5,
             500,
@@ -22,7 +22,7 @@
           "task_list": [
             {
               "task": "execution_for_loop",
-              "name": "impact",
+              "parameter": "impact",
               "linear_range": [
                 0,
                 1,

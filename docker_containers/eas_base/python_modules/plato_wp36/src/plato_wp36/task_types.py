@@ -33,28 +33,28 @@ class TaskTypeList:
         # List of all known Docker containers, mapped to the set of tasks they can perform
         self.container_capabilities: Dict[str, Set[str]] = {}
 
-    def task_names(self):
+    def task_type_names(self):
         """
-        Return a list of all known task names.
+        Return a list of all known task type names.
         :return:
-            List of all known task names.
+            List of all known task type names.
         """
 
         return self.task_list.keys()
 
-    def containers_for_task(self, task_name: str):
+    def containers_for_task(self, task_type_name: str):
         """
         Return a list of the names of the Docker containers which are capable of running a particular task.
 
-        :param task_name:
+        :param task_type_name:
             The name of the task to be run
-        :type task_name:
+        :type task_type_name:
             str
         :return:
             List of string names of Docker containers
         """
 
-        return self.task_list[task_name]
+        return self.task_list[task_type_name]
 
     def tasks_for_container(self, container_name: str):
         """
@@ -103,9 +103,9 @@ class TaskTypeList:
             output.container_names.add(container_name)
             output.container_capabilities[container_name] = set()
 
-        # Parse list of known pipeline tasks
+        # Parse list of known pipeline task types
         for task_item in xml_structure['tasks']['task']:
-            task_name: str = task_item['name']
+            task_type_name: str = task_item['name']
             docker_containers: Set[str] = set()
 
             # If we only have a list of one container type, still make sure it's a one-item list
@@ -125,9 +125,9 @@ class TaskTypeList:
 
                     # Add container to list of those that can run this task
                     docker_containers.add(container_item)
-                    output.container_capabilities[container_item].add(task_name)
+                    output.container_capabilities[container_item].add(task_type_name)
 
-            output.task_list[task_name] = docker_containers
+            output.task_list[task_type_name] = docker_containers
 
         # Return new task list
         return output

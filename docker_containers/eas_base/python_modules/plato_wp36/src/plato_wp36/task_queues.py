@@ -49,7 +49,7 @@ class TaskScheduler:
         with TaskDatabaseConnection() as task_db:
             # Fetch the name of the type of task
             task_db.db_handle.parameterised_query("""
-SELECT t.taskId, ett.taskName
+SELECT t.taskId, ett.taskTypeName
 FROM eas_task t
 INNER JOIN eas_task_types ett on t.taskTypeId = ett.taskTypeId
 WHERE t.taskId = %s;
@@ -60,7 +60,7 @@ WHERE t.taskId = %s;
             with TaskQueueConnector(queue_engine=self.queue_implementation).interface() as message_bus:
                 # Schedule each matching result
                 for item in tasks:
-                    queue_name = item['taskName']
+                    queue_name = item['taskTypeName']
                     task_id = item['taskId']
                     logging.info("Scheduling {:6d} - {:s}".format(task_id, queue_name))
                     attempt_id = task_db.execution_attempt_register(task_id=task_id)
@@ -461,7 +461,7 @@ SELECT COUNT(*)
 FROM eas_scheduling_attempt s
 INNER JOIN eas_task t ON t.taskId = s.taskId
 INNER JOIN eas_task_types ty ON ty.taskTypeId = t.taskTypeId
-WHERE ty.taskName=%s AND s.isQueued;
+WHERE ty.taskTypeName=%s AND s.isQueued;
 """, (queue_name,))
         results = self.db.db_handle.fetchall()
 
@@ -527,7 +527,7 @@ WHERE schedulingAttemptId = (
     SELECT schedulingAttemptId FROM eas_scheduling_attempt s
     INNER JOIN eas_task t ON t.taskId = s.taskId
     INNER JOIN eas_task_types ty ON ty.taskTypeId = t.taskTypeId
-    WHERE ty.taskName=%s AND s.isQueued
+    WHERE ty.taskTypeName=%s AND s.isQueued
     ORDER BY s.queuedTime LIMIT 1
 );
 """, (host_id, queue_name))
@@ -578,7 +578,7 @@ SELECT s.schedulingAttemptId
 FROM eas_scheduling_attempt s
 INNER JOIN eas_task t ON t.taskId = s.taskId
 INNER JOIN eas_task_types ty ON ty.taskTypeId = t.taskTypeId
-WHERE ty.taskName=%s AND s.isQueued;
+WHERE ty.taskTypeName=%s AND s.isQueued;
 """, (queue_name,))
         results = self.db.db_handle.fetchall()
 

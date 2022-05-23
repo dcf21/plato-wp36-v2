@@ -33,7 +33,7 @@ def fetch_job_tree(job_name: Optional[str] = None, status: str = 'any'):
 
         # Search for all tasks with a given parent
         task_db.db_handle.parameterised_query("""
-SELECT t.taskId, t.jobName, ett.taskName,
+SELECT t.taskId, t.jobName, ett.taskTypeName,
    (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.isQueued) AS runs_queued,
    (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND
                     (x.errorFail OR (x.isRunning AND x.latestHeartbeat < {min_heartbeat:f}))) AS runs_stalled,
@@ -93,7 +93,7 @@ WHERE {constraint} ORDER BY taskId;
                         output.append({
                             'indent': " &rarr; " * level,
                             'job_name': parent['job_name'],
-                            'task_name': parent['task']['taskName'],
+                            'task_type_name': parent['task']['taskTypeName'],
                             'class': html_class,
                             'task_id': parent['task']['taskId'],
                             'w': parent['task']['runs_queued'],

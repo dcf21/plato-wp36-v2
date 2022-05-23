@@ -84,12 +84,12 @@ class TaskDatabaseConnection:
             self.db_handle = None
 
     # *** Functions relating to task type lists
-    def task_list_from_db(self):
+    def task_type_list_from_db(self):
         """
-        Return a list of all known task names, from the database.
+        Return a list of all known task type names, from the database.
 
         :return:
-            List of all known task names.
+            List of all known task type names.
         """
 
         # Create empty task list
@@ -97,12 +97,12 @@ class TaskDatabaseConnection:
 
         # Fetch list of tasks
         self.db_handle.parameterised_query("""
-SELECT taskTypeId, taskName, workerContainers
+SELECT taskTypeId, taskTypeName, workerContainers
 FROM eas_task_types ORDER BY taskTypeId;""")
 
         for item in self.db_handle.fetchall():
             container_list = json.loads(item['workerContainers'])
-            output.task_list[item['taskName']] = container_list
+            output.task_list[item['taskTypeName']] = container_list
 
             for container_name in container_list:
                 output.container_names.add(container_name)
@@ -110,14 +110,14 @@ FROM eas_task_types ORDER BY taskTypeId;""")
                 if container_name not in output.container_capabilities:
                     output.container_capabilities[container_name] = set()
 
-                output.container_capabilities[container_name].add(item['taskName'])
+                output.container_capabilities[container_name].add(item['taskTypeName'])
 
         # Return list
         return output
 
-    def task_list_to_db(self, task_list: TaskTypeList):
+    def task_type_list_to_db(self, task_list: TaskTypeList):
         """
-        Write a list of all known task names to the database.
+        Write a list of all known task type names to the database.
 
         :return:
             None
@@ -126,23 +126,24 @@ FROM eas_task_types ORDER BY taskTypeId;""")
         # Write each task type in turn
         for name, containers in task_list.task_list.items():
             self.db_handle.parameterised_query("""
-INSERT INTO eas_task_types (taskName, workerContainers) VALUES (%s, %s);
+INSERT INTO eas_task_types (taskTypeName, workerContainers) VALUES (%s, %s);
 """, (name, json.dumps(list(containers))))
 
-    def task_list_fetch_id(self, task_name: str):
+    def task_type_list_fetch_id(self, task_type_name: str):
         """
         Fetch the integer ID associated with a type of pipeline task.
 
-        :param task_name:
+        :param task_type_name:
             The name of the pipeline task type.
         :return:
             Integer ID
         """
-        self.db_handle.parameterised_query("SELECT taskTypeId FROM eas_task_types WHERE taskName=%s;", (task_name,))
+        self.db_handle.parameterised_query("SELECT taskTypeId FROM eas_task_types WHERE taskTypeName=%s;",
+                                           (task_type_name,))
         results = self.db_handle.fetchall()
 
         # Check that task is recognised
-        assert len(results) == 1, "Unrecognised task type <{}>".format(task_name)
+        assert len(results) == 1, "Unrecognised task type <{}>".format(task_type_name)
 
         # Return ID
         return results[0]['taskTypeId']
@@ -1369,7 +1370,7 @@ ORDER BY p.inputId;
     def task_open_file_input(self, task: Task, input_name: str, tmp_dir: TemporaryDirectory,
                              execution_id: Optional[int] = None, must_have_passed_qc: bool = True):
         """
-        Open an input file to a task.
+        Make a copy of an input file to a task in a temporary directory.
 
         :param task:
             The task which is requesting to open one of its input files.
@@ -1469,7 +1470,7 @@ ORDER BY s.schedulingAttemptId;
 
         # Look up task properties
         self.db_handle.parameterised_query("""
-SELECT taskId, parentTask, createdTime, t.taskName AS taskTypeName, jobName, workingDirectory
+SELECT taskId, parentTask, createdTime, t.taskTypeName AS taskTypeName, jobName, taskName, workingDirectory
 FROM eas_task j
 INNER JOIN eas_task_types t ON t.taskTypeId = j.taskTypeId
 WHERE taskId = %s;
@@ -1508,6 +1509,7 @@ WHERE taskId = %s;
             created_time=result[0]['createdTime'],
             task_type=result[0]['taskTypeName'],
             job_name=result[0]['jobName'],
+            task_name=result[0]['taskName'],
             working_directory=result[0]['workingDirectory'],
             input_files=input_products,
             execution_attempts_passed=list(execution_attempts_passed.values()),
@@ -1518,7 +1520,7 @@ WHERE taskId = %s;
 
     def task_register(self, parent_id: Optional[int] = None,
                       created_time: Optional[float] = None,
-                      task_type: Optional[str] = None, job_name: Optional[str] = None,
+                      task_type: Optional[str] = None, job_name: Optional[str] = None, task_name: Optional[str] = None,
                       working_directory: Optional[str] = None,
                       input_files: Optional[Dict[str, FileProduct]] = None,
                       metadata: Dict[str, Any] = None):
@@ -1534,6 +1536,8 @@ WHERE taskId = %s;
             The string name of this type of task, as defined in <task_type_registry.xml>
         :param job_name:
             The human-readable name of the top-level job (requested by a user) that this task of part of
+        :param task_name:
+            The human-readable name of a task; used by its siblings to identify metadata coming from a task
         :param working_directory:
             The directory in the file store where this job should write its output file products
         :param input_files:
@@ -1550,13 +1554,13 @@ WHERE taskId = %s;
             working_directory = ""
 
         # Fetch task type integer id
-        task_type_id = self.task_list_fetch_id(task_name=task_type)
+        task_type_id = self.task_type_list_fetch_id(task_type_name=task_type)
 
         # Insert record into the database
         self.db_handle.parameterised_query("""
-INSERT INTO eas_task (parentTask, createdTime, taskTypeId, jobName, workingDirectory)
-VALUES (%s, %s, %s, %s, %s);
-""", (parent_id, created_time, task_type_id, job_name, working_directory))
+INSERT INTO eas_task (parentTask, createdTime, taskTypeId, jobName, taskName, workingDirectory)
+VALUES (%s, %s, %s, %s, %s, %s);
+""", (parent_id, created_time, task_type_id, job_name, task_name, working_directory))
         output_id = self.db_handle.lastrowid()
 
         # Register task metadata

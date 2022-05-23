@@ -93,7 +93,6 @@ class PslsWrapper:
             'duration': 730,  # days
             't0': 1,  # Time for inferior conjunction (days)
             'master_seed': time.time(),
-            'datadir_local': self.eas_settings.settings['localDataPath'],
             'enable_transits': True,
             'star_radius': self.constants.sun_radius / self.constants.jupiter_radius,  # Jupiter radii
             'planet_radius': 1,  # Jupiter radii
@@ -312,7 +311,7 @@ class PslsWrapper:
                     duration=simulation_duration,
                     master_seed=int(self.settings['master_seed']),
                     nsr=float(self.settings['nsr']),
-                    datadir_local=self.settings['datadir_local'],
+                    datadir_local=self.eas_settings.settings['localDataPath'],
                     enable_transits=int(self.settings['enable_transits']),
                     planet_radius=float(self.settings['planet_radius']),
                     orbital_period=float(self.settings['orbital_period']),
@@ -330,7 +329,7 @@ class PslsWrapper:
             )
 
         # Path to PSLS binary
-        psls_binary = os.path.join(self.settings['datadir_local'], "virtualenv/bin/psls.py")
+        psls_binary = os.path.join(self.eas_settings.settings['localDataPath'], "virtualenv/bin/psls.py")
 
         # Run PSLS
         psls_executed_ok = task_execution.call_subprocess_and_log_output(

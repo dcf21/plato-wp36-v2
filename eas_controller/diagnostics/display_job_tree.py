@@ -40,7 +40,7 @@ def display_job_tree(job_name: Optional[str] = None, status: str = 'any'):
 
         # Search for all tasks with a given parent
         task_db.db_handle.parameterised_query("""
-SELECT t.taskId, t.jobName, ett.taskName,
+SELECT t.taskId, t.jobName, ett.taskTypeName,
    (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND x.isQueued) AS runs_queued,
    (SELECT COUNT(*) FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND
                     (x.errorFail OR (x.isRunning AND x.latestHeartbeat < {min_heartbeat:f}))) AS runs_stalled,
@@ -86,10 +86,10 @@ WHERE {constraint} ORDER BY taskId;
                 for level, parent in enumerate(parents):
                     if not parent['shown']:
                         parent['shown'] = True
-                        print('{indent}{job_name}/{task_name} ({id} - {w}/{r}/{s}/{d})'.format(
+                        print('{indent}{job_name}/{task_type_name} ({id} - {w}/{r}/{s}/{d})'.format(
                             indent=" | " * level,
                             job_name=parent['job_name'],
-                            task_name=parent['task']['taskName'],
+                            task_type_name=parent['task']['taskTypeName'],
                             id=parent['task']['taskId'],
                             w=parent['task']['runs_queued'],
                             r=parent['task']['runs_running'],

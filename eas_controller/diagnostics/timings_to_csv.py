@@ -48,10 +48,10 @@ def timings_to_csv(job_name: Optional[str] = None, task_type: Optional[str] = No
             job_list = [item for item in job_list if item == job_name]
 
         # Fetch list of task types (but to save space, don't show internal execution_ task types)
-        task_db.db_handle.parameterised_query("SELECT taskName FROM eas_task_types ORDER BY taskName;")
-        task_list = [item['taskName']
+        task_db.db_handle.parameterised_query("SELECT taskTypeName FROM eas_task_types ORDER BY taskTypeName;")
+        task_list = [item['taskTypeName']
                      for item in task_db.db_handle.fetchall()
-                     if not item['taskName'].startswith('execution_')]
+                     if not item['taskTypeName'].startswith('execution_')]
 
         if task_type is not None:
             task_list = [item for item in task_list if item == task_type]
@@ -68,7 +68,7 @@ SELECT runTimeWallClock, runTimeCpu, runTimeCpuIncChildren, et.taskId
 FROM eas_scheduling_attempt s
 INNER JOIN eas_task et on et.taskId = s.taskId
 INNER JOIN eas_task_types ett on ett.taskTypeId = et.taskTypeId
-WHERE et.jobName=%s AND ett.taskName=%s
+WHERE et.jobName=%s AND ett.taskTypeName=%s
 ORDER BY schedulingAttemptId;
 """, (job_name, task_type)
                                                       )

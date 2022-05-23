@@ -24,11 +24,91 @@
                 <td>{{ item[0] }}</td>
                 <td style="max-width:800px;">{{ item[1] }}</td>
             </tr>
+        {% else %}
+            <tr>
+                <td colspan="2">
+                    There is no metadata associated with this item.
+                </td>
+            </tr>
         {% endfor %}
         </tbody>
     </table>
 
     <h5>Input files</h5>
+
+    <table class="library_list bordered bordered_compact">
+        <thead>
+        <tr>
+            <td>Semantic type</td>
+            <td>Info</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in task_info.file_input_info %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>
+                    <p style="margin: 18px 0 6px 0;"><b>File info</b></p>
+
+                    <table class="library_list bordered bordered_compact stripy">
+                        <thead>
+                        <tr>
+                            <td>Parameter</td>
+                            <td>Value</td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Filename</td>
+                            <td>{{ item.filename }}</td>
+                        </tr>
+                        <tr>
+                            <td>Directory</td>
+                            <td>{{ item.directory }}</td>
+                        </tr>
+                        <tr>
+                            <td>File ID</td>
+                            <td>{{ item.id }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <p style="margin: 18px 0 6px 0;"><b>File metadata</b></p>
+
+                    <table class="library_list bordered bordered_compact stripy">
+                        <thead>
+                        <tr>
+                            <td>Parameter</td>
+                            <td>Value</td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for meta_item in item.metadata %}
+                            <tr>
+                                <td>{{ meta_item[0] }}</td>
+                                <td style="max-width:800px;">{{ meta_item[1] }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="2">
+                                    There is no metadata associated with this item.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="2">
+                    There are no input file products.
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
     {% for task_run in task_info.runs %}
 
@@ -111,11 +191,95 @@
                     <td>{{ item[0] }}</td>
                     <td style="max-width:800px;">{{ item[1] }}</td>
                 </tr>
+            {% else %}
+                <tr>
+                    <td colspan="2">
+                        There is no metadata associated with this item.
+                    </td>
+                </tr>
             {% endfor %}
             </tbody>
         </table>
 
         <h5>Output files</h5>
+
+        <table class="library_list bordered bordered_compact">
+            <thead>
+            <tr>
+                <td>Semantic type</td>
+                <td>Info</td>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in task_run.file_output_info %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>
+                        <p style="margin: 18px 0 6px 0;"><b>File info</b></p>
+
+                        <table class="library_list bordered bordered_compact stripy">
+                            <thead>
+                            <tr>
+                                <td>Parameter</td>
+                                <td>Value</td>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Filename</td>
+                                <td>{{ item.filename }}</td>
+                            </tr>
+                            <tr>
+                                <td>Directory</td>
+                                <td>{{ item.directory }}</td>
+                            </tr>
+                            <tr>
+                                <td>File ID</td>
+                                <td>{{ item.id }}</td>
+                            </tr>
+                            <tr>
+                                <td>Passed QC</td>
+                                <td>{{ item.passed_qc }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                        <p style="margin: 18px 0 6px 0;"><b>File metadata</b></p>
+
+                        <table class="library_list bordered bordered_compact stripy">
+                            <thead>
+                            <tr>
+                                <td>Parameter</td>
+                                <td>Value</td>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for meta_item in item.metadata %}
+                                <tr>
+                                    <td>{{ meta_item[0] }}</td>
+                                    <td style="max-width:800px;">{{ meta_item[1] }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="2">
+                                        There is no metadata associated with this item.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="2">
+                        There are no output file products.
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
 
         <h5>Log messages</h5>
 
@@ -138,11 +302,8 @@
                 </tr>
             {% else %}
                 <tr>
-                    <td>
+                    <td colspan="2">
                         There are no log messages currently in the database.
-                    </td>
-                    <td>
-
                     </td>
                 </tr>
             {% endfor %}

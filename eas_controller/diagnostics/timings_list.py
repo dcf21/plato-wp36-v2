@@ -49,7 +49,7 @@ def timings_list(job_name: Optional[str] = None, task_type: Optional[str] = None
     with task_database.TaskDatabaseConnection() as task_db:
         # Fetch list of timings
         task_db.db_handle.parameterised_query("""
-SELECT startTime, runTimeWallClock, runTimeCpu, runTimeCpuIncChildren, et.taskId, et.jobName, ett.taskName
+SELECT startTime, runTimeWallClock, runTimeCpu, runTimeCpuIncChildren, et.taskId, et.jobName, ett.taskTypeName
 FROM eas_scheduling_attempt s
 INNER JOIN eas_task et on et.taskId = s.taskId
 INNER JOIN eas_task_types ett on ett.taskTypeId = et.taskTypeId
@@ -69,7 +69,7 @@ ORDER BY schedulingAttemptId;
             time_string = render_time(timestamp=item['startTime'])
             output.write("{:20.20s} |{:36.36s}|{:18.18s}|{:12.12s}|{:12.12s}|{:12.12s}\n".format(
                 time_string,
-                str(item['jobName']), item['taskName'],
+                str(item['jobName']), item['taskTypeName'],
                 render_run_time(input=item['runTimeWallClock']),
                 render_run_time(input=item['runTimeCpu']),
                 render_run_time(input=item['runTimeCpuIncChildren'])

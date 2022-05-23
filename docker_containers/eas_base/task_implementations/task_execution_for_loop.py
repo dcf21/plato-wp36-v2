@@ -36,7 +36,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
         assert isinstance(task_list, list), "Execution chain has incorrect type of <{}>".format(type(task_list))
 
         # Name of the metadata parameter we are to iterate over
-        parameter_name = execution_attempt.task_object.task_description['name']
+        parameter_name = execution_attempt.task_object.task_description['parameter']
 
         # Work out all the parameter values we need to iterate over
         if 'values' in execution_attempt.task_object.task_description:

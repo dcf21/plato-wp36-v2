@@ -36,7 +36,7 @@ def errors_list(job_name: Optional[str] = None, task_type: Optional[str] = None)
     with task_database.TaskDatabaseConnection() as task_db:
         # Fetch list of error messages
         task_db.db_handle.parameterised_query("""
-SELECT l.timestamp, l.message, t.jobName, ty.taskName AS taskType
+SELECT l.timestamp, l.message, t.jobName, ty.taskTypeName AS taskType
 FROM eas_log_messages l
 LEFT OUTER JOIN eas_scheduling_attempt s ON s.schedulingAttemptId = l.generatedByTaskExecution
 LEFT OUTER JOIN eas_task t ON s.taskId = t.taskId

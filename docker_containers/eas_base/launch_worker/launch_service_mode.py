@@ -54,8 +54,8 @@ def enter_service_mode():
 
     # Extract the name of each available task in turn
     for item in available_tasks:
-        task_name = re.search(r"task_([^/]*).py", item).group(1)
-        container_capabilities.append(task_name)
+        task_type_name = re.search(r"task_([^/]*).py", item).group(1)
+        container_capabilities.append(task_type_name)
 
     # Fetch EAS pipeline settings
     s = settings.Settings()
@@ -92,14 +92,14 @@ def enter_service_mode():
 
                     # Read task type from the database
                     task_info = task_db.task_lookup(task_id=attempt_info.task_id)
-                    task_name = task_info.task_type
+                    task_type_name = task_info.task_type
 
                 # Announce that we're running a task
-                logging.info("Starting task execution attempt <{} - {}>".format(attempt_id, task_name))
+                logging.info("Starting task execution attempt <{} - {}>".format(attempt_id, task_type_name))
 
                 # The filename where we expect to find the Python script that implements this task
                 task_implementation = os.path.abspath(os.path.join(
-                    s.settings['pythonPath'], 'task_implementations', 'task_{}.py'.format(task_name)
+                    s.settings['pythonPath'], 'task_implementations', 'task_{}.py'.format(task_type_name)
                 ))
 
                 # Check that task implementation exists
@@ -126,11 +126,11 @@ def enter_service_mode():
                     continue
 
                 # Announce that we're moving onto post-execution QC
-                logging.info("Starting QC on task execution attempt <{} - {}>".format(attempt_id, task_name))
+                logging.info("Starting QC on task execution attempt <{} - {}>".format(attempt_id, task_type_name))
 
                 # The filename where we expect to find the Python script that implements QC for this task
                 task_qc_implementation = os.path.abspath(os.path.join(
-                    s.settings['pythonPath'], 'task_qc_implementations', 'task_{}.py'.format(task_name)
+                    s.settings['pythonPath'], 'task_qc_implementations', 'task_{}.py'.format(task_type_name)
                 ))
 
                 # Check that task implementation exists
@@ -154,7 +154,7 @@ def enter_service_mode():
                 )
 
                 # Announce that we've finished a task
-                logging.info("Finished task execution attempt <{} - {}>".format(attempt_id, task_name))
+                logging.info("Finished task execution attempt <{} - {}>".format(attempt_id, task_type_name))
 
         # To avoid clobbering the database, have a quick snooze between polling to see if we have work to do
         time.sleep(10)
