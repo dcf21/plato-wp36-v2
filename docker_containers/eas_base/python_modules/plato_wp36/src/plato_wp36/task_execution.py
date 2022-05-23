@@ -144,7 +144,7 @@ def do_pipeline_task(job_id: int,
     # Catch all exceptions, and record them in the logging database
     try:
         # Start task timer. Do not remove this, as otherwise the start and end times for the job are not recorded.
-        with task_timer.TaskTimer(task_attempt_id=job_id):
+        with task_timer.TaskTimer(task_attempt_id=job_id, is_qc_task=is_qc_task):
             # Announce that we're running a task
             logging.info("Starting {} attempt <{}> in child process".format(task_type, job_id))
 

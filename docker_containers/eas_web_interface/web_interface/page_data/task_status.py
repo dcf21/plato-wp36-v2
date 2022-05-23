@@ -2,7 +2,6 @@
 # task_status.py
 
 from datetime import datetime
-from typing import Dict, List, Optional
 from plato_wp36 import task_database
 
 from .log_messages import fetch_log_messages
@@ -14,13 +13,15 @@ def render_time(timestamp):
     else:
         return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
+
 def render_run_time(input):
     if input is None:
         return "&ndash;"
     else:
         return "{:.2f} sec".format(input)
 
-def task_status(task_id: Optional[int] = None):
+
+def task_status(task_id: int):
     """
     Show the status of a task
 
@@ -28,13 +29,22 @@ def task_status(task_id: Optional[int] = None):
         The task to show the status for
 
     :return:
-        List[Dict]
+        Dict
     """
 
-    output: List[Dict] = []
+    output = {
+        'runs': []
+    }
 
     # Open connection to the database
     with task_database.TaskDatabaseConnection() as task_db:
+        # Search for input metadata for this task
+        input_metadata = task_db.metadata_fetch_all(task_id=task_id)
+        input_metadata_list_keys = sorted(input_metadata.keys())
+        input_metadata_list_values = [input_metadata[key].value for key in input_metadata_list_keys]
+        input_metadata_list = zip(input_metadata_list_keys, input_metadata_list_values)
+        output['input_metadata_list'] = input_metadata_list
+
         # Search for all attempts to execute this task
         task_db.db_handle.parameterised_query("""
 SELECT schedulingAttemptId, queuedTime, startTime, endTime, latestHeartbeat, h.hostname,
@@ -48,6 +58,11 @@ ORDER BY queuedTime;
         run_list = task_db.db_handle.fetchall()
 
         for task_run in run_list:
+            output_metadata = task_db.metadata_fetch_all(scheduling_attempt_id=task_run['schedulingAttemptId'])
+            output_metadata_list_keys = sorted(output_metadata.keys())
+            output_metadata_list_values = [output_metadata[key].value for key in output_metadata_list_keys]
+            output_metadata_list = zip(output_metadata_list_keys, output_metadata_list_values)
+
             run_info = {
                 'run_id': task_run['schedulingAttemptId'],
                 'queuedTime': render_time(timestamp=task_run['queuedTime']),
@@ -62,11 +77,12 @@ ORDER BY queuedTime;
                 'isRunning': task_run['isRunning'],
                 'isFinished': task_run['isFinished'],
                 'errorFail': task_run['errorFail'],
+                'output_metadata': output_metadata_list,
                 'log_table': fetch_log_messages(attempt_id=task_run['schedulingAttemptId'])
             }
 
         # Append this item to the list of results
-        output.append(run_info)
+        output['runs'].append(run_info)
 
     # Return results
     return output

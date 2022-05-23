@@ -34,7 +34,8 @@ def error_fail(attempt_id: int, error_message: str):
     # Open a connection to the EasControl task database
     with task_database.TaskDatabaseConnection() as task_db:
         # Record the failure of this task
-        task_db.execution_attempt_update(attempt_id=attempt_id, error_fail=True, error_text=error_message)
+        task_db.execution_attempt_update(attempt_id=attempt_id, is_queued=False, is_running=False, is_finished=True,
+                                         error_fail=True, error_text=error_message)
 
 
 def enter_service_mode():

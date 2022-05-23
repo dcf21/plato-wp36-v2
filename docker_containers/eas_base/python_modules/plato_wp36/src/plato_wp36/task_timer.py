@@ -14,8 +14,6 @@ import platform
 import resource
 import time
 
-from typing import Optional
-
 from .task_database import TaskDatabaseConnection
 
 
@@ -25,7 +23,7 @@ class TaskTimer:
     and also CPU time.
     """
 
-    def __init__(self, task_attempt_id: Optional[int] = None):
+    def __init__(self, task_attempt_id: int, is_qc_task: bool):
         """
         Create a new timer.
 
@@ -33,10 +31,15 @@ class TaskTimer:
             The integer ID of the task attempt that is being timed, in the <eas_scheduling_attempt> table.
         :type task_attempt_id:
             int
+        :param is_qc_task:
+            Boolean indicating whether we're running QC on the task, or the task itself
+        :type is_qc_task:
+            bool
         """
 
         # Store the state of this timer
         self.task_attempt_id = task_attempt_id
+        self.is_qc_task = is_qc_task
 
     @staticmethod
     def measure_time():
@@ -75,7 +78,8 @@ class TaskTimer:
             hostname_id = task_db.hostname_get_id(name=my_hostname)
 
             # File task execution time in the database
-            task_db.db_handle.parameterised_query("""
+            if not self.is_qc_task:
+                task_db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
 SET startTime=%s, latestHeartbeat=%s, hostId=%s, isQueued=0, isRunning=1
 WHERE schedulingAttemptId=%s;
@@ -100,7 +104,7 @@ WHERE schedulingAttemptId=%s;
         # Record the end time of the task
         self.end_time = self.measure_time()
 
-        # Calculate run time
+        # Calculate run time (seconds)
         run_times = {}
         for key in self.end_time:
             run_times[key] = self.end_time[key] - self.start_time[key]
@@ -108,12 +112,13 @@ WHERE schedulingAttemptId=%s;
         # Open connection to the database
         with TaskDatabaseConnection() as task_db:
             # File task execution time in the database
-            task_db.db_handle.parameterised_query("""
+            if not self.is_qc_task:
+                task_db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
 SET endTime=%s, runTimeWallClock=%s, runTimeCpu=%s, runTimeCpuIncChildren=%s, isRunning=0, isFinished=1
 WHERE schedulingAttemptId=%s;
 """,
-                                                  (time.time(),
-                                                   run_times['wall_clock'], run_times['cpu'],
-                                                   run_times['cpu_inc_children'],
-                                                   self.task_attempt_id))
+                                                      (time.time(),
+                                                       run_times['wall_clock'], run_times['cpu'],
+                                                       run_times['cpu_inc_children'],
+                                                       self.task_attempt_id))

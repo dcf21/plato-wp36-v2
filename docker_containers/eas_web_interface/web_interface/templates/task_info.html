@@ -9,7 +9,30 @@
         Showing task status
     </div>
 
-    {% for task_run in task_info %}
+    <h5>Input metadata</h5>
+
+    <table class="library_list bordered bordered_compact stripy">
+        <thead>
+        <tr>
+            <td>Parameter</td>
+            <td>Value</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in task_info.input_metadata_list %}
+            <tr>
+                <td>{{ item[0] }}</td>
+                <td style="max-width:800px;">{{ item[1] }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <h5>Input files</h5>
+
+    {% for task_run in task_info.runs %}
+
+        <hr/>
 
         <h3>Task execution attempt {{ task_run.run_id }}</h3>
 
@@ -73,7 +96,24 @@
             </tbody>
         </table>
 
-        <h5>Input files</h5>
+        <h5>Output metadata</h5>
+
+        <table class="library_list bordered bordered_compact stripy">
+            <thead>
+            <tr>
+                <td>Parameter</td>
+                <td>Value</td>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in task_run.output_metadata %}
+                <tr>
+                    <td>{{ item[0] }}</td>
+                    <td style="max-width:800px;">{{ item[1] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
 
         <h5>Output files</h5>
 
@@ -109,6 +149,5 @@
             </tbody>
         </table>
 
-        <hr />
     {% endfor %}
 {% endblock %}

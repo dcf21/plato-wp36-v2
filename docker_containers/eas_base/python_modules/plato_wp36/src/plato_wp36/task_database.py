@@ -1172,6 +1172,9 @@ VALUES (%s, %s);
                                  run_time_wall_clock: Optional[float] = None,
                                  run_time_cpu: Optional[float] = None,
                                  run_time_cpu_inc_children: Optional[float] = None,
+                                 is_queued: Optional[bool] = None,
+                                 is_running: Optional[bool] = None,
+                                 is_finished: Optional[bool] = None,
                                  metadata: Optional[Dict[str, Any]] = None):
         """
         Update information about a task execution attempt in the database
@@ -1199,6 +1202,12 @@ VALUES (%s, %s);
             The number of seconds the job took to execute, in CPU time
         :param run_time_cpu_inc_children:
             The number of seconds the job took to execute, in CPU time, including child threads
+        :param is_queued:
+            A boolean flag indicating whether this execution attempt is queued for execution
+        :param is_running:
+            A boolean flag indicating whether this execution attempt is currently running
+        :param is_finished:
+            A boolean flag indicating whether this execution attempt is finished
         :param metadata:
             A dictionary of metadata associated with this execution attempt.
         :return:
@@ -1222,6 +1231,20 @@ UPDATE eas_scheduling_attempt SET latestHeartbeat=%s WHERE schedulingAttemptId=%
             self.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt SET endTime=%s WHERE schedulingAttemptId=%s;
 """, (end_time, attempt_id))
+
+        # Update execution status
+        if is_queued is not None:
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET isQueued=%s WHERE schedulingAttemptId=%s;
+""", (is_queued, attempt_id))
+        if is_running is not None:
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET isRunning=%s WHERE schedulingAttemptId=%s;
+""", (is_running, attempt_id))
+        if is_finished is not None:
+            self.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt SET isFinished=%s WHERE schedulingAttemptId=%s;
+""", (is_finished, attempt_id))
 
         # Update remaining fields
         if all_products_passed_qc is not None:
