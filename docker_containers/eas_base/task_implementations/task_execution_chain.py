@@ -59,7 +59,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
             # Determine the task name of the subtask
             task_name = ""
             if 'name' in subtask_info:
-                task_name = expression_evaluator.evaluate_expression(expression=subtask_info['task_name'])
+                task_name = expression_evaluator.evaluate_expression(expression=subtask_info['name'])
 
             # Determine the working directory for the subtask
             working_directory = execution_attempt.task_object.working_directory
