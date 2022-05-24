@@ -30,7 +30,7 @@ def deploy_all(namespace: str, worker_types: Iterable):
     # List of components in the order in which we create them
     components = ["input-pv", "input-pvc", "output-pv", "output-pvc", "mysql-pv-minikube", "mysql-pvc-minikube",
                   "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service",
-                  "eas-worker-base", "eas-worker-synthesis-psls-batman", "eas-worker-tls", "eas-worker-bls-reference",
+                  "eas-worker-base", "eas-worker-synthesis-psls-batman", "eas-worker-tls", "eas-worker-bls-reference", "eas-worker-qats",
                   "web-interface", "web-interface-service"]
 
     # Create components in order
