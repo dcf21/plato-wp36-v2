@@ -11,6 +11,7 @@ import MySQLdb
 import os
 import re
 import sqlite3
+import gzip
 
 from typing import Optional
 
@@ -59,9 +60,12 @@ class DatabaseInterface:
         """
         raise NotImplementedError
 
-    def create_database(self):
+    def create_database(self, initialise_schema: bool = True):
         """
-        Create a clean database.
+        Create an empty SQL database.
+
+        :param initialise_schema:
+            Boolean flag indicating whether we initialise the schema of the database.
         """
         raise NotImplementedError
 
@@ -142,6 +146,31 @@ class DatabaseInterface:
         """
         return self.db_cursor.lastrowid
 
+    def dump(self, output_filename: str):
+        """
+        Create a gzipped database dump to a file.
+
+        :param output_filename:
+            The filename for the database dump
+        """
+        raise NotImplementedError
+
+    def restore(self, input_filename: str):
+        """
+        Restore from a database dump
+
+        :param input_filename:
+            The filename from which to read the database dump
+        """
+
+        # Create a new empty database
+        self.close()
+        self.create_database(initialise_schema=False)
+        self.connect()
+
+        # Import the contents of the database dump
+        self.db_cursor.executescript(gzip.open(input_filename, "rt").read())
+
 
 class DatabaseInterfaceMySql(DatabaseInterface):
     """
@@ -218,9 +247,12 @@ class DatabaseInterfaceMySql(DatabaseInterface):
         db.close()
         return True
 
-    def create_database(self):
+    def create_database(self, initialise_schema: bool = True):
         """
         Create an empty SQL database.
+
+        :param initialise_schema:
+            Boolean flag indicating whether we initialise the schema of the database.
         """
 
         # Read database schema
@@ -240,8 +272,9 @@ class DatabaseInterfaceMySql(DatabaseInterface):
         os.system(cmd)
 
         # Create basic database schema
-        cmd = "cat {:s} | mysql --defaults-extra-file={:s} {:s}".format(sql, db_config_filename, self.db_database)
-        os.system(cmd)
+        if initialise_schema:
+            cmd = "cat {:s} | mysql --defaults-extra-file={:s} {:s}".format(sql, db_config_filename, self.db_database)
+            os.system(cmd)
 
     def connect(self):
         """
@@ -332,6 +365,19 @@ db_database: {:s}
         """
         self.db_cursor.executemany(sql, parameters)
 
+    def dump(self, output_filename: str):
+        """
+        Create a gzipped database dump to a file.
+
+        :param output_filename:
+            The filename for the database dump
+        """
+
+        # Create MySQL database dump
+        db_config_filename = self.sql_login_config_path(engine_name="mysql")[0]
+        cmd = "mysqldump --defaults-extra-file={:s} | gzip > {:s}".format(db_config_filename, output_filename)
+        os.system(cmd)
+
 
 class DatabaseInterfaceSqlite(DatabaseInterface):
     """
@@ -386,9 +432,12 @@ class DatabaseInterfaceSqlite(DatabaseInterface):
         """
         return os.path.isfile(path=self._sqlite3_database_path())
 
-    def create_database(self):
+    def create_database(self, initialise_schema: bool = True):
         """
         Create an empty SQL database.
+
+        :param initialise_schema:
+            Boolean flag indicating whether we initialise the schema of the database.
         """
 
         # Read database schema
@@ -408,8 +457,9 @@ class DatabaseInterfaceSqlite(DatabaseInterface):
         # SQLite databases work faster if primary keys don't auto increment, so remove keyword from schema
         db = sqlite3.connect(db_file_path)
         c = db.cursor()
-        schema = re.sub("AUTO_INCREMENT", "", sql_schema)
-        c.executescript(schema)
+        if initialise_schema:
+            schema = re.sub("AUTO_INCREMENT", "", sql_schema)
+            c.executescript(schema)
         db.commit()
         db.close()
 
@@ -506,6 +556,24 @@ db_database: {:s}
         # sqlite3 uses ? as a placeholder for SQL parameters, not %s
         sql = re.sub(r"%s", r"?", sql)
         self.db_cursor.executemany(sql, parameters)
+
+    def dump(self, output_filename: str):
+        """
+        Create a gzipped database dump to a file.
+
+        :param output_filename:
+            The filename for the database dump
+        """
+        # Open new database connection, without custom row factory
+        db_file_path = self._sqlite3_database_path()
+        db = sqlite3.connect(db_file_path)
+
+        with gzip.open(output_filename, 'wt') as f:
+            for line in db.iterdump():
+                f.write('%s\n' % line)
+
+        # Close database
+        db.close()
 
 
 class DatabaseConnector:
