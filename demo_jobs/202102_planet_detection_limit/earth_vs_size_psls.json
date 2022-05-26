@@ -7,7 +7,7 @@
       "parameter": "tda",
       "values": [
         "tls",
-        "bls_reference"
+        "qats"
       ],
       "task_list": [
         {

@@ -4,7 +4,7 @@
 # container.
 
 # Use a Ubuntu base image
-FROM ubuntu:latest
+FROM ubuntu:20.04
 
 # Install various useful Ubuntu packages
 RUN apt-get update

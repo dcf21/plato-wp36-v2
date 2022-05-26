@@ -94,7 +94,8 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
                 sigma_max = int(sigma_base * pow(1 + f / 2, sigma_index + 1))
 
                 # Run QATS
-                qats_path = os.path.join(eas_settings.settings['pythonPath'], "../datadir_local/qats/qats/call_qats")
+                qats_path = os.path.join(eas_settings.settings['pythonPath'],
+                                         "../../data/datadir_local/qats/qats/call_qats")
 
                 # logging.info("{} {} {} {} {}".format(qats_path, lc_file, sigma_min, sigma_max, transit_length))
 
@@ -138,7 +139,7 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
 
             # Run QATS
             qats_path = os.path.join(eas_settings.settings['pythonPath'],
-                                     "../datadir_local/qats/qats/call_qats_indices")
+                                     "../../data/datadir_local/qats/qats/call_qats_indices")
 
             qats_ok, qats_stdout = task_execution.call_subprocess_and_catch_stdout(
                 arguments=(qats_path, lc_file, x['m_best'], x['sigma_min'], x['sigma_max'], x['transit_length'])
@@ -162,7 +163,7 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
                             transit_list.append({
                                 'counter': counter,
                                 'position': position,
-                                'time': lc_fixed_step.time_value(index=position)
+                                'time': lc_fixed_step.get_time_of_point(index=position)
                             })
                         except ValueError:
                             logging.warning("Could not parse QATS indices output")
