@@ -4,17 +4,19 @@
 from datetime import datetime
 from plato_wp36 import task_database
 
+from typing import Optional
+
 from .log_messages import fetch_log_messages
 
 
-def render_time(timestamp):
+def render_time(timestamp: Optional[float]):
     if timestamp is None:
         return "&ndash;"
     else:
         return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
 
-def render_run_time(input):
+def render_run_time(input: Optional[float]):
     if input is None:
         return "&ndash;"
     else:
@@ -43,6 +45,10 @@ def task_status(task_id: int):
     with task_database.TaskDatabaseConnection() as task_db:
         # Fetch task information
         task_info = task_db.task_lookup(task_id=task_id)
+
+        # Return immediately if the requested task doesn't exist
+        if task_info is None:
+            return None
 
         # Start building output data structure
         output = {

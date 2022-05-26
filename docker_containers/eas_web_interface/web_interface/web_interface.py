@@ -3,7 +3,7 @@
 # web_interface.py
 
 
-from flask import Flask, render_template, url_for
+from flask import Flask, redirect, render_template, url_for
 import argparse
 
 from page_data import file_explorer, task_status, task_tree, log_messages
@@ -27,6 +27,8 @@ def task_index():
 def task_info(taskId):
     # Fetch a list of information about all the attempts to run this task
     task_info = task_status.task_status(task_id=int(taskId))
+    if task_info is None:
+        return redirect(url_for('task_index'))
 
     # Render task information into HTML
     return render_template('task_info.html', task_id=int(taskId), task_info=task_info)

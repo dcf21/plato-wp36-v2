@@ -26,7 +26,7 @@
             {{ task_item.indent|safe }}
             <a href="/task/{{ task_item.task_id }}">
                 <span class="item_{{task_item.class}}">
-                    {{ task_item.job_name }}/{{ task_item.task_type_name }}
+                    #{{ task_item.task_id }} {{ task_item.job_name }}/{{ task_item.task_type_name }}
                 </span>
             </a>
         </td>
@@ -37,11 +37,8 @@
     </tr>
     {% else %}
     <tr>
-        <td>
+        <td colspan="5">
             There are no tasks currently in the database.
-        </td>
-        <td>
-
         </td>
     </tr>
     {% endfor %}
