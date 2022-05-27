@@ -162,14 +162,7 @@ class DatabaseInterface:
         :param input_filename:
             The filename from which to read the database dump
         """
-
-        # Create a new empty database
-        self.close()
-        self.create_database(initialise_schema=False)
-        self.connect()
-
-        # Import the contents of the database dump
-        self.db_cursor.executescript(gzip.open(input_filename, "rt").read())
+        raise NotImplementedError
 
 
 class DatabaseInterfaceMySql(DatabaseInterface):
@@ -375,8 +368,30 @@ db_database: {:s}
 
         # Create MySQL database dump
         db_config_filename = self.sql_login_config_path(engine_name="mysql")[0]
-        cmd = "mysqldump --defaults-extra-file={:s} {:s} | gzip > {:s}".format(db_config_filename, self.db_database, output_filename)
+        cmd = "mysqldump --defaults-extra-file={:s} {:s} | gzip > {:s}".format(db_config_filename, self.db_database,
+                                                                               output_filename)
         os.system(cmd)
+
+    def restore(self, input_filename: str):
+        """
+        Restore from a database dump
+
+        :param input_filename:
+            The filename from which to read the database dump
+        """
+
+        # Create a new empty database
+        self.close()
+        self.create_database(initialise_schema=False)
+
+        # Import the contents of the database dump
+        db_config_filename = self.sql_login_config_path(engine_name="mysql")[0]
+        cmd = ("zcat < '{}' | mysql --defaults-extra-file={:s} {}".format(input_filename, db_config_filename,
+                                                                          self.db_database))
+        os.system(cmd)
+
+        # Reconnect to database
+        self.connect()
 
 
 class DatabaseInterfaceSqlite(DatabaseInterface):
@@ -574,6 +589,22 @@ db_database: {:s}
 
         # Close database
         db.close()
+
+    def restore(self, input_filename: str):
+        """
+        Restore from a database dump
+
+        :param input_filename:
+            The filename from which to read the database dump
+        """
+
+        # Create a new empty database
+        self.close()
+        self.create_database(initialise_schema=False)
+        self.connect()
+
+        # Import the contents of the database dump
+        self.db_cursor.executescript(gzip.open(input_filename, "rt").read())
 
 
 class DatabaseConnector:

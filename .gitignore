@@ -4,6 +4,9 @@ data/datadir_input
 # Generated output data
 data/datadir_output
 
+# Database dumps
+eas_controller/database_initialisation/*.sql.gz
+
 # Local build, e.g. python virtual environment
 data/datadir_local
 
