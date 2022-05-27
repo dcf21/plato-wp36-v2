@@ -375,7 +375,7 @@ db_database: {:s}
 
         # Create MySQL database dump
         db_config_filename = self.sql_login_config_path(engine_name="mysql")[0]
-        cmd = "mysqldump --defaults-extra-file={:s} --all-databases | gzip > {:s}".format(db_config_filename, output_filename)
+        cmd = "mysqldump --defaults-extra-file={:s} {:s} | gzip > {:s}".format(db_config_filename, self.db_database, output_filename)
         os.system(cmd)
 
 
