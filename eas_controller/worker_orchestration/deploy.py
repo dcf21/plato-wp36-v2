@@ -17,9 +17,13 @@ from typing import Iterable
 from plato_wp36 import temporary_directory, task_database
 
 
-def fetch_component_list():
+def fetch_component_list(include_workers: bool = True):
     """
     Fetch a list of all the Kubernetes infrastructure elements which make up a deployment of the EAS pipeline.
+
+    :param include_workers:
+        If true, then include the worker pods in the list of Kubernetes components. Note that this isn't possible
+        without an initialised database, so set to False if the database isn't initialised yet.
     """
 
     # Name of the text file containing a list of the Kubernetes elements
@@ -38,12 +42,13 @@ def fetch_component_list():
             kubernetes_components.append(line)
 
     # Add a list of all the worker container types
-    with task_database.TaskDatabaseConnection() as task_db:
-        task_type_list = task_db.task_type_list_from_db()
-        for container_name in task_type_list.worker_containers:
-            if container_name not in kubernetes_components:
-                deployment_name = re.sub("_", "-", container_name)
-                kubernetes_components.append(deployment_name)
+    if include_workers:
+        with task_database.TaskDatabaseConnection() as task_db:
+            task_type_list = task_db.task_type_list_from_db()
+            for container_name in task_type_list.worker_containers:
+                if container_name not in kubernetes_components:
+                    deployment_name = re.sub("_", "-", container_name)
+                    kubernetes_components.append(deployment_name)
 
     # Return a list of all the infrastructure elements that we found
     return kubernetes_components
@@ -62,7 +67,7 @@ def deploy_all(namespace: str, worker_types: Iterable):
     create_namespace(namespace=namespace)
 
     # List of components in the order in which we create them
-    components = fetch_component_list()
+    components = fetch_component_list(include_workers=len(list(worker_types)) > 0)
 
     # Create components in order
     for item in components:
