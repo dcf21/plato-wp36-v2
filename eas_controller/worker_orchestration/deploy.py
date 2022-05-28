@@ -110,7 +110,7 @@ def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False):
         logging.info("Deleting <{}>".format(item_name))
         kubernetes_action = "delete"
 
-    if not item_name.strip("eas-worker-"):
+    if not item_name.startswith("eas-worker-"):
         yaml_filename = os.path.join(os.path.dirname(__file__), "../kubernetes_yaml", "{}.yaml".format(item_name))
         os.system("kubectl {} -f {} -n={}".format(kubernetes_action, yaml_filename, namespace))
     else:
