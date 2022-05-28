@@ -1,21 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: eas-worker-base
+  name: {pod_name:s}
 spec:
   selector:
     matchLabels:
-      app: eas-worker-base
+      app: {pod_name:s}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: eas-worker-base
+        app: {pod_name:s}
     spec:
       containers:
-        - image: plato/eas_base:v1
-          name: plato
+        - image: plato/{container_name:s}:v1
+          name: {pod_name:s}
+          resources:
+            requests:
+              memory: "{memory_requirement:s}"
+              cpu: "{cpu_requirement:f}"
+              nvidia.com/gpu: "{gpu_requirement:d}"
+            limits:
+              memory: "{memory_requirement:s}"
+              cpu: "{cpu_requirement:f}"
+              nvidia.com/gpu: "{gpu_requirement:d}"
           command: [ './launch_service_mode.py' ]
           args: [  ]
           volumeMounts:

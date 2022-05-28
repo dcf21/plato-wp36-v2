@@ -95,21 +95,38 @@ class TaskDatabaseConnection:
         # Create empty task list
         output = TaskTypeList()
 
-        # Fetch list of tasks
+        # Fetch list of worker container types
         self.db_handle.parameterised_query("""
-SELECT taskTypeId, taskTypeName, workerContainers
+SELECT containerId, containerName, requiredCpus, requiredGpus, requiredRam
+FROM eas_worker_containers ORDER BY containerId;""")
+
+        # Iterate over each type of container
+        for item in self.db_handle.fetchall():
+            output.worker_containers[item['containerName']] = {
+                'cpu': item['requiredCpus'],
+                'gpu': item['requiredGpus'],
+                'memory': item['requiredRam'],
+            }
+            output.container_capabilities[item['containerName']] = set()
+
+        # Fetch list of task types
+        self.db_handle.parameterised_query("""
+SELECT taskTypeId, taskTypeName
 FROM eas_task_types ORDER BY taskTypeId;""")
 
+        # Iterate over each type of task
         for item in self.db_handle.fetchall():
-            container_list = json.loads(item['workerContainers'])
+            # Fetch list of containers which can run this task
+            self.db_handle.parameterised_query("""
+SELECT c.containerName
+FROM eas_task_containers x
+INNER JOIN eas_worker_containers c ON c.containerId = x.containerId
+WHERE x.taskTypeId=%s
+ORDER BY c.containerId;""")
+            container_list = set([i['containerName'] for i in self.db_handle.fetchall()])
             output.task_list[item['taskTypeName']] = container_list
 
             for container_name in container_list:
-                output.container_names.add(container_name)
-
-                if container_name not in output.container_capabilities:
-                    output.container_capabilities[container_name] = set()
-
                 output.container_capabilities[container_name].add(item['taskTypeName'])
 
         # Return list
@@ -123,11 +140,36 @@ FROM eas_task_types ORDER BY taskTypeId;""")
             None
         """
 
-        # Write each task type in turn
-        for name, containers in task_list.task_list.items():
+        # Write list of containers
+        for container_name, requirements in task_list.worker_containers.items():
             self.db_handle.parameterised_query("""
-INSERT INTO eas_task_types (taskTypeName, workerContainers) VALUES (%s, %s);
-""", (name, json.dumps(list(containers))))
+SELECT COUNT(*) FROM eas_worker_containers WHERE containerName=%s;""", (container_name,))
+            if self.db_handle.fetchone()['COUNT(*)'] == 0:
+                self.db_handle.parameterised_query("""
+INSERT INTO eas_worker_containers (containerName, requiredCpus, requiredGpus, requiredRam) VALUES (%s, %s, %s, %s);
+""", (container_name, requirements['cpu'], requirements['gpu'], requirements['memory']))
+
+        # Write list of task types
+        for task_type_name, containers in task_list.task_list.items():
+            self.db_handle.parameterised_query("""
+SELECT COUNT(*) FROM eas_task_types WHERE taskTypeName=%s;""", (task_type_name,))
+            if self.db_handle.fetchone()['COUNT(*)'] == 0:
+                self.db_handle.parameterised_query("""
+INSERT INTO eas_task_types (taskTypeName) VALUES (%s);
+""", (task_type_name, ))
+
+            # Write list of task containers
+            self.db_handle.parameterised_query("""
+DELETE FROM eas_task_containers WHERE taskTypeId=(SELECT taskTypeId FROM eas_task_types WHERE taskTypeName=%s);
+""", (task_type_name,))
+            for container_name in containers:
+                self.db_handle.parameterised_query("""
+INSERT INTO eas_task_containers (taskTypeId, containerId)
+VALUES (
+  (SELECT taskTypeId FROM eas_task_types WHERE taskTypeName=%s),
+  (SELECT containerId FROM eas_worker_containers WHERE containerName=%s)
+);
+""", (task_type_name, container_name))
 
     def task_type_list_fetch_id(self, task_type_name: str):
         """

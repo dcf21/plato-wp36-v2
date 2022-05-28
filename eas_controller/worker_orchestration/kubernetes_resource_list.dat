@@ -1,0 +1,15 @@
+# kubernetes_resource_list.dat
+# List of all Kubernetes resources which need to be deployed, in order of deployment
+
+input-pv
+input-pvc
+output-pv
+output-pvc
+mysql-pv-minikube
+mysql-pvc-minikube
+mysql-app
+mysql-service
+rabbitmq-controller
+rabbitmq-service
+web-interface
+web-interface-service

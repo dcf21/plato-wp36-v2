@@ -8,32 +8,24 @@ Python API because it's massively less verbose.
 """
 
 import argparse
-import os
 import logging
 import sys
+
+from deploy import fetch_component_list, deploy_or_delete_item
 
 
 def delete_all(namespace: str):
     # List of components in the order in which we create them
-    components = ["input-pv", "input-pvc", "output-pv", "output-pvc", "mysql-pv-minikube", "mysql-pvc-minikube",
-                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service",
-                  "eas-worker-base", "eas-worker-synthesis-psls-batman", "eas-worker-tls", "eas-worker-bls-reference",
-                  "web-interface", "web-interface-service"]
+    components = fetch_component_list()
 
     # Delete components in the opposite order to which they are created
-    for item in reversed(components):
-        # Do not restart input/output persistent volumes
-        if item.startswith("input") or item.startswith("output"):
+    for kubernetes_component in reversed(components):
+        # Do not restart input/output persistent volumes, to avoid data loss
+        if kubernetes_component.startswith("input") or kubernetes_component.startswith("output"):
             continue
 
-        # Delete all other items
-        delete_item(name=item, namespace=namespace)
-
-
-def delete_item(name: str, namespace: str):
-    logging.info("Deleting <{}>".format(name))
-    json_filename = os.path.join(os.path.dirname(__file__), "../kubernetes_yaml", "{}.yaml".format(name))
-    os.system("kubectl delete -f {} -n={}".format(json_filename, namespace))
+        # Delete all remaining items
+        deploy_or_delete_item(item_name=kubernetes_component, namespace=namespace, delete=True)
 
 
 # If we're called as a script, deploy straight away

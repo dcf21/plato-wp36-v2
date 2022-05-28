@@ -7,10 +7,11 @@ Restart all the worker deployments in the Kubernetes cluster.
 """
 
 import argparse
-import os
 import logging
 import subprocess
 import sys
+
+from deploy import deploy_or_delete_item
 
 
 def get_list_of_running_workers(namespace: str):
@@ -47,8 +48,9 @@ def restart_deployment(namespace: str, name: str):
     :return:
         None
     """
-    os.system("kubectl delete -f ../kubernetes_yaml/{}.yaml -n={}".format(name, namespace))
-    os.system("kubectl apply -f ../kubernetes_yaml/{}.yaml -n={}".format(name, namespace))
+
+    deploy_or_delete_item(item_name=name, namespace=namespace, delete=True)
+    deploy_or_delete_item(item_name=name, namespace=namespace, delete=False)
 
 
 # If we're called as a script, deploy straight away

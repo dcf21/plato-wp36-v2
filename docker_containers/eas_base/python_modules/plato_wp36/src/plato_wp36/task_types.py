@@ -24,18 +24,29 @@ class TaskTypeList:
         Initialise a null list of known pipeline tasks.
         """
 
-        # List of all known Docker containers
-        self.container_names: Set[str] = set()
+        # List of all known Docker containers and their resource requirements
+        self.worker_containers: Dict[str, Dict] = {}
 
-        # List of all known pipeline tasks, mapped to the set of Docker containers capable of running them
+        # List of all known pipeline tasks, mapped to the set of the names of Docker containers capable of running them
         self.task_list: Dict[str, Set[str]] = {}
 
         # List of all known Docker containers, mapped to the set of tasks they can perform
         self.container_capabilities: Dict[str, Set[str]] = {}
 
+    def worker_container_names(self):
+        """
+        Return a list of all worker container names.
+
+        :return:
+            List of all known worker container names.
+        """
+
+        return self.worker_containers.keys()
+
     def task_type_names(self):
         """
         Return a list of all known task type names.
+
         :return:
             List of all known task type names.
         """
@@ -100,7 +111,11 @@ class TaskTypeList:
         # Parse list of Docker containers
         for container_item in xml_structure['containers']['container']:
             container_name = container_item['name']
-            output.container_names.add(container_name)
+            output.worker_containers[container_name] = {
+                'cpu': container_item['resourceRequirements']['cpu'],
+                'gpu': container_item['resourceRequirements']['gpu'],
+                'memory': container_item['resourceRequirements']['memory'],
+            }
             output.container_capabilities[container_name] = set()
 
         # Parse list of known pipeline task types
@@ -117,10 +132,10 @@ class TaskTypeList:
             for container_item in container_list:
                 if container_item == "all":
                     # Special container name 'all' indicates that task is available in all containers
-                    docker_containers = docker_containers.union(output.container_names)
+                    docker_containers = docker_containers.union(output.worker_containers.keys())
                 else:
                     # Make sure this container name is recognised
-                    assert container_item in output.container_names, \
+                    assert container_item in output.worker_containers, \
                         "Unrecognised container <{}>".format(container_item)
 
                     # Add container to list of those that can run this task

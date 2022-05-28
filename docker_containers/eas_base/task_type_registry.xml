@@ -3,33 +3,83 @@
     <containers>
         <container>
             <name>eas_base</name>
+            <resourceRequirements>
+                <cpu>1</cpu>
+                <gpu>0</gpu>
+                <memory>8Gi</memory>
+            </resourceRequirements>
         </container>
         <container>
             <name>eas_worker_bls_kovacs</name>
+            <resourceRequirements>
+                <cpu>1</cpu>
+                <gpu>0</gpu>
+                <memory>8Gi</memory>
+            </resourceRequirements>
         </container>
         <container>
             <name>eas_worker_bls_reference</name>
+            <resourceRequirements>
+                <cpu>1</cpu>
+                <gpu>0</gpu>
+                <memory>8Gi</memory>
+            </resourceRequirements>
         </container>
         <container>
             <name>eas_worker_dst_v26</name>
+            <resourceRequirements>
+                <cpu>1</cpu>
+                <gpu>0</gpu>
+                <memory>8Gi</memory>
+            </resourceRequirements>
         </container>
         <container>
             <name>eas_worker_dst_v29</name>
+            <resourceRequirements>
+                <cpu>1</cpu>
+                <gpu>0</gpu>
+                <memory>8Gi</memory>
+            </resourceRequirements>
         </container>
         <container>
             <name>eas_worker_exotrans</name>
+            <resourceRequirements>
+                <cpu>1</cpu>
+                <gpu>0</gpu>
+                <memory>8Gi</memory>
+            </resourceRequirements>
         </container>
         <container>
             <name>eas_worker_qats</name>
+            <resourceRequirements>
+                <cpu>1</cpu>
+                <gpu>0</gpu>
+                <memory>8Gi</memory>
+            </resourceRequirements>
         </container>
         <container>
             <name>eas_worker_synthesis_platosim</name>
+            <resourceRequirements>
+                <cpu>1</cpu>
+                <gpu>0</gpu>
+                <memory>8Gi</memory>
+            </resourceRequirements>
         </container>
         <container>
             <name>eas_worker_synthesis_psls_batman</name>
+            <resourceRequirements>
+                <cpu>1</cpu>
+                <gpu>0</gpu>
+                <memory>16Gi</memory>
+            </resourceRequirements>
         </container>
         <container>
             <name>eas_worker_tls</name>
+            <resourceRequirements>
+                <cpu>4</cpu>
+                <gpu>0</gpu>
+                <memory>16Gi</memory>
+            </resourceRequirements>
         </container>
     </containers>
     <tasks>

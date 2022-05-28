@@ -10,9 +10,43 @@ using the Python API because it's massively less verbose.
 import argparse
 import os
 import logging
+import re
 import sys
 from typing import Iterable
-from kubernetes import config
+
+from plato_wp36 import temporary_directory, task_database
+
+
+def fetch_component_list():
+    """
+    Fetch a list of all the Kubernetes infrastructure elements which make up a deployment of the EAS pipeline.
+    """
+
+    # Name of the text file containing a list of the Kubernetes elements
+    component_list_file = os.path.join(os.path.dirname(__file__), "kubernetes_resource_list.dat")
+    kubernetes_components = []
+
+    # Iterate through the text file, line by line
+    with open(component_list_file) as f:
+        for line in f:
+            # Ignore comment lines
+            line = line.strip()
+            if len(line) < 1 or line[0] == '#':
+                continue
+
+            # Non-comment lines contain named infrastructure elements, one per line
+            kubernetes_components.append(line)
+
+    # Add a list of all the worker container types
+    with task_database.TaskDatabaseConnection() as task_db:
+        task_type_list = task_db.task_type_list_from_db()
+        for container_name in task_type_list.worker_containers:
+            if container_name not in kubernetes_components:
+                deployment_name = re.sub("_", "-", container_name)
+                kubernetes_components.append(deployment_name)
+
+    # Return a list of all the infrastructure elements that we found
+    return kubernetes_components
 
 
 def deploy_all(namespace: str, worker_types: Iterable):
@@ -28,10 +62,7 @@ def deploy_all(namespace: str, worker_types: Iterable):
     create_namespace(namespace=namespace)
 
     # List of components in the order in which we create them
-    components = ["input-pv", "input-pvc", "output-pv", "output-pvc", "mysql-pv-minikube", "mysql-pvc-minikube",
-                  "mysql-app", "mysql-service", "rabbitmq-controller", "rabbitmq-service",
-                  "eas-worker-base", "eas-worker-synthesis-psls-batman", "eas-worker-tls", "eas-worker-bls-reference", "eas-worker-qats",
-                  "web-interface", "web-interface-service"]
+    components = fetch_component_list()
 
     # Create components in order
     for item in components:
@@ -42,7 +73,7 @@ def deploy_all(namespace: str, worker_types: Iterable):
 
         # If this component is needed, deploy it now
         if item_needed:
-            deploy_item(name=item, namespace=namespace)
+            deploy_or_delete_item(item_name=item, namespace=namespace)
 
 
 def create_namespace(namespace: str):
@@ -55,21 +86,56 @@ def create_namespace(namespace: str):
     os.system("kubectl create namespace {}".format(namespace))
 
 
-def deploy_item(name: str, namespace: str):
+def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False):
     """
     Deploy a single infrastructure item within Kubernetes, as described by a YAML file on disk.
 
-    :param name:
+    :param item_name:
         The filename of the YAML file describing the infrastructure item to deploy.
     :param namespace:
         The Kubernetes namespace in which to deploy the item.
+    :param delete:
+        Boolean. If true, then delete an infrastructure item, rather than deploying it
     """
-    logging.info("Creating <{}>".format(name))
-    config.load_kube_config()
 
-    json_filename = os.path.join(os.path.dirname(__file__), "../kubernetes_yaml", "{}.yaml".format(name))
+    if not delete:
+        logging.info("Creating <{}>".format(item_name))
+        kubernetes_action = "apply"
+    else:
+        logging.info("Deleting <{}>".format(item_name))
+        kubernetes_action = "delete"
 
-    os.system("kubectl apply -f {} -n={}".format(json_filename, namespace))
+    if not item_name.strip("eas-worker-"):
+        yaml_filename = os.path.join(os.path.dirname(__file__), "../kubernetes_yaml", "{}.yaml".format(item_name))
+        os.system("kubectl {} -f {} -n={}".format(kubernetes_action, yaml_filename, namespace))
+    else:
+        # Look up resource requirements for this EAS worker type
+        container_name = re.sub("-", "_", item_name)
+        with task_database.TaskDatabaseConnection() as task_db:
+            task_type_list = task_db.task_type_list_from_db()
+            assert container_name in task_type_list.worker_containers, \
+                "Unknown worker type <{}>".format(container_name)
+            resource_requirements = task_type_list.worker_containers[container_name]
+
+        yaml_filename = os.path.join(os.path.dirname(__file__), "../kubernetes_yaml/eas-worker-template.yaml")
+        yaml_template = open(yaml_filename).read()
+        yaml_descriptor = yaml_template.format(
+            pod_name=item_name,
+            container_name=container_name,
+            memory_requirement=resource_requirements['memory'],
+            cpu_requirement=resource_requirements['cpu'],
+            gpu_requirement=resource_requirements['gpu']
+        )
+
+        with temporary_directory.TemporaryDirectory() as tmp_dir:
+            # Write out YAML description for this pod deployment
+            yaml_path = os.path.join(tmp_dir.tmp_dir, "item.yaml")
+
+            with open(yaml_path, "wt") as f:
+                f.write(yaml_descriptor)
+
+            # Deploy this item
+            os.system("kubectl {} -f {} -n={}".format(kubernetes_action, yaml_path, namespace))
 
 
 # If we're called as a script, deploy straight away

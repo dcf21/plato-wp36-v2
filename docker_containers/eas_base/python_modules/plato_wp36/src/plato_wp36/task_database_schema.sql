@@ -2,13 +2,33 @@
 
 BEGIN;
 
+-- Table of worker Docker containers and their resource requirements
+CREATE TABLE eas_worker_containers
+(
+    containerId   INTEGER PRIMARY KEY AUTO_INCREMENT,
+    containerName VARCHAR(64) UNIQUE NOT NULL,
+    requiredCpus  INTEGER            NOT NULL,
+    requiredGpus  INTEGER            NOT NULL,
+    requiredRam   VARCHAR(64)        NOT NULL
+);
+
 -- Table of types of named tasks the EAS can run (e.g. synthesis_psls)
 CREATE TABLE eas_task_types
 (
-    taskTypeId       INTEGER PRIMARY KEY AUTO_INCREMENT,
-    taskTypeName     VARCHAR(64) UNIQUE NOT NULL,
-    workerContainers JSON               NOT NULL
+    taskTypeId   INTEGER PRIMARY KEY AUTO_INCREMENT,
+    taskTypeName VARCHAR(64) UNIQUE NOT NULL
 );
+
+-- Table of the containers that tasks can run within
+CREATE TABLE eas_task_containers
+(
+    taskTypeId  INTEGER NOT NULL,
+    containerId INTEGER NOT NULL,
+    FOREIGN KEY (taskTypeId) REFERENCES eas_task_types (taskTypeId),
+    FOREIGN KEY (containerId) REFERENCES eas_worker_containers (containerId)
+);
+
+CREATE UNIQUE INDEX eas_task_containers_1 ON eas_task_containers (taskTypeId, containerId);
 
 -- Table of specific tasks EAS is scheduled to run (e.g. run tool X on lightcurve Y)
 CREATE TABLE eas_task
