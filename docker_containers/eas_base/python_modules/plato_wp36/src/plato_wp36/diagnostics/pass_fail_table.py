@@ -86,7 +86,6 @@ ORDER BY schedulingAttemptId;
                     'column_headings': [],
                     'data_rows': []
                 }
-                output_table_list.append(output_table_item)
 
                 # Display column headings
                 for item in all_parameter_names + ["outcome"]:
@@ -121,14 +120,19 @@ ORDER BY schedulingAttemptId;
                             output_row['row_str'].append("{:12.12s}".format(str(value_string)))
 
                     # Display result
-                    outcome = int(metadata_out['outcome'] == 'PASS')
+                    outcome = int(metadata_out['outcome'].value == 'PASS')
                     output_row['row_values'].append(outcome)
                     output_row['row_str'].append("{:d} ".format(outcome))
 
                     # New line
                     output_table_item['data_rows'].append(output_row)
 
+                # Only show this table if it has any data
+                if len(output_table_item['data_rows']) == 0:
+                    continue
+
                 # Sort table rows
+                output_table_list.append(output_table_item)
                 output_table_item['data_rows'].sort(key=itemgetter('row_values'))
 
     # Return data table

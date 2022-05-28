@@ -8,7 +8,7 @@ Implementation of the EAS pipeline task <transit_search_tls>.
 
 import logging
 
-from plato_wp36 import quality_control, lightcurve, task_database, task_execution, temporary_directory
+from plato_wp36 import quality_control, lightcurve, settings, task_database, task_execution, temporary_directory
 from eas_tls_wrapper import tls
 
 
@@ -24,6 +24,9 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     """
 
     # Perform the transit detection task
+
+    # Fetch EAS pipeline settings
+    s = settings.Settings()
 
     # Read specification for the lightcurve we are to verify
     filename_in = execution_attempt.task_object.task_description['inputs']['lightcurve']
@@ -48,7 +51,11 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
 
     # Search for transits in this lightcurve
     transit_search_settings = execution_attempt.task_object.task_description.get('search_settings', {})
-    x = tls.process_lightcurve(lc=lc_in, lc_duration=lc_duration, search_settings=transit_search_settings)
+    x = tls.process_lightcurve(lc=lc_in,
+                               lc_duration=lc_duration,
+                               search_settings=transit_search_settings,
+                               thread_count=s.installation_info['tls_thread_count']
+                               )
 
     # Extract output returned by TLS
     tls_output, output_extended = x

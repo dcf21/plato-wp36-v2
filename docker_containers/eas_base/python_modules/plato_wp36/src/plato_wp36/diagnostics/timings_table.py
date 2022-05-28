@@ -94,7 +94,6 @@ ORDER BY schedulingAttemptId;
                     'column_headings': [],
                     'data_rows': []
                 }
-                output_table_list.append(output_table_item)
 
                 # List of run-time metrics
                 run_time_metrics = ["runTimeWallClock", "runTimeCpu", "runTimeCpuIncChildren"]
@@ -133,7 +132,12 @@ ORDER BY schedulingAttemptId;
                     # New line
                     output_table_item['data_rows'].append(output_row)
 
+                # Only show this table if it has any data
+                if len(output_table_item['data_rows']) == 0:
+                    continue
+
                 # Sort table rows
+                output_table_list.append(output_table_item)
                 output_table_item['data_rows'].sort(key=itemgetter('row_values'))
 
     # Return data table

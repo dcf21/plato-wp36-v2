@@ -1,15 +1,15 @@
 {% extends "page.html" %}
-{% block title %}Pipeline task timings{% endblock %}
+{% block title %}Pipeline success data{% endblock %}
 {% block head %}
 {% endblock %}
 {% block content %}
-    <h1>Pipeline task timings</h1>
+    <h1>Pipeline success data</h1>
 
     <div class="alert alert-info" role="alert">
-        Showing task timings
+        Showing success data
     </div>
 
-    {% for table_item in timing_info %}
+    {% for table_item in pass_fail_info %}
 
         <h5>{{ table_item.title }}</h5>
 
@@ -34,7 +34,7 @@
 
     {% else %}
         <p>
-            There is no timing data currently in the task database.
+            There is no success data currently in the task database.
         </p>
     {% endfor %}
 

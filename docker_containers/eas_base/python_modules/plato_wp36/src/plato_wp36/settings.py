@@ -33,15 +33,14 @@ class Settings:
         installation_info = {}
 
         # Sources containing local settings. Later entries override settings in earlier files.
-        local_settings_files = [
-            ("configuration/installation_settings.conf", True)
-        ]
+        local_settings_files = []
+
+        for item in glob.glob(os.path.join(root_path, "configuration/*.conf")):
+            local_settings_files.append((item, True))
 
         # Add all local configuration files
         for item in glob.glob(os.path.join(root_path, "../../data/datadir_local/local_settings*.conf")):
-            local_settings_files.append(
-                (item, False)
-            )
+            local_settings_files.append((item, False))
 
         # Read each settings file in turn
         for file_path, must_exist in local_settings_files:

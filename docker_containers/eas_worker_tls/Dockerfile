@@ -1,6 +1,10 @@
 # Use standardised Python environment with EAS pipeline code
 FROM plato/eas_base:v1
 
+# Copy configuration file into the Docker container
+WORKDIR /plato-wp36-v2/docker_containers/eas_base/configuration
+ADD configuration/installation_settings_tls.conf installation_settings_tls.conf
+
 # Copy source code into the Docker container
 WORKDIR /plato-wp36-v2/docker_containers/eas_worker_tls
 ADD build build

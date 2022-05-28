@@ -66,6 +66,16 @@ def timing_index():
     return render_template('timings.html', timing_info=timing_list)
 
 
+# Index of all the task timing data in the database
+@app.route("/pass_fail")
+def pass_fail_index():
+    # Fetch a list of all pass/fail data in the database
+    pass_fail_list = pass_fail_table.fetch_pass_fail_table()
+
+    # Render list of timing data into HTML
+    return render_template('pass_fail.html', pass_fail_info=pass_fail_list)
+
+
 # Index of all log messages in the database
 @app.route("/logs")
 def log_index():

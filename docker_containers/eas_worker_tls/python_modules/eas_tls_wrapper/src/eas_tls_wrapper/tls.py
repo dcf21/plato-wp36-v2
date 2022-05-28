@@ -2,6 +2,7 @@
 # tls.py
 
 import logging
+import multiprocessing
 import numpy as np
 from transitleastsquares import transitleastsquares
 
@@ -10,7 +11,8 @@ from plato_wp36.lightcurve import LightcurveArbitraryRaster
 from typing import Optional
 
 
-def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[float], search_settings: dict):
+def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[float], search_settings: dict,
+                       thread_count: int = multiprocessing.cpu_count()):
     """
     Perform a transit search on a light curve, using the TLS code.
 
@@ -26,6 +28,8 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
         Dictionary of settings which control how we search for transits.
     :type search_settings:
         dict
+    :param thread_count:
+        The number of parallel threads to use.
     :return:
         dict containing the results of the transit search.
     """
@@ -43,7 +47,10 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
     logging.info("Lightcurve metadata: {}".format(lc.metadata))
 
     # Create a list of settings to pass to TLS
-    tls_settings = {}
+    tls_settings = {
+        'use_threads': thread_count,
+        'show_progress_bar': False
+    }
 
     if 'period_min' in search_settings:
         tls_settings['period_min'] = float(search_settings['period_min'])  # Minimum trial period, days
