@@ -39,7 +39,7 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
    Install various libraries that the EAS control software requires on the host server:
 
    ```
-   sudo apt install build-essential python3-virtualenv python3-dev sqlite3 libmysqlclient-dev
+   sudo apt install build-essential python3-virtualenv python3-dev sqlite3 libmysqlclient-dev mysql-client
    ```
    
    Also make sure your system `locale` is set to something sensible (on a clean Ubuntu Server installation it isn't!). The important part is the `UTF-8` suffix. Without this, Python will helpfully spew incomprehensible errors whenever you try to install packages with accented characters in their descriptions.
@@ -156,8 +156,8 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
 
     ```
     cd eas_controller/database_initialisation
-    ./init_schema.py --db_port 30036 --db_host 192.168.59.101
-    ./init_queues.py --mq_port 30672 --mq_host 192.168.59.101
+    ./init_schema.py --db_port 30036 --db_host 192.168.49.2
+    ./init_queues.py --mq_port 30672 --mq_host 192.168.49.2
     ```
 
 11. **Port-forward the web interface**

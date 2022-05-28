@@ -122,7 +122,7 @@ SELECT c.containerName
 FROM eas_task_containers x
 INNER JOIN eas_worker_containers c ON c.containerId = x.containerId
 WHERE x.taskTypeId=%s
-ORDER BY c.containerId;""")
+ORDER BY c.containerId;""", (item['taskTypeId'],))
             container_list = set([i['containerName'] for i in self.db_handle.fetchall()])
             output.task_list[item['taskTypeName']] = container_list
 
