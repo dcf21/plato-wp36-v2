@@ -198,6 +198,7 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
    To close the EAS pipeline down:
 
     ```
+     cd eas_controller/worker_orchestration
     ./stop.py
     ```
 

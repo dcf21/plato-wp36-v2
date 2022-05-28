@@ -1,0 +1,41 @@
+{% extends "page.html" %}
+{% block title %}Pipeline task information{% endblock %}
+{% block head %}
+{% endblock %}
+{% block content %}
+    <h1>Pipeline task timings</h1>
+
+    <div class="alert alert-info" role="alert">
+        Showing task timings
+    </div>
+
+    {% for table_item in timing_info %}
+
+        <h5>{{ table_item.title }}</h5>
+
+        <table class="library_list bordered bordered_compact stripy">
+            <thead>
+            <tr>
+                {% for column_item in table_item.column_headings %}
+                    <td>{{ column_item }}</td>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row_item in table_item.data_rows %}
+                <tr>
+                    {% for column_item in row_item.row_str %}
+                        <td style="text-align: right;">{{ column_item }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <p>
+            There is no timing data currently in the task database.
+        </p>
+    {% endfor %}
+
+{% endblock %}

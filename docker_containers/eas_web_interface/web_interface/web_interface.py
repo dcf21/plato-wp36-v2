@@ -6,6 +6,8 @@
 from flask import Flask, redirect, render_template, url_for
 import argparse
 
+from plato_wp36.diagnostics import timings_table, pass_fail_table
+
 from page_data import file_explorer, task_status, task_tree, log_messages
 
 # Instantiate flask http server
@@ -52,6 +54,16 @@ def file_index(directory):
 
     # Render list of files into HTML
     return render_template('files.html', item_list=file_list)
+
+
+# Index of all the task timing data in the database
+@app.route("/timings")
+def timing_index():
+    # Fetch a list of all timing data in the database
+    timing_list = timings_table.fetch_timings_table()
+
+    # Render list of timing data into HTML
+    return render_template('timings.html', timing_info=timing_list)
 
 
 # Index of all log messages in the database
