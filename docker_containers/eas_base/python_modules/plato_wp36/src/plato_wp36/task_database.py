@@ -211,6 +211,9 @@ VALUES (
             None
         """
 
+        logging.info("Updating resource assignment for <{}> to {.3f} CPU, {:d} GPU, {:.3f} GB RAM.".
+                     format(container_name, cpu, gpu, memory_gb))
+
         # Update container entry in database
         self.db_handle.parameterised_query("""
 UPDATE eas_worker_containers SET assignedCpus=%s, assignedGpus=%s, assignedRam=%s
