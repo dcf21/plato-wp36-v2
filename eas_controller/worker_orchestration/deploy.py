@@ -152,10 +152,11 @@ def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False,
                 ram_request = ram_max_request_gb
 
         # Update database with resource assignment
-        task_db.container_set_resource_assignment(container_name=container_name,
-                                                  cpu=cpu_request,
-                                                  gpu=gpu_request,
-                                                  memory_gb=ram_request)
+        with task_database.TaskDatabaseConnection() as task_db:
+            task_db.container_set_resource_assignment(container_name=container_name,
+                                                      cpu=cpu_request,
+                                                      gpu=gpu_request,
+                                                      memory_gb=ram_request)
 
         # Create YAML string describing this worker deployment
         yaml_filename = os.path.join(os.path.dirname(__file__), "../kubernetes_yaml/eas-worker-template.yaml")
