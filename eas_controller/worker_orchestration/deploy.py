@@ -141,13 +141,13 @@ def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False,
         if resource_limit_fraction is not None:
             cpu_max_request = multiprocessing.cpu_count() * resource_limit_fraction
             if cpu_request > cpu_max_request:
-                logging.info("Limiting worker <{}> to {} cpu cores; request was {} cores".
+                logging.info("Limiting worker <{}> to {:.3f} cpu cores; request was {:.3f} cores".
                              format(container_name, cpu_max_request, cpu_request))
                 cpu_request = cpu_max_request
 
             ram_max_request_gb = psutil.virtual_memory().total / pow(1024, 3) * resource_limit_fraction
             if ram_request > ram_max_request_gb:
-                logging.info("Limiting worker <{}> to {.1f} GB ram; request was {.1f} GB".
+                logging.info("Limiting worker <{}> to {:.3f} GB ram; request was {:.3f} GB".
                              format(container_name, ram_max_request_gb, ram_request))
                 ram_request = ram_max_request_gb
 
@@ -157,7 +157,7 @@ def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False,
         yaml_descriptor = yaml_template.format(
             pod_name=item_name,
             container_name=container_name,
-            memory_requirement="{.f}Gi".format(ram_request),
+            memory_requirement="{:.0f}Mi".format(ram_request * 1024),
             cpu_requirement=cpu_request,
             gpu_requirement=gpu_request
         )
@@ -182,7 +182,7 @@ if __name__ == '__main__':
                         help='The Kubernetes namespace to deploy the EAS pipeline into.')
     parser.add_argument('--worker', action='append', type=str, dest='worker',
                         help='The name of a worker node type that we should deploy.')
-    parser.add_argument('--limit-to-system-fraction', type=float, dest='resource_limit', default=0.5,
+    parser.add_argument('--limit-to-system-fraction', type=float, dest='resource_limit', default=0.25,
                         help='Limit workers to a given fraction of total system resources, even if they request more.')
     args = parser.parse_args()
 

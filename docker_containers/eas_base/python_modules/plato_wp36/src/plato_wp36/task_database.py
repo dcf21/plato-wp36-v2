@@ -105,7 +105,7 @@ FROM eas_worker_containers ORDER BY containerId;""")
             output.worker_containers[item['containerName']] = {
                 'cpu': item['requiredCpus'],
                 'gpu': item['requiredGpus'],
-                'memory': item['requiredRam'],
+                'memory_gb': item['requiredRam'],
             }
             output.container_capabilities[item['containerName']] = set()
 
@@ -147,7 +147,7 @@ SELECT COUNT(*) FROM eas_worker_containers WHERE containerName=%s;""", (containe
             if self.db_handle.fetchone()['COUNT(*)'] == 0:
                 self.db_handle.parameterised_query("""
 INSERT INTO eas_worker_containers (containerName, requiredCpus, requiredGpus, requiredRam) VALUES (%s, %s, %s, %s);
-""", (container_name, requirements['cpu'], requirements['gpu'], requirements['memory']))
+""", (container_name, requirements['cpu'], requirements['gpu'], requirements['memory_gb']))
 
         # Write list of task types
         for task_type_name, containers in task_list.task_list.items():

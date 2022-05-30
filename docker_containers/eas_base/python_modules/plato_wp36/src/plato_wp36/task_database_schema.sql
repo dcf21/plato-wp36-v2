@@ -7,9 +7,9 @@ CREATE TABLE eas_worker_containers
 (
     containerId   INTEGER PRIMARY KEY AUTO_INCREMENT,
     containerName VARCHAR(64) UNIQUE NOT NULL,
-    requiredCpus  INTEGER            NOT NULL,
+    requiredCpus  REAL               NOT NULL,
     requiredGpus  INTEGER            NOT NULL,
-    requiredRam   VARCHAR(64)        NOT NULL
+    requiredRam   REAL               NOT NULL
 );
 
 -- Table of types of named tasks the EAS can run (e.g. synthesis_psls)

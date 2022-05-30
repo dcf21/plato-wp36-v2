@@ -28,7 +28,8 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     # Fetch EAS pipeline settings to find out how many threads are allocated to each TLS worker
     with task_database.TaskDatabaseConnection() as task_db:
         task_type_list = task_db.task_type_list_from_db()
-        tls_thread_count = task_type_list.worker_containers['eas_worker_tls']['cpu']
+        tls_thread_count = max(1, int(task_type_list.worker_containers['eas_worker_tls']['cpu']))
+    logging.info("TLS using {:d} threads".format(tls_thread_count))
 
     # Read specification for the lightcurve we are to verify
     filename_in = execution_attempt.task_object.task_description['inputs']['lightcurve']

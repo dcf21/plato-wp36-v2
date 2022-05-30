@@ -114,7 +114,7 @@ class TaskTypeList:
             output.worker_containers[container_name] = {
                 'cpu': container_item['resourceRequirements']['cpu'],
                 'gpu': container_item['resourceRequirements']['gpu'],
-                'memory': container_item['resourceRequirements']['memory'],
+                'memory_gb': container_item['resourceRequirements']['memory_gb'],
             }
             output.container_capabilities[container_name] = set()
 

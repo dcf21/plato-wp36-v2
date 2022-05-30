@@ -64,7 +64,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--namespace', default="plato", type=str, dest='namespace',
                         help='The Kubernetes namespace to deploy the EAS pipeline into.')
-    parser.add_argument('--limit-to-system-fraction', type=float, dest='resource_limit', default=0.5,
+    parser.add_argument('--limit-to-system-fraction', type=float, dest='resource_limit', default=0.25,
                         help='Limit workers to a given fraction of total system resources, even if they request more.')
     args = parser.parse_args()
 
