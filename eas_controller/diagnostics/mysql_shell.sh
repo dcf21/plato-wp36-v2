@@ -6,5 +6,5 @@
 cd "$(dirname "$0")"
 cwd=`pwd`
 
-mysql --defaults-extra-file=../../data/datadir_local/mysql_sql_login.cfg 
+mysql --defaults-extra-file=../../data/datadir_local/mysql_sql_login.cfg plato
 

@@ -153,7 +153,7 @@ def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False,
 
         # Update database with resource assignment
         with task_database.TaskDatabaseConnection() as task_db:
-            task_db.container_set_resource_assignment(container_name=item_name,
+            task_db.container_set_resource_assignment(container_name=container_name,
                                                       cpu=cpu_request,
                                                       gpu=gpu_request,
                                                       memory_gb=ram_request)
