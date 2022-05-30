@@ -97,15 +97,15 @@ class TaskDatabaseConnection:
 
         # Fetch list of worker container types
         self.db_handle.parameterised_query("""
-SELECT containerId, containerName, requiredCpus, requiredGpus, requiredRam
+SELECT containerId, containerName, requestedCpus, requestedGpus, requestedRam
 FROM eas_worker_containers ORDER BY containerId;""")
 
         # Iterate over each type of container
         for item in self.db_handle.fetchall():
             output.worker_containers[item['containerName']] = {
-                'cpu': item['requiredCpus'],
-                'gpu': item['requiredGpus'],
-                'memory_gb': item['requiredRam'],
+                'cpu': item['requestedCpus'],
+                'gpu': item['requestedGpus'],
+                'memory_gb': item['requestedRam'],
             }
             output.container_capabilities[item['containerName']] = set()
 
@@ -146,8 +146,13 @@ ORDER BY c.containerId;""", (item['taskTypeId'],))
 SELECT COUNT(*) FROM eas_worker_containers WHERE containerName=%s;""", (container_name,))
             if self.db_handle.fetchone()['COUNT(*)'] == 0:
                 self.db_handle.parameterised_query("""
-INSERT INTO eas_worker_containers (containerName, requiredCpus, requiredGpus, requiredRam) VALUES (%s, %s, %s, %s);
-""", (container_name, requirements['cpu'], requirements['gpu'], requirements['memory_gb']))
+INSERT INTO eas_worker_containers
+    (containerName, requestedCpus, requestedGpus, requestedRam, assignedCpus, assignedGpus, assignedRam)
+VALUES
+    (%s, %s, %s, %s, %s, %s, %s);
+""", (container_name,
+      requirements['cpu'], requirements['gpu'], requirements['memory_gb'],
+      requirements['cpu'], requirements['gpu'], requirements['memory_gb']))
 
         # Write list of task types
         for task_type_name, containers in task_list.task_list.items():
@@ -156,7 +161,7 @@ SELECT COUNT(*) FROM eas_task_types WHERE taskTypeName=%s;""", (task_type_name,)
             if self.db_handle.fetchone()['COUNT(*)'] == 0:
                 self.db_handle.parameterised_query("""
 INSERT INTO eas_task_types (taskTypeName) VALUES (%s);
-""", (task_type_name, ))
+""", (task_type_name,))
 
             # Write list of task containers
             self.db_handle.parameterised_query("""
@@ -190,6 +195,54 @@ VALUES (
         # Return ID
         return results[0]['taskTypeId']
 
+    def container_set_resource_assignment(self, container_name: str, cpu: float, gpu: int, memory_gb: float):
+        """
+        Update the database with the system resources currently assigned to a particular type of worker container.
+
+        :param container_name:
+            The name of the worker container.
+        :param cpu:
+            The number of CPU cores assigned to each instance of the worker container.
+        :param gpu:
+            The number of GPU units assigned to each instance of the worker container.
+        :param memory_gb:
+            The number of GB of RAM assigned to each instance of the worker container.
+        :return:
+            None
+        """
+
+        # Update container entry in database
+        self.db_handle.parameterised_query("""
+UPDATE eas_worker_containers SET assignedCpus=%s, assignedGpus=%s, assignedRam=%s
+WHERE containerName=%s;
+""", (cpu, gpu, memory_gb, container_name))
+
+    def container_get_resource_assignment(self, container_name: str):
+        """
+        Update the database with the system resources currently assigned to a particular type of worker container.
+
+        :param container_name:
+            The name of the worker container.
+        :return:
+            dict
+        """
+
+        # Query container entry in database
+        self.db_handle.parameterised_query("""
+SELECT assignedCpus, assignedGpus, assignedRam FROM eas_worker_containers WHERE containerName=%s;
+""", (container_name,))
+        results = self.db_handle.fetchall()
+
+        # Check that task is recognised
+        assert len(results) == 1, "Unrecognised worker container <{}>".format(container_name)
+
+        # Return output
+        return {
+            'cpu': results[0]['assignedCpus'],
+            'gpu': results[0]['assignedCpus'],
+            'memory_gb': results[0]['assignedRam'],
+        }
+
     # *** Functions relating to metadata items
     def metadata_keyword_id(self, keyword: str):
         """
@@ -201,6 +254,9 @@ VALUES (
             Integer ID
         """
 
+        # On first pass, allow SQL insertion errors to pass, because another worker may have updated table
+        allow_errors = True
+
         while True:
             # Lookup ID from database
             self.db_handle.parameterised_query("SELECT keyId FROM eas_metadata_keys WHERE name=%s;", (keyword,))
@@ -210,7 +266,8 @@ VALUES (
                 return result[0]['keyId']
 
             # Create new ID
-            self.db_handle.parameterised_query("INSERT INTO eas_metadata_keys (name) VALUES (%s);", (keyword,))
+            self.db_handle.parameterised_query("INSERT INTO eas_metadata_keys (name) VALUES (%s);", (keyword,),
+                                               allow_errors=allow_errors)
 
     def metadata_fetch_all(self,
                            task_id: Optional[int] = None,
