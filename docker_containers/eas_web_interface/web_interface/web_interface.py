@@ -3,25 +3,56 @@
 # web_interface.py
 
 
-from flask import Flask, redirect, render_template, url_for
+from flask import Flask, redirect, request, render_template, url_for
 import argparse
 
 from plato_wp36.diagnostics import timings_table, pass_fail_table
 
-from page_data import file_explorer, task_status, task_tree, log_messages
+from page_data import file_explorer, log_messages, select_options, task_status, task_tree
 
 # Instantiate flask http server
 app = Flask(__name__)
 
 
+def read_get_arguments(search):
+    for parameter in search:
+        val = request.values.get(parameter)
+        if val == '-- Any --' or val is None:
+            search[parameter] = None
+        elif not parameter.startswith('max_'):
+            try:
+                search[parameter] = str(val)
+            except (TypeError, ValueError):
+                pass
+        else:
+            try:
+                search[parameter] = int(val)
+            except (TypeError, ValueError):
+                pass
+
+
 # Index of all the tasks in the database
-@app.route("/")
+@app.route("/", methods=('GET', 'POST'))
 def task_index():
+    # Fetch page search parameters
+    search = {
+        'job_name': None,
+        'status': None,
+        'max_depth': None
+    }
+    read_get_arguments(search)
+
     # Fetch a list of all the tasks in the database
-    task_list = task_tree.fetch_job_tree()
+    task_list = task_tree.fetch_job_tree(**search)
 
     # Render list of tasks into HTML
-    return render_template('index.html', task_table=task_list)
+    self_url = url_for("task_index")
+    return render_template('index.html', task_table=task_list, self_url=self_url,
+                           status_options=('-- Any --', 'queued', 'waiting', 'done', 'running', 'stalled'),
+                           max_depth_options=['-- Any --'] + list(range(5)),
+                           job_name_options=['-- Any --'] + select_options.job_name_options(),
+                           status=search['status'], job_name=search['job_name'], max_depth=search['max_depth']
+                           )
 
 
 # Index of all the tasks in the database
@@ -59,31 +90,63 @@ def file_index(directory):
 # Index of all the task timing data in the database
 @app.route("/timings")
 def timing_index():
+    # Fetch page search parameters
+    search = {
+        'job_name': None,
+        'task_type': None
+    }
+    read_get_arguments(search)
+
     # Fetch a list of all timing data in the database
-    timing_list = timings_table.fetch_timings_table()
+    timing_list = timings_table.fetch_timings_table(**search)
 
     # Render list of timing data into HTML
-    return render_template('timings.html', timing_info=timing_list)
+    self_url = url_for("timing_index")
+    return render_template('timings.html', timing_info=timing_list, self_url=self_url,
+                           job_name=search['job_name'], task_type=search['task_type'],
+                           job_name_options=['-- Any --'] + select_options.job_name_options(),
+                           task_type_options=['-- Any --'] + select_options.task_type_options()
+                           )
 
 
 # Index of all the task timing data in the database
 @app.route("/pass_fail")
 def pass_fail_index():
+    # Fetch page search parameters
+    search = {
+        'job_name': None,
+        'task_type': None
+    }
+    read_get_arguments(search)
+
     # Fetch a list of all pass/fail data in the database
-    pass_fail_list = pass_fail_table.fetch_pass_fail_table()
+    pass_fail_list = pass_fail_table.fetch_pass_fail_table(**search)
 
     # Render list of timing data into HTML
-    return render_template('pass_fail.html', pass_fail_info=pass_fail_list)
+    self_url = url_for("pass_fail_index")
+    return render_template('pass_fail.html', pass_fail_info=pass_fail_list, self_url=self_url,
+                           job_name=search['job_name'], task_type=search['task_type'],
+                           job_name_options=['-- Any --'] + select_options.job_name_options(),
+                           task_type_options=['-- Any --'] + select_options.task_type_options()
+                           )
 
 
 # Index of all log messages in the database
 @app.route("/logs")
 def log_index():
+    # Fetch page search parameters
+    search = {
+        'min_severity': None
+    }
+    read_get_arguments(search)
+
     # Fetch a list of all the log messages in the database
-    log_list = log_messages.fetch_log_messages()
+    log_list = log_messages.fetch_log_messages(**search)
 
     # Render list of log messages into HTML
-    return render_template('logs.html', log_table=log_list)
+    self_url = url_for("log_index")
+    return render_template('logs.html', log_table=log_list, self_url=self_url, min_severity=search['min_severity'],
+                           severity_options=('-- Any --', 'warning', 'error'))
 
 
 if __name__ == "__main__":

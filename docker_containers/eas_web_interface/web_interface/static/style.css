@@ -82,6 +82,11 @@ table.bordered_compact td {
     padding: 0 6px;
 }
 
+p.formlabel { padding: 3px 0; font-size:17px; color:#777; margin: 3px; }
+.form-item-holder { clear: both; overflow:hidden; }
+.form-item { float: left; padding: 4px 15px; min-height: 78px; }
+.form-item-notitle { padding-top: 42px; }
+
 .item_done { background-color: #a0ffa0; }
 .item_running { background-color: #ffa0ff; }
 .item_stalled { background-color: #ffa0a0; }

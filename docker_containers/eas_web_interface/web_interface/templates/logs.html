@@ -3,37 +3,59 @@
 {% block head %}
 {% endblock %}
 {% block content %}
-<h1>Pipeline log messages</h1>
+    <h1>Pipeline log messages</h1>
 
-<div class="alert alert-info" role="alert">
-    Showing pipeline logs
-</div>
+    <div class="alert alert-info" role="alert">
+        Showing pipeline logs
+    </div>
 
-<table class="library_list bordered bordered_compact">
-    <thead>
-    <tr>
-        <td>Task id</td>
-        <td>Timestamp</td>
-        <td>Message</td>
-    </tr>
-    </thead>
-    <tbody>
-    {% for log_item in log_table %}
-    <tr class="log_item_{{log_item.class}}">
-        <td>{{ log_item.attempt_id }}</td>
-        <td style="white-space: nowrap">{{ log_item.time }}</td>
-        <td><pre style="font-size: 12px; margin-bottom:0;">{{ log_item.message }}</pre></td>
-    </tr>
-    {% else %}
-    <tr>
-        <td>
-            There are no log messages currently in the database.
-        </td>
-        <td>
+    <form method="GET" action="{{ self_url }}">
+        <div class="form-item-holder">
+            <div class="form-item">
+                <p class="formlabel">Filter by severity</p>
+                <select class="slt" name="min_severity">
+                    {% for option in severity_options %}
+                        <option value="{{ option }}" {% if option == min_severity %}selected="selected"{% endif %}>
+                            {{ option }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-item form-item-notitle">
+                <input type="submit" class="btn btn-sm btn-success" value="Update...">
+            </div>
+        </div>
+    </form>
 
-        </td>
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
+    <hr/>
+
+    <table class="library_list bordered bordered_compact">
+        <thead>
+        <tr>
+            <td>Task id</td>
+            <td>Timestamp</td>
+            <td>Message</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for log_item in log_table %}
+            <tr class="log_item_{{ log_item.class }}">
+                <td>{{ log_item.attempt_id }}</td>
+                <td style="white-space: nowrap">{{ log_item.time }}</td>
+                <td>
+                    <pre style="font-size: 12px; margin-bottom:0;">{{ log_item.message }}</pre>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td>
+                    There are no log messages currently in the database.
+                </td>
+                <td>
+
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

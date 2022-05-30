@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 from plato_wp36.diagnostics import render_task_tree
 
 
-def fetch_job_tree(job_name: Optional[str] = None, status: str = 'any', max_depth: Optional[int] = None):
+def fetch_job_tree(job_name: Optional[str] = None, status: Optional[str] = None, max_depth: Optional[int] = None):
     """
     Fetch the hierarchy of jobs in the database.
 
@@ -21,6 +21,10 @@ def fetch_job_tree(job_name: Optional[str] = None, status: str = 'any', max_dept
     """
 
     output: List[Dict] = []
+
+    # Sanitise input
+    if status is None:
+        status = 'any'
 
     def add_tree_item(item: Dict):
         html_class = 'waiting'

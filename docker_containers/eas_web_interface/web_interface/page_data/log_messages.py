@@ -25,6 +25,14 @@ def fetch_log_messages(attempt_id: Optional[int] = None,
         List[Dict]
     """
 
+    # Turn string severity levels into integers
+    if min_severity == 'warning':
+        min_severity = 30
+    elif min_severity == 'error':
+        min_severity = 40
+    elif isinstance(min_severity, str):
+        min_severity = 0
+
     output: List[Dict] = []
 
     # Open connection to the database

@@ -3,45 +3,85 @@
 {% block head %}
 {% endblock %}
 {% block content %}
-<h1>Pipeline task status</h1>
+    <h1>Pipeline task status</h1>
 
-<div class="alert alert-info" role="alert">
-    Showing pipeline task status
-</div>
+    <div class="alert alert-info" role="alert">
+        Showing pipeline task status
+    </div>
 
-<table class="library_list bordered bordered_slim stripy">
-    <thead>
-    <tr>
-        <td>Task name</td>
-        <td>Runs waiting</td>
-        <td>Runs running</td>
-        <td>Runs stalled</td>
-        <td>Runs done</td>
-    </tr>
-    </thead>
-    <tbody>
-    {% for task_item in task_table %}
-    <tr>
-        <td>
-            {{ task_item.indent|safe }}
-            <a href="/task/{{ task_item.task_id }}">
-                <span class="item_{{task_item.class}}">
+    <form method="GET" action="{{ self_url }}">
+        <div class="form-item-holder">
+            <div class="form-item">
+                <p class="formlabel">Filter by status</p>
+                <select class="slt" name="status">
+                    {% for option in status_options %}
+                        <option value="{{ option }}" {% if option == status %}selected="selected"{% endif %}>
+                            {{ option }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-item">
+                <p class="formlabel">Job name</p>
+                <select class="slt" name="job_name">
+                    {% for option in job_name_options %}
+                        <option value="{{ option }}" {% if option == job_name %}selected="selected"{% endif %}>
+                            {{ option }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-item">
+                <p class="formlabel">Max depth</p>
+                <select class="slt" name="max_depth">
+                    {% for option in max_depth_options %}
+                        <option value="{{ option }}" {% if option == max_depth %}selected="selected"{% endif %}>
+                            {{ option }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-item form-item-notitle">
+                <input type="submit" class="btn btn-sm btn-success" value="Update...">
+            </div>
+        </div>
+    </form>
+
+    <hr/>
+
+    <table class="library_list bordered bordered_slim stripy">
+        <thead>
+        <tr>
+            <td>Task name</td>
+            <td>Runs waiting</td>
+            <td>Runs running</td>
+            <td>Runs stalled</td>
+            <td>Runs done</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for task_item in task_table %}
+            <tr>
+                <td>
+                    {{ task_item.indent|safe }}
+                    <a href="/task/{{ task_item.task_id }}">
+                <span class="item_{{ task_item.class }}">
                     #{{ task_item.task_id }} {{ task_item.job_name }}/{{ task_item.task_type_name }}
                 </span>
-            </a>
-        </td>
-        <td>{{ task_item.w }}</td>
-        <td>{{ task_item.r }}</td>
-        <td>{{ task_item.s }}</td>
-        <td>{{ task_item.d }}</td>
-    </tr>
-    {% else %}
-    <tr>
-        <td colspan="5">
-            There are no tasks currently in the database.
-        </td>
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
+                    </a>
+                </td>
+                <td>{{ task_item.w }}</td>
+                <td>{{ task_item.r }}</td>
+                <td>{{ task_item.s }}</td>
+                <td>{{ task_item.d }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5">
+                    There are no tasks currently in the database.
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}
