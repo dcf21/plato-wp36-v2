@@ -104,7 +104,12 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
                 )
 
                 if qats_ok:
-                    # QATS returned no error; loop over lines of output and read S_best and M_best
+                    # QATS returned no error
+
+                    # Save output
+                    open(os.path.join(tmp_dir.tmp_dir, "{}_{}.qats"), "wb").write(qats_stdout)
+
+                    # L oop over lines of output and read S_best and M_best
                     for line in qats_stdout.decode('utf-8').split('\n'):
                         line = line.strip()
                         # Ignore comment lines
@@ -146,7 +151,12 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
             )
 
             if qats_ok:
-                # QATS returned no error; loop over lines of output and read S_best and M_best
+                # QATS returned no error
+
+                # Save output
+                open(os.path.join(tmp_dir.tmp_dir, "final.qats"), "wb").write(qats_stdout)
+
+                # Loop over lines of output and read S_best and M_best
                 for line in qats_stdout.decode('utf-8').split('\n'):
                     line = line.strip()
                     # Ignore comment lines
@@ -168,20 +178,25 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
                         except ValueError:
                             logging.warning("Could not parse QATS indices output")
 
-    # Deduce mean period from list of transit times
-    best_period = np.nan
-    if len(transit_list) > 1:
-        first_transit = transit_list[0]['time']
-        last_transit = transit_list[-1]['time']
-        period_span = len(transit_list) - 1
-        best_period = (last_transit - first_transit) / period_span
+        # Store tarball of intermediate results
+        os.system("cd {} ; tar cvfz *.qats /tmp/qats_debugging.tar.gz".format(tmp_dir.tmp_dir))
 
-    # Find best period
+
+    # Start building output data structure
     results = {
-        'period': best_period
+        'period': 0,
+        'transit_count': len(transit_list),
+        'transit_times': repr([item['time'] for item in transit_list]),
+        'period_span': len(transit_list) - 1
     }
 
-    # Extended results to save to disk
+    # Deduce mean period from list of transit times
+    if len(transit_list) > 1:
+        results['first_transit'] = transit_list[0]['time']
+        results['last_transit'] = transit_list[-1]['time']
+        results['period'] = (results['last_transit'] - results['first_transit']) / results['period_span']
+
+    # Extended results
     results_extended = results
 
     # Return results

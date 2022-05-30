@@ -14,16 +14,15 @@
           "task": "execution_for_loop",
           "parameter": "cadence",
           "values": [
-            900,
-            25
+            900
           ],
           "task_list": [
             {
               "task": "execution_for_loop",
               "parameter": "size",
               "log_range": [
-                "(constants.Rearth / 4)",
-                "(constants.Rearth * 4)",
+                "(constants.Rearth / 40)",
+                "(constants.Rearth * 40)",
                 10
               ],
               "task_list": [
@@ -54,6 +53,9 @@
                   "name": "transit_detection",
                   "inputs": {
                     "lightcurve": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
+                  },
+                  "outputs": {
+                    "debugging": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.tar.gz'.format(**metadata)"
                   },
                   "lc_duration": 730
                 }

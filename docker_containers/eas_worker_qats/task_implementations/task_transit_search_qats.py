@@ -54,6 +54,16 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     # Extract output
     qats_output, output_extended = x
 
+    # Import debugging data into the task database
+    with task_database.TaskDatabaseConnection() as task_db:
+        task_db.execution_attempt_register_output(
+            execution_attempt=execution_attempt,
+            output_name="debugging",
+            file_path="/tmp/qats_debugging.tar.gz",
+            preserve=False,
+            file_metadata={**qats_output}
+        )
+
     # Test whether transit-detection was successful
     qc_metadata = quality_control.transit_detection_quality_control(lc=lc_in, metadata=qats_output)
 
