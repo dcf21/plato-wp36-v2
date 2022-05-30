@@ -179,8 +179,13 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
                             logging.warning("Could not parse QATS indices output")
 
         # Store tarball of intermediate results
-        os.system("cd {} ; tar cvfz *.qats /tmp/qats_debugging.tar.gz".format(tmp_dir.tmp_dir))
-
+        cwd = os.getcwd()
+        os.chdir(tmp_dir.tmp_dir)
+        logging.info(task_execution.call_subprocess_and_catch_stdout("ls -l")[1])
+        logging.info(task_execution.call_subprocess_and_catch_stdout(
+            "tar cvfz *.qats /tmp/qats_debugging.tar.gz".format(tmp_dir.tmp_dir)
+        )[1])
+        os.chdir(cwd)
 
     # Start building output data structure
     results = {

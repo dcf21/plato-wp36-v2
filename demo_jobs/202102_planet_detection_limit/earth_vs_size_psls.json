@@ -6,7 +6,6 @@
       "task": "execution_for_loop",
       "parameter": "tda",
       "values": [
-        "tls",
         "qats"
       ],
       "task_list": [
