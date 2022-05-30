@@ -25,8 +25,10 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
 
     # Perform the transit detection task
 
-    # Fetch EAS pipeline settings
-    s = settings.Settings()
+    # Fetch EAS pipeline settings to find out how many threads are allocated to each TLS worker
+    with task_database.TaskDatabaseConnection() as task_db:
+        task_type_list = task_db.task_type_list_from_db()
+        tls_thread_count = task_type_list.worker_containers['eas_worker_tls']['cpu']
 
     # Read specification for the lightcurve we are to verify
     filename_in = execution_attempt.task_object.task_description['inputs']['lightcurve']
@@ -54,7 +56,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     x = tls.process_lightcurve(lc=lc_in,
                                lc_duration=lc_duration,
                                search_settings=transit_search_settings,
-                               thread_count=s.installation_info['tls_thread_count']
+                               thread_count=tls_thread_count
                                )
 
     # Extract output returned by TLS

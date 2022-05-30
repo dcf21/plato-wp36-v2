@@ -11,6 +11,8 @@ import logging
 import subprocess
 import sys
 
+from typing import Optional
+
 from deploy import deploy_or_delete_item
 
 
@@ -37,7 +39,7 @@ def get_list_of_running_workers(namespace: str):
     return workers
 
 
-def restart_deployment(namespace: str, name: str):
+def restart_deployment(namespace: str, name: str, resource_limit_fraction: Optional[float] = None):
     """
     Restart a particular named worker deployment.
 
@@ -45,12 +47,15 @@ def restart_deployment(namespace: str, name: str):
         The namespace that the EAS pipeline is running within.
     :param name:
         The name of the deployment to restart.
+    :param resource_limit_fraction:
+        Limit workers to a given fraction of total system resources, even if they request more.
     :return:
         None
     """
 
     deploy_or_delete_item(item_name=name, namespace=namespace, delete=True)
-    deploy_or_delete_item(item_name=name, namespace=namespace, delete=False)
+    deploy_or_delete_item(item_name=name, namespace=namespace, delete=False,
+                          resource_limit_fraction=resource_limit_fraction)
 
 
 # If we're called as a script, deploy straight away
@@ -59,6 +64,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--namespace', default="plato", type=str, dest='namespace',
                         help='The Kubernetes namespace to deploy the EAS pipeline into.')
+    parser.add_argument('--limit-to-system-fraction', type=float, dest='resource_limit', default=0.5,
+                        help='Limit workers to a given fraction of total system resources, even if they request more.')
     args = parser.parse_args()
 
     # Set up logging
@@ -71,4 +78,4 @@ if __name__ == '__main__':
 
     # Do restart
     for worker in get_list_of_running_workers(namespace=args.namespace):
-        restart_deployment(namespace=args.namespace, name=worker)
+        restart_deployment(namespace=args.namespace, name=worker, resource_limit_fraction=args.resource_limit)

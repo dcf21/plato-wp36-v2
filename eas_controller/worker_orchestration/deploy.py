@@ -10,9 +10,11 @@ using the Python API because it's massively less verbose.
 import argparse
 import os
 import logging
+import multiprocessing
+import psutil
 import re
 import sys
-from typing import Iterable
+from typing import Iterable, Optional
 
 from plato_wp36 import temporary_directory, task_database
 
@@ -54,7 +56,7 @@ def fetch_component_list(include_workers: bool = True):
     return kubernetes_components
 
 
-def deploy_all(namespace: str, worker_types: Iterable):
+def deploy_all(namespace: str, worker_types: Iterable, resource_limit_fraction: Optional[float] = None):
     """
     Deploy all the Kubernetes infrastructure items needed by the EAS pipeline.
 
@@ -62,6 +64,10 @@ def deploy_all(namespace: str, worker_types: Iterable):
         The Kubernetes namespace in which to deploy the items.
     :param worker_types:
         A list of all the types of worker nodes that are to be deployed.
+    :param resource_limit_fraction:
+        Limit workers to a given fraction of total system resources, even if they request more.
+    :return:
+        None
     """
     # Create namespace for the EAS resources
     create_namespace(namespace=namespace)
@@ -78,7 +84,7 @@ def deploy_all(namespace: str, worker_types: Iterable):
 
         # If this component is needed, deploy it now
         if item_needed:
-            deploy_or_delete_item(item_name=item, namespace=namespace)
+            deploy_or_delete_item(item_name=item, namespace=namespace, resource_limit_fraction=resource_limit_fraction)
 
 
 def create_namespace(namespace: str):
@@ -91,7 +97,8 @@ def create_namespace(namespace: str):
     os.system("kubectl create namespace {}".format(namespace))
 
 
-def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False):
+def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False,
+                          resource_limit_fraction: Optional[float] = None):
     """
     Deploy a single infrastructure item within Kubernetes, as described by a YAML file on disk.
 
@@ -101,6 +108,10 @@ def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False):
         The Kubernetes namespace in which to deploy the item.
     :param delete:
         Boolean. If true, then delete an infrastructure item, rather than deploying it
+    :param resource_limit_fraction:
+        Limit workers to a given fraction of total system resources, even if they request more.
+    :return:
+        None
     """
 
     if not delete:
@@ -122,16 +133,36 @@ def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False):
                 "Unknown worker type <{}>".format(container_name)
             resource_requirements = task_type_list.worker_containers[container_name]
 
+        # Limit resource request to requested fraction of total system resources
+        cpu_request = resource_requirements['cpu']
+        ram_request = resource_requirements['memory_gb']
+        gpu_request = resource_requirements['gpu']
+
+        if resource_limit_fraction is not None:
+            cpu_max_request = multiprocessing.cpu_count() * resource_limit_fraction
+            if cpu_request > cpu_max_request:
+                logging.info("Limiting worker <{}> to {} cpu cores; request was {} cores".
+                             format(container_name, cpu_max_request, cpu_request))
+                cpu_request = cpu_max_request
+
+            ram_max_request_gb = psutil.virtual_memory().total / pow(1024, 3) * resource_limit_fraction
+            if ram_request > ram_max_request_gb:
+                logging.info("Limiting worker <{}> to {.1f} GB ram; request was {.1f} GB".
+                             format(container_name, ram_max_request_gb, ram_request))
+                ram_request = ram_max_request_gb
+
+        # Create YAML string describing this worker deployment
         yaml_filename = os.path.join(os.path.dirname(__file__), "../kubernetes_yaml/eas-worker-template.yaml")
         yaml_template = open(yaml_filename).read()
         yaml_descriptor = yaml_template.format(
             pod_name=item_name,
             container_name=container_name,
-            memory_requirement=resource_requirements['memory'],
-            cpu_requirement=resource_requirements['cpu'],
-            gpu_requirement=resource_requirements['gpu']
+            memory_requirement="{.f}Gi".format(ram_request),
+            cpu_requirement=cpu_request,
+            gpu_requirement=gpu_request
         )
 
+        # Save YAML description to file
         with temporary_directory.TemporaryDirectory() as tmp_dir:
             # Write out YAML description for this pod deployment
             yaml_path = os.path.join(tmp_dir.tmp_dir, "item.yaml")
@@ -151,6 +182,8 @@ if __name__ == '__main__':
                         help='The Kubernetes namespace to deploy the EAS pipeline into.')
     parser.add_argument('--worker', action='append', type=str, dest='worker',
                         help='The name of a worker node type that we should deploy.')
+    parser.add_argument('--limit-to-system-fraction', type=float, dest='resource_limit', default=0.5,
+                        help='Limit workers to a given fraction of total system resources, even if they request more.')
     args = parser.parse_args()
 
     # Set up logging
@@ -167,4 +200,4 @@ if __name__ == '__main__':
         worker_types = ()
 
     # Do deployment
-    deploy_all(namespace=args.namespace, worker_types=worker_types)
+    deploy_all(namespace=args.namespace, worker_types=worker_types, resource_limit_fraction=args.resource_limit)

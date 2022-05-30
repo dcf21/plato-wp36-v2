@@ -6,7 +6,7 @@
             <resourceRequirements>
                 <cpu>1</cpu>
                 <gpu>0</gpu>
-                <memory>8Gi</memory>
+                <memory_gb>8</memory_gb>
             </resourceRequirements>
         </container>
         <container>
@@ -14,7 +14,7 @@
             <resourceRequirements>
                 <cpu>1</cpu>
                 <gpu>0</gpu>
-                <memory>8Gi</memory>
+                <memory_gb>8</memory_gb>
             </resourceRequirements>
         </container>
         <container>
@@ -22,7 +22,7 @@
             <resourceRequirements>
                 <cpu>1</cpu>
                 <gpu>0</gpu>
-                <memory>8Gi</memory>
+                <memory_gb>8</memory_gb>
             </resourceRequirements>
         </container>
         <container>
@@ -30,7 +30,7 @@
             <resourceRequirements>
                 <cpu>1</cpu>
                 <gpu>0</gpu>
-                <memory>8Gi</memory>
+                <memory_gb>8</memory_gb>
             </resourceRequirements>
         </container>
         <container>
@@ -38,7 +38,7 @@
             <resourceRequirements>
                 <cpu>1</cpu>
                 <gpu>0</gpu>
-                <memory>8Gi</memory>
+                <memory_gb>8</memory_gb>
             </resourceRequirements>
         </container>
         <container>
@@ -46,7 +46,7 @@
             <resourceRequirements>
                 <cpu>1</cpu>
                 <gpu>0</gpu>
-                <memory>8Gi</memory>
+                <memory_gb>8</memory_gb>
             </resourceRequirements>
         </container>
         <container>
@@ -54,7 +54,7 @@
             <resourceRequirements>
                 <cpu>1</cpu>
                 <gpu>0</gpu>
-                <memory>8Gi</memory>
+                <memory_gb>8</memory_gb>
             </resourceRequirements>
         </container>
         <container>
@@ -62,7 +62,7 @@
             <resourceRequirements>
                 <cpu>1</cpu>
                 <gpu>0</gpu>
-                <memory>8Gi</memory>
+                <memory_gb>8</memory_gb>
             </resourceRequirements>
         </container>
         <container>
@@ -70,15 +70,15 @@
             <resourceRequirements>
                 <cpu>1</cpu>
                 <gpu>0</gpu>
-                <memory>16Gi</memory>
+                <memory_gb>16</memory_gb>
             </resourceRequirements>
         </container>
         <container>
             <name>eas_worker_tls</name>
             <resourceRequirements>
-                <cpu>4</cpu>
+                <cpu>20</cpu>
                 <gpu>0</gpu>
-                <memory>16Gi</memory>
+                <memory_gb>16</memory_gb>
             </resourceRequirements>
         </container>
     </containers>
