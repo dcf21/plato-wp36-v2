@@ -3,32 +3,43 @@
 {% block head %}
 {% endblock %}
 {% block content %}
-<h1>File explorer: Directories</h1>
+    <h1>File explorer: Directories</h1>
 
-<div class="alert alert-info" role="alert">
-    File explorer: Directories
-</div>
+    <div class="alert alert-info" role="alert">
+        File explorer: Directories
+    </div>
 
-<table class="library_list bordered bordered_compact">
-    <tbody>
-    {% for item in item_list %}
-    <tr>
-        <td>
-            <a href="/files/{{ item.name }}">
-                {{ item.name }}
-            </a>
-        </td>
-    </tr>
-    {% else %}
-    <tr>
-        <td>
-            There are no directories currently in the database.
-        </td>
-        <td>
+    <h5>Select intermediate file product directory to view:</h5>
 
-        </td>
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
+    <table class="library_list bordered bordered_compact" style="margin: 20px;">
+        <thead>
+        <tr>
+            <td>Directory</td>
+            <td>File count</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in item_list %}
+            <tr>
+                <td>
+                    <a href="/files/{{ item.name }}">
+                        {{ item.name }}
+                    </a>
+                </td>
+                <td>
+                    {{ item.item_count }}
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td>
+                    There are no directories currently in the database.
+                </td>
+                <td>
+
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

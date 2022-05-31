@@ -43,7 +43,7 @@
             <ul class="navbar-nav" style="list-style: none;">
                 <li class="nav-item">
                     <a class="nav-link" href="/">
-                        Tasks
+                        Task tree
                     </a>
                 </li>
                 <li class="nav-item">
@@ -51,25 +51,33 @@
                         File products
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/timings">
-                        Task timings
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button"
+                       aria-haspopup="true" aria-expanded="false">
+                        Performance
                     </a>
+                    <div class="dropdown-menu" aria-labelledby="Preview">
+                        <a class="dropdown-item" href="/timings">
+                            Task timings
+                        </a>
+                        <a class="dropdown-item" href="/pass_fail">
+                            Task pass/fail
+                        </a>
+                    </div>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/pass_fail">
-                        Task pass/fail
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button"
+                       aria-haspopup="true" aria-expanded="false">
+                        Pipeline activity
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/timeline">
-                        Activity timeline
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/logs">
-                        Logs
-                    </a>
+                    <div class="dropdown-menu" aria-labelledby="Preview">
+                        <a class="dropdown-item" href="/timeline">
+                            Activity timeline
+                        </a>
+                        <a class="dropdown-item" href="/progress">
+                            Progress summary
+                        </a>
+                    </div>
                 </li>
             </ul>
         </div>

@@ -12,7 +12,8 @@ from flask import Flask, Response, redirect, request, render_template, url_for
 from plato_wp36 import task_database
 from plato_wp36.diagnostics import timings_table, pass_fail_table
 
-from page_data import activity_history, file_explorer, log_messages, select_options, task_status, task_tree
+from page_data import activity_history, file_explorer, log_messages, progress_summary, select_options, \
+    task_status, task_tree
 
 # Instantiate flask http server
 app = Flask(__name__)
@@ -152,6 +153,26 @@ def pass_fail_index():
                            job_name=search['job_name'], task_type=search['task_type'],
                            job_name_options=['-- Any --'] + select_options.job_name_options(),
                            task_type_options=['-- Any --'] + select_options.task_type_options()
+                           )
+
+
+# Summary of the fraction of tasks which have completed
+@app.route("/progress")
+def progress_index():
+    # Fetch page search parameters
+    search = {
+        'job_name': None
+    }
+    read_get_arguments(search)
+
+    # Fetch progress summary table
+    progress_table = progress_summary.fetch_progress_summary(**search)
+
+    # Render list of timing data into HTML
+    self_url = url_for("progress_index")
+    return render_template('progress.html', progress_summary=progress_table, self_url=self_url,
+                           job_name=search['job_name'],
+                           job_name_options=['-- Any --'] + select_options.job_name_options()
                            )
 
 

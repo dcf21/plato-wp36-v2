@@ -22,9 +22,10 @@ def fetch_directory_list():
     with task_database.TaskDatabaseConnection() as task_db:
         # Search for all directory names
         task_db.db_handle.parameterised_query("""
-SELECT DISTINCT p.directoryName
-FROM eas_product p
-ORDER BY p.directoryName;
+SELECT directoryName, COUNT(productId) AS count
+FROM eas_product 
+GROUP BY directoryName
+ORDER BY directoryName;
 """)
 
         # Fetch all directory names
@@ -33,7 +34,8 @@ ORDER BY p.directoryName;
         # Convert names into dictionaries
         for item in directory_list:
             output.append({
-                'name': item['directoryName']
+                'name': item['directoryName'],
+                'item_count': item['count']
             })
 
     # Return results

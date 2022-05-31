@@ -1,0 +1,59 @@
+{% extends "page.html" %}
+{% block title %}Pipeline progress summary{% endblock %}
+{% block head %}
+{% endblock %}
+{% block content %}
+    <h1>Pipeline progress summary</h1>
+
+    <div class="alert alert-info" role="alert">
+        Showing progress summary
+    </div>
+
+    <form method="GET" action="{{ self_url }}">
+        <div class="form-item-holder">
+            <div class="form-item">
+                <p class="formlabel">Filter by job name</p>
+                <select class="slt" name="job_name">
+                    {% for option in job_name_options %}
+                        <option value="{{ option }}" {% if option == job_name %}selected="selected"{% endif %}>
+                            {{ option }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-item form-item-notitle">
+                <input type="submit" class="btn btn-sm btn-success" value="Update...">
+            </div>
+        </div>
+    </form>
+
+    <hr/>
+
+    {% if progress_summary.rows|length > 0 %}
+
+        <table class="library_list bordered bordered_compact stripy">
+            <thead>
+            <tr>
+                {% for column_item in progress_summary.column_headings %}
+                    <td>{{ column_item }}</td>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row_item in progress_summary.rows %}
+                <tr>
+                    {% for column_item in row_item %}
+                        <td style="text-align: right; padding: 5px 20px;">{{ column_item }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <p>
+            There are no matching tasks in the task database.
+        </p>
+    {% endif %}
+
+{% endblock %}
