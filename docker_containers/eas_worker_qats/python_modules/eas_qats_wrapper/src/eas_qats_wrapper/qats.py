@@ -2,6 +2,7 @@
 # qats.py
 
 from math import floor, log
+import glob
 import logging
 import numpy as np
 import os
@@ -107,7 +108,7 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
                     # QATS returned no error
 
                     # Save output
-                    open(os.path.join(tmp_dir.tmp_dir, "{}_{}.qats"), "wb").write(qats_stdout)
+                    open(os.path.join(tmp_dir.tmp_dir, "{}_{}.qats".format(transit_length, sigma_index)), "wb").write(qats_stdout)
 
                     # L oop over lines of output and read S_best and M_best
                     for line in qats_stdout.decode('utf-8').split('\n'):
@@ -178,20 +179,19 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
                         except ValueError:
                             logging.warning("Could not parse QATS indices output")
 
-        # Store tarball of intermediate results
+        # Store tarball of debugging files
         cwd = os.getcwd()
         os.chdir(tmp_dir.tmp_dir)
-        logging.info(task_execution.call_subprocess_and_catch_stdout("ls -l")[1])
-        logging.info(task_execution.call_subprocess_and_catch_stdout(
-            "tar cvfz *.qats /tmp/qats_debugging.tar.gz".format(tmp_dir.tmp_dir)
-        )[1])
+        # logging.info(task_execution.call_subprocess_and_catch_stdout("ls".split())[1])
+        task_execution.call_subprocess_and_catch_stdout(
+            ["tar", "cvfz", "/tmp/qats_debugging.tar.gz"] + glob.glob("*.qats")
+        )
         os.chdir(cwd)
 
     # Start building output data structure
     results = {
         'period': 0,
         'transit_count': len(transit_list),
-        'transit_times': repr([item['time'] for item in transit_list]),
         'period_span': len(transit_list) - 1
     }
 

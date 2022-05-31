@@ -157,7 +157,7 @@ def enter_service_mode():
                 logging.info("Finished task execution attempt <{} - {}>".format(attempt_id, task_type_name))
 
         # To avoid clobbering the database, have a quick snooze between polling to see if we have work to do
-        time.sleep(10)
+        time.sleep(2)
 
 
 if __name__ == "__main__":

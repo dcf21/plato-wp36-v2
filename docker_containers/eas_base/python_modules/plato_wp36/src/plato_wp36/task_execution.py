@@ -17,39 +17,43 @@ import sys
 import subprocess
 import traceback
 
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Optional
 
 from plato_wp36 import logging_database, task_database, task_expression_evaluation
 from plato_wp36 import task_heartbeat, task_objects, task_timer
 
 
-def call_subprocess_and_log_output(arguments: Iterable):
+def call_subprocess_and_log_output(arguments: Iterable, shell: Optional[bool] = None):
     """
     Execute a shell command, and capture any error messages sent to stderr, storing them in the logging database.
     
     :param arguments:
         A list of the command-line arguments to run in the shell.
+    :param shell:
+        Boolean indicating whether subprocess runs in a shell.
     :return:
         Boolean indicating whether the process exited with no error reported
     """
 
     # Run subprocess
-    return call_subprocess_and_catch_stdout(arguments=arguments)[0]
+    return call_subprocess_and_catch_stdout(arguments=arguments, shell=shell)[0]
 
 
-def call_subprocess_and_catch_stdout(arguments: Iterable):
+def call_subprocess_and_catch_stdout(arguments: Iterable, shell: Optional[bool] = None):
     """
     Execute a shell command, and capture any error messages sent to stderr, storing them in the logging database.
 
     :param arguments:
         A list of the command-line arguments to run in the shell.
+    :param shell:
+        Boolean indicating whether subprocess runs in a shell.
     :return:
         Boolean indicating whether the process exited with no error reported
     """
 
     # Run subprocess
     string_arguments = [str(item) for item in arguments]
-    process_output = subprocess.run(string_arguments, capture_output=True)
+    process_output = subprocess.run(string_arguments, capture_output=True, shell=shell)
 
     # Check if subprocess exited with non-zero status, and log it
     if process_output.returncode != 0:
