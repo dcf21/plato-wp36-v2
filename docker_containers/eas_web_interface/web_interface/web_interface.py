@@ -2,13 +2,17 @@
 # -*- coding: utf-8 -*-
 # web_interface.py
 
-
-from flask import Flask, redirect, request, render_template, url_for
 import argparse
+import json
+import magic
+import os.path
 
+from flask import Flask, Response, redirect, request, render_template, url_for
+
+from plato_wp36 import task_database
 from plato_wp36.diagnostics import timings_table, pass_fail_table
 
-from page_data import file_explorer, log_messages, select_options, task_status, task_tree
+from page_data import activity_history, file_explorer, log_messages, select_options, task_status, task_tree
 
 # Instantiate flask http server
 app = Flask(__name__)
@@ -56,15 +60,35 @@ def task_index():
 
 
 # Index of all the tasks in the database
-@app.route("/task/<taskId>", methods=("GET", "POST"))
-def task_info(taskId):
+@app.route("/file/<product_version_id>/<filename>")
+def file_fetch(product_version_id, filename):
+    # Fetch path to file
+    with task_database.TaskDatabaseConnection() as task_db:
+        file_path = task_db.file_version_path_for_id(product_version_id=int(product_version_id))
+
+    # Check file exists
+    if not os.path.isfile(file_path):
+        return redirect(url_for('task_index'))
+
+    # Determine mime type for file
+    mime = magic.Magic(mime=True)
+    mime_type = mime.from_file(file_path)
+
+    # Serve file
+    content = open(file_path, "rb").read()
+    return Response(content, mimetype=mime_type)
+
+
+# Index of all the tasks in the database
+@app.route("/task/<task_id>", methods=("GET", "POST"))
+def task_info(task_id):
     # Fetch a list of information about all the attempts to run this task
-    task_info = task_status.task_status(task_id=int(taskId))
+    task_info = task_status.task_status(task_id=int(task_id))
     if task_info is None:
         return redirect(url_for('task_index'))
 
     # Render task information into HTML
-    return render_template('task_info.html', task_id=int(taskId), task_info=task_info)
+    return render_template('task_info.html', task_id=int(task_id), task_info=task_info)
 
 
 # Index of all the file directories in the database
@@ -147,6 +171,17 @@ def log_index():
     self_url = url_for("log_index")
     return render_template('logs.html', log_table=log_list, self_url=self_url, min_severity=search['min_severity'],
                            severity_options=('-- Any --', 'warning', 'error'))
+
+
+# Show a timeline of tasks running on the cluster
+@app.route("/timeline")
+def activity_timeline():
+    groups, timeline = activity_history.fetch_timeline()
+
+    # Render page
+    self_url = url_for("activity_timeline")
+    return render_template('timeline.html', self_url=self_url, groups=groups,
+                           activity_history=json.dumps(timeline))
 
 
 if __name__ == "__main__":

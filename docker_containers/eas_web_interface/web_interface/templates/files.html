@@ -3,53 +3,54 @@
 {% block head %}
 {% endblock %}
 {% block content %}
-<h1>File explorer: Files</h1>
+    <h1>File explorer: Files</h1>
 
-<div class="alert alert-info" role="alert">
-    File explorer: Files
-</div>
+    <div class="alert alert-info" role="alert">
+        File explorer: Files
+    </div>
 
-<table class="library_list bordered bordered_compact">
-    <thead>
-    <tr>
-        <td>Filename</td>
-        <td>File type</td>
-        <td>Versions</td>
-    </tr>
-    </thead>
-    <tbody>
-    {% for item in item_list %}
-    <tr>
-        <td>{{ item.name }}</td>
-        <td>{{ item.type }}</td>
-        <td>
-            <table>
-                {% for version in item.versions %}
-                <tr>
-                    <td style="white-space: nowrap">{{ version.time }}</td>
-                    <td style="white-space: nowrap; width: 100px; text-align: right;">
-                        {{ version.file_size }}
-                    </td>
-                    <td style="white-space: nowrap; font-weight: bold;">
-                        <a href="/task/{{ version.attempt_id }}">
-                            {{ version.passed_qc|safe }}
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-        </td>
-    </tr>
-    {% else %}
-    <tr>
-        <td>
-            There are no log messages currently in the database.
-        </td>
-        <td>
+    <table class="library_list bordered bordered_compact stripy">
+        <thead>
+        <tr>
+            <td>Filename</td>
+            <td>File type</td>
+            <td>Versions</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in item_list %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.type }}</td>
+                <td>
+                    <table>
+                        {% for version in item.versions %}
+                            <tr style="background: none;">
+                                <td style="white-space: nowrap">{{ version.time }}</td>
+                                <td><a href="/file/{{ version.uid }}/{{ item.name }}">Download</a></td>
+                                <td style="white-space: nowrap; width: 100px; text-align: right;">
+                                    {{ version.file_size }}
+                                </td>
+                                <td style="white-space: nowrap; font-weight: bold;">
+                                    <a href="/task/{{ version.attempt_id }}">
+                                        {{ version.passed_qc|safe }}
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td>
+                    There are no log messages currently in the database.
+                </td>
+                <td>
 
-        </td>
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

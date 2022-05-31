@@ -5,7 +5,7 @@
     "Dominic Ford <dcf21@ast.cam.ac.uk>"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/dcf21/plato-wp36-v2",
+  "homepage": "https://repos.cosmos.esa.int/plato/users/dford/repos/wp36-eas-prototype/browse",
   "ignore": [
     "**/.*",
     "node_modules",
@@ -17,6 +17,9 @@
   "dependencies": {
     "bootstrap": "4.0.0-alpha.2",
     "jquery": "~1.11.3",
-    "font-awesome": "fontawesome#^4.6.1"
+    "jquery-ui": "~1.11.4",
+    "font-awesome": "fontawesome#^4.6.1",
+    "tether": "^1.4.1",
+    "vis": "^4.21.0"
   }
 }

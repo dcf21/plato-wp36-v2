@@ -72,16 +72,19 @@ def task_status(task_id: int):
                                                           must_have_passed_qc=True)
             if len(version_ids) == 0:
                 repository_id = "-- Not generated yet --"
+                version_id = 0
                 item_metadata = item_parent.metadata
             else:
                 item = task_db.file_version_lookup(product_version_id=version_ids[-1])
                 repository_id = item.repository_id
+                version_id = version_ids[-1]
                 item_metadata = item.metadata
             file_input_info.append({
                 'name': semantic_type,
                 'filename': item_parent.filename,
                 'directory': item_parent.directory,
                 'id': repository_id,
+                'version_id': version_id,
                 'metadata': metadata_list_from_dict(item_metadata)
             })
         output['file_input_info'] = file_input_info

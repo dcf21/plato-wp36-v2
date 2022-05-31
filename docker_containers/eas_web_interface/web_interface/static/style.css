@@ -96,3 +96,5 @@ p.formlabel { padding: 3px 0; font-size:17px; color:#777; margin: 3px; }
 .log_item_info { background-color: #a0ffa0; }
 .log_item_warning { background-color: #ffe0a0; }
 .log_item_error { background-color: #ffa0a0; }
+
+.vis-labelset { font-weight: bold; font-size: 13px; }

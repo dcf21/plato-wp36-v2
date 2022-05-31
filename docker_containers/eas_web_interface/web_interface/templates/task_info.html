@@ -67,7 +67,15 @@
         <tbody>
         {% for item in task_info.file_input_info %}
             <tr>
-                <td>{{ item.name }}</td>
+                <td>
+                    {% if item.version_id > 0 %}
+                        <a href="/file/{{ item.version_id }}/{{ item.filename }}">
+                            {{ item.name }}
+                        </a>
+                    {% else %}
+                        {{ item.name }}
+                    {% endif %}
+                </td>
                 <td>
                     <p style="margin: 18px 0 6px 0;"><b>File info</b></p>
 

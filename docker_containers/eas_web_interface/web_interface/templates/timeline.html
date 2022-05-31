@@ -1,0 +1,43 @@
+{% extends "page.html" %}
+{% block title %}Pipeline activity history{% endblock %}
+{% block head %}
+{% endblock %}
+{% block content %}
+    <h1>Pipeline activity history</h1>
+
+    <div class="alert alert-info" role="alert">
+        Showing pipeline activity history
+    </div>
+
+    <p>
+        Double click on tasks to view more information.
+    </p>
+
+    <div id="visualization"></div>
+
+    <script type="text/javascript">
+        // DOM element where the Timeline will be attached
+        var container = document.getElementById('visualization');
+
+        // Create a DataSet (allows two way data-binding)
+        var groups = new vis.DataSet({{ groups|safe }});
+        var items = new vis.DataSet({{ activity_history|safe }});
+
+        // Configuration for the Timeline
+        var options = {
+            margin: {
+                item: {horizontal: 0, vertical: 10},
+                axis: 5
+            }
+        };
+
+        // Create a Timeline
+        var timeline = new vis.Timeline(container, items, groups, options);
+
+        // Bind double-click event
+        timeline.on('doubleClick', function (properties) {
+            window.location = "/task/" + properties.item;
+        });
+    </script>
+
+{% endblock %}

@@ -5,19 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="author" content="Dominic Ford"/>
-    <meta http-equiv="refresh" content="20">
+    <!-- <meta http-equiv="refresh" content="20"> -->
 
     <title id="title1">
         {% block title %}{% endblock %}
     </title>
 
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
     <script src="/static/vendor/jquery/dist/jquery.min.js" type="text/javascript"></script>
 
+    <script src="/static/vendor/tether/dist/js/tether.min.js"></script>
     <link rel="stylesheet" href="/static/vendor/bootstrap/dist/css/bootstrap.min.css">
     <script src="/static/vendor/bootstrap/dist/js/bootstrap.min.js"></script>
 
     <script src="/static/vendor/jquery-ui/jquery-ui.min.js" type="text/javascript"></script>
     <link rel="stylesheet" href="/static/vendor/font-awesome/css/font-awesome.min.css">
+
+    <script src="/static/vendor/vis/dist/vis.js"></script>
+    <link href="/static/vendor/vis/dist/vis.css" rel="stylesheet" type="text/css"/>
+    <link href="/static/vendor/vis/dist/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css"/>
 
     <link rel="stylesheet" type="text/css" href="/static/style.css" media="all"/>
     <script type="text/javascript" src="/static/js/dummy.js"></script>

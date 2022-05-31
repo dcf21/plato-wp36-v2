@@ -110,6 +110,7 @@ ORDER BY v.generatedByTaskExecution;
         # Convert items into dictionaries
         for item in file_list:
             output.append({
+                'uid': item['productVersionId'],
                 'attempt_id': item['generatedByTaskExecution'],
                 'time': datetime.utcfromtimestamp(item['modifiedTime']).strftime('%Y-%m-%d %H:%M:%S'),
                 'file_size': item['fileSize'],
