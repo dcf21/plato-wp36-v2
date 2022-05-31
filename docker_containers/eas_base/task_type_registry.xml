@@ -100,11 +100,11 @@
             <container>all</container>
         </task>
         <task>
-            <name>execution_for_loop</name>
+            <name>execution_do_while_loop</name>
             <container>all</container>
         </task>
         <task>
-            <name>execution_while_loop</name>
+            <name>execution_for_loop</name>
             <container>all</container>
         </task>
         <task>

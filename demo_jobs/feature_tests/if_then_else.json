@@ -1,0 +1,87 @@
+{
+  "job_name": "if_then_else_test",
+  "working_directory": "if_then_else_test",
+  "task_list": [
+    {
+      "task": "execution_for_loop",
+      "parameter": "tda",
+      "values": [
+        "tls"
+      ],
+      "task_list": [
+        {
+          "task": "execution_for_loop",
+          "parameter": "cadence",
+          "values": [
+            900
+          ],
+          "task_list": [
+            {
+              "task": "execution_for_loop",
+              "parameter": "size",
+              "log_range": [
+                "(constants.Rearth / 8)",
+                "(constants.Rearth * 8)",
+                8
+              ],
+              "task_list": [
+                {
+                  "task": "synthesis_psls",
+                  "name": "lightcurve_synthesis",
+                  "outputs": {
+                    "lightcurve": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
+                  },
+                  "specs": {
+                    "duration": 730,
+                    "planet_radius": "(metadata['size'])",
+                    "orbital_period": 240,
+                    "semi_major_axis": 1,
+                    "orbital_angle": 0,
+                    "sampling_cadence": "(metadata['cadence'])"
+                  }
+                },
+                {
+                  "task": "verify",
+                  "name": "lightcurve_verification",
+                  "inputs": {
+                    "lightcurve": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
+                  }
+                },
+                {
+                  "task": "'transit_search_{tda}'.format(**metadata)",
+                  "name": "transit_detection",
+                  "inputs": {
+                    "lightcurve": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
+                  },
+                  "outputs": {
+                    "debugging": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.tar.gz'.format(**metadata)"
+                  },
+                  "lc_duration": 730
+                },
+                {
+                  "task": "execution_conditional",
+                  "requires_metadata_from": [
+                    "transit_detection"
+                  ],
+                  "criterion": "(transit_detection.outcome == 'PASSED')",
+                  "task_list": [
+                    {
+                      "task": "null",
+                      "name": "conditional_true"
+                    }
+                  ],
+                  "else_task_list": [
+                    {
+                      "task": "error",
+                      "name": "conditional_false"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
