@@ -6,22 +6,24 @@
       "task": "execution_for_loop",
       "parameter": "tda",
       "values": [
-        "qats"
+        "bls_reference",
+        "tls"
       ],
       "task_list": [
         {
           "task": "execution_for_loop",
           "parameter": "cadence",
           "values": [
-            900
+            900,
+            25
           ],
           "task_list": [
             {
               "task": "execution_for_loop",
               "parameter": "size",
               "log_range": [
-                "(constants.Rearth / 40)",
-                "(constants.Rearth * 40)",
+                "(constants.Rearth / 4)",
+                "(constants.Rearth * 4)",
                 10
               ],
               "task_list": [
