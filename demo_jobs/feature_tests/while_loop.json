@@ -42,7 +42,7 @@
                 },
                 {
                   "task": "execution_do_while_loop",
-                  "iteration_name": "tda_loop",
+                  "iteration_name": "my_while_loop",
                   "requires_metadata_from_child": [
                     "transit_detection"
                   ],
@@ -62,7 +62,7 @@
                         "lightcurve": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                       },
                       "outputs": {
-                        "debugging": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.tar.gz'.format(**metadata)"
+                        "debugging": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}_{my_while_loop_index}.tar.gz'.format(**metadata)"
                       },
                       "lc_duration": 240
                     }

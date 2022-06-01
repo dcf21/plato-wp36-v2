@@ -53,9 +53,6 @@
                   "inputs": {
                     "lightcurve": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                   },
-                  "outputs": {
-                    "debugging": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.tar.gz'.format(**metadata)"
-                  },
                   "lc_duration": 240
                 },
                 {
