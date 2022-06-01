@@ -534,6 +534,7 @@ class Task:
         self.task_name: Optional[str] = None
         self.working_directory: Optional[str] = None
         self.input_files: Dict[str, FileProduct] = {}
+        self.input_metadata: Dict[str, Dict[str, MetadataItem]] = {}
         self.execution_attempts_passed: Dict[int, TaskExecutionAttempt] = {}
         self.execution_attempts_incomplete: Dict[int, TaskExecutionAttempt] = {}
         self.metadata: Dict[str, MetadataItem] = {}
@@ -551,6 +552,7 @@ class Task:
                   task_name: Optional[str] = None,
                   working_directory: Optional[str] = None,
                   input_files: Optional[Dict[str, FileProduct]] = None,
+                  input_metadata: Dict[str, Dict[str, MetadataItem]] = None,
                   execution_attempts_passed: List[TaskExecutionAttempt] = None,
                   execution_attempts_incomplete: List[TaskExecutionAttempt] = None,
                   metadata: Dict[str, MetadataItem] = None,
@@ -574,6 +576,9 @@ class Task:
         :param input_files:
             The list of file products that this task uses as inputs. This task cannot be executed
             until all of these file products exist and have passed QC.
+        :param input_files:
+            A dictionary of metadata produced by previous tasks which this task has requested access to, indexed by
+            the name of the tasks which produced the metadata.
         :param execution_attempts_passed:
             A list of all the successfully completed attempts to execute this task
         :param execution_attempts_incomplete:
@@ -603,6 +608,10 @@ class Task:
             # Merge new output files with existing ones
             for semantic_type, item in input_files.items():
                 self.input_files[semantic_type] = item
+        if input_metadata is not None:
+            # Merge new metadata with existing metadata
+            for input_name, item in input_metadata.items():
+                self.input_metadata[input_name] = item
         if execution_attempts_passed is not None:
             # Merge new execution attempts with existing list
             for item in execution_attempts_passed:
@@ -652,6 +661,8 @@ class Task:
             "task_name": self.task_name,
             "working_directory": self.working_directory,
             "input_files": [(keyword, item.as_dict()) for keyword, item in self.input_files.items()],
+            "input_metadata": [(input_name, [i2.as_dict() for i2 in i1.values()])
+                               for input_name, i1 in self.input_metadata.items()],
             "execution_attempts_passed": [item.as_dict() for item in self.execution_attempts_passed.values()],
             "execution_attempts_incomplete": [item.as_dict() for item in self.execution_attempts_incomplete.values()],
             "metadata": [item.as_dict() for item in self.metadata.values()],
@@ -688,6 +699,15 @@ class Task:
         # Populate input files
         for item in d['input_files']:
             output.configure(input_files={item[0]: FileProduct.from_dict(item[1])})
+
+        # Populate input metadata
+        input_metadata: Dict[str, Dict[str, MetadataItem]] = {}
+        for input_name, i1 in d['input_metadata'].items():
+            input_metadata[input_name] = {}
+            for i2 in i1:
+                item_object = MetadataItem.from_dict(i2)
+                input_metadata[input_name][item_object.keyword] = item_object
+        output.configure(input_metadata=input_metadata)
 
         # Populate output files
         for item in d['output_files']:

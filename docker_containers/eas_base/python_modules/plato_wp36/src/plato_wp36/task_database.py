@@ -1451,6 +1451,38 @@ ORDER BY p.productId;
 
         return output
 
+    def task_fetch_metadata_inputs(self, task_id: int):
+        """
+        Retrieve a dictionary of metadata inputs to a task from previous tasks, indexed by their names.
+
+        :param task_id:
+            The ID of the task.
+        :return:
+            Dictionary of dictionaries, indexed by the names of the tasks the metadata is coming from.
+        """
+
+        output: Dict[str, Dict] = {}
+
+        # Look up all the previous tasks which feed metadata into this task
+        self.db_handle.parameterised_query("""
+SELECT i.taskName AS inputName, i.taskId AS inputTask
+FROM eas_task_metadata_input p
+INNER JOIN eas_task i ON p.inputId = i.taskId
+WHERE p.taskId = %s
+ORDER BY p.inputId;
+""", (task_id,))
+        input_list = self.db_handle.fetchall()
+
+        for input_task in input_list:
+            # Find out which version of this file we should use
+            input_task_runs = self.task_fetch_execution_attempts(task_id=input_task, successful=True)
+            if len(input_task_runs) > 0:
+                most_recent_task_run = input_task_runs[-1]
+                most_recent_task_metadata = most_recent_task_run.metadata
+                output[input_task['inputName']] = most_recent_task_metadata
+
+        return output
+
     def task_fetch_file_inputs(self, task_id: int):
         """
         Retrieve a dictionary of all the file inputs to a task, indexed by their
@@ -1594,14 +1626,13 @@ WHERE taskId = %s;
             return None
 
         # List input file products
-        input_products = self.task_fetch_file_inputs(
-            task_id=result[0]['taskId']
-        )
+        input_products = self.task_fetch_file_inputs(task_id=result[0]['taskId'])
+
+        # Dictionary of input metadata
+        input_metadata = self.task_fetch_metadata_inputs(task_id=result[0]['taskId'])
 
         # List output file products
-        output_products = self.task_fetch_file_products(
-            task_id=result[0]['taskId']
-        )
+        output_products = self.task_fetch_file_products(task_id=result[0]['taskId'])
 
         # Read scheduling attempt metadata
         metadata = self.metadata_fetch_all(task_id=result[0]['taskId'])
@@ -1624,6 +1655,7 @@ WHERE taskId = %s;
             task_name=result[0]['taskName'],
             working_directory=result[0]['workingDirectory'],
             input_files=input_products,
+            input_metadata=input_metadata,
             execution_attempts_passed=list(execution_attempts_passed.values()),
             execution_attempts_incomplete=list(execution_attempts_incomplete.values()),
             metadata=metadata,

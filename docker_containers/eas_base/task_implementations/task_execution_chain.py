@@ -45,7 +45,8 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
 
             # Evaluate any metadata expressions within fields we extract from the task description
             expression_evaluator = task_expression_evaluation.TaskExpressionEvaluation(
-                metadata=execution_attempt.task_object.metadata
+                metadata=execution_attempt.task_object.metadata,
+                requested_metadata=execution_attempt.task_object.input_metadata
             )
 
             # Determine the type of the subtask

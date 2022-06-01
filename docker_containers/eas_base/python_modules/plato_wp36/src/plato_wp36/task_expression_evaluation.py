@@ -11,9 +11,11 @@ are available.
 # noinspection PyUnresolvedReferences
 import random
 
-from typing import Any, Optional, Dict
+from typing import Any, Dict
 
 import plato_wp36.constants
+
+from plato_wp36.task_objects import MetadataItem
 
 
 class TaskExpressionEvaluation:
@@ -24,18 +26,26 @@ class TaskExpressionEvaluation:
     are available.
     """
 
-    def __init__(self, metadata: Optional[Dict] = None):
+    def __init__(self,
+                 metadata: Dict[str, MetadataItem],
+                 requested_metadata: Dict[str, Dict[str, MetadataItem]]):
         """
         Create a new expression evaluator.
 
         :param metadata:
-            A dictionary of all the metadata which is available in the current context.
+            A dictionary of all the metadata which is available from parent tasks in the current context.
+        :param requested_metadata:
+            A dictionary of metadata requested from sibling tasks which ran before this one, indexed by the name
+            of the sibling task.
         :type metadata:
-            Optional[Dict]
+            Dict[str, MetadataItem]
+        :type requested_metadata:
+            Dict[str, Dict[str, MetadataItem]]
         """
 
         # Store the currently-available metadata
-        self.metadata = metadata
+        self.metadata: Dict[str, MetadataItem] = metadata
+        self.requested_metadata: Dict[str, Dict[str, MetadataItem]] = requested_metadata
 
     def evaluate_expression(self, expression: Any):
         """
@@ -61,6 +71,11 @@ class TaskExpressionEvaluation:
         constants = plato_wp36.constants.EASConstants()
         # noinspection PyUnusedLocal
         metadata = {keyword: value.value for keyword, value in self.metadata.items()}
+        # noinspection PyUnusedLocal
+        requested_metadata = {
+            {keyword: value.value for keyword, value in item_dict.items()}
+            for input_name, item_dict in self.requested_metadata.items()
+        }
 
         # Evaluate expression
         return eval(expression)
@@ -83,7 +98,7 @@ class TaskExpressionEvaluation:
                 keyword = self.evaluate_in_structure(structure=keyword_raw)
                 # Special case for nested 'taskList' entries, which contain child subprocesses, which may need
                 # metadata we don't have yet. So don't evaluate expressions within them at this time.
-                if keyword == 'task_list':
+                if keyword in ('task_list', 'task_list_else', 'repeat_criterion'):
                     output[keyword] = value_raw
                 # In all other cases, evaluate nested levels immediately
                 else:

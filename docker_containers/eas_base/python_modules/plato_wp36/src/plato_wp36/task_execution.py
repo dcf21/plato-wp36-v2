@@ -176,7 +176,8 @@ def do_pipeline_task(job_id: int,
 
                     # Evaluate any metadata expressions within our task description
                     expression_evaluator = task_expression_evaluation.TaskExpressionEvaluation(
-                        metadata=attempt_info.task_object.metadata
+                        metadata=attempt_info.task_object.metadata,
+                        requested_metadata=attempt_info.task_object.input_metadata
                     )
                     task_description = expression_evaluator.evaluate_in_structure(structure=task_description_raw)
 

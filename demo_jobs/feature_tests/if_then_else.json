@@ -63,7 +63,7 @@
                   "requires_metadata_from": [
                     "transit_detection"
                   ],
-                  "criterion": "(transit_detection.outcome == 'PASSED')",
+                  "criterion": "(requested_metadata['transit_detection']['outcome'] == 'PASSED')",
                   "task_list": [
                     {
                       "task": "null",
