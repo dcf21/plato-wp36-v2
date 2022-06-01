@@ -89,7 +89,11 @@
                         <tbody>
                         <tr>
                             <td>Filename</td>
-                            <td>{{ item.filename }}</td>
+                            <td>
+                                <a href="/file/{{ item.version_id }}/{{ item.filename }}">
+                                    {{ item.filename }}
+                                </a>
+                            </td>
                         </tr>
                         <tr>
                             <td>Directory</td>
@@ -242,7 +246,11 @@
             <tbody>
             {% for item in task_run.file_output_info %}
                 <tr>
-                    <td>{{ item.name }}</td>
+                    <td>
+                        <a href="/file/{{ item.version_id }}/{{ item.filename }}">
+                            {{ item.name }}
+                        </a>
+                    </td>
                     <td>
                         <p style="margin: 18px 0 6px 0;"><b>File info</b></p>
 
@@ -256,7 +264,11 @@
                             <tbody>
                             <tr>
                                 <td>Filename</td>
-                                <td>{{ item.filename }}</td>
+                                <td>
+                                    <a href="/file/{{ item.version_id }}/{{ item.filename }}">
+                                        {{ item.filename }}
+                                    </a>
+                                </td>
                             </tr>
                             <tr>
                                 <td>Directory</td>

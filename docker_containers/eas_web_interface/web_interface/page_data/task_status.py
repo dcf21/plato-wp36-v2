@@ -118,6 +118,7 @@ ORDER BY queuedTime;
                     'directory': item_parent.directory,
                     'passed_qc': item.passed_qc,
                     'id': item.repository_id,
+                    'version_id': item.product_version_id,
                     'metadata': metadata_list_from_dict(item.metadata)
                 })
 

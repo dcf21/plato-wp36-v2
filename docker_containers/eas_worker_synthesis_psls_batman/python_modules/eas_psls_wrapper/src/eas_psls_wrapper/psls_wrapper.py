@@ -358,6 +358,9 @@ class PslsWrapper:
         fluxes = fluxes[run_in_samples: run_in_samples + final_length]
         flags = flags[run_in_samples: run_in_samples + final_length]
 
+        # Reset start time of lightcurve to zero
+        times -= times[0]
+
         # Compute MES statistic. To do this, we need a theoretical model of the pure transit signal, which we
         # generate using batman.
         if not self.settings['enable_transits']:
