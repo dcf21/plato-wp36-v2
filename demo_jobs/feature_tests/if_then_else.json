@@ -69,8 +69,16 @@
                   ],
                   "else_task_list": [
                     {
-                      "task": "error",
-                      "name": "conditional_false"
+                      "task": "null",
+                      "name": "conditional_false_1"
+                    },
+                    {
+                      "task": "null",
+                      "name": "conditional_false_2"
+                    },
+                    {
+                      "task": "null",
+                      "name": "conditional_false_3"
                     }
                   ]
                 }
