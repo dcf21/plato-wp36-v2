@@ -73,7 +73,7 @@ class TaskExpressionEvaluation:
         metadata = {keyword: value.value for keyword, value in self.metadata.items()}
         # noinspection PyUnusedLocal
         requested_metadata = {
-            {keyword: value.value for keyword, value in item_dict.items()}
+            input_name: {keyword: value.value for keyword, value in item_dict.items()}
             for input_name, item_dict in self.requested_metadata.items()
         }
 

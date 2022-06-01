@@ -64,6 +64,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
         task_list.append({
             "task": "execution_do_while_loop",
             "iteration_name": td['iteration_name'],
+            "requires_metadata_from": td['requires_metadata_from_child'],
             "requires_metadata_from_child": td['requires_metadata_from_child'],
             "repeat_criterion": td['repeat_criterion'],
             "task_list": task_list[:]

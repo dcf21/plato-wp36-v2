@@ -32,10 +32,10 @@
                     "lightcurve": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                   },
                   "specs": {
-                    "duration": 730,
+                    "duration": 240,
                     "planet_radius": "(metadata['size'])",
-                    "orbital_period": 240,
-                    "semi_major_axis": 1,
+                    "orbital_period": 60,
+                    "semi_major_axis": 0.4,
                     "orbital_angle": 0,
                     "sampling_cadence": "(metadata['cadence'])"
                   }
@@ -64,7 +64,7 @@
                       "outputs": {
                         "debugging": "'evsize_psls_{tda_index}_{cadence_index}_{size_index}.tar.gz'.format(**metadata)"
                       },
-                      "lc_duration": 730
+                      "lc_duration": 240
                     }
                   ]
                 }
