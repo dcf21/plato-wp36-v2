@@ -271,6 +271,8 @@ SELECT assignedCpus, assignedGpus, assignedRam FROM eas_worker_containers WHERE 
             # Create new ID
             self.db_handle.parameterised_query("INSERT INTO eas_metadata_keys (name) VALUES (%s);", (keyword,),
                                                allow_errors=allow_errors)
+            self.commit()
+            allow_errors = False
 
     def metadata_fetch_all(self,
                            task_id: Optional[int] = None,
@@ -961,6 +963,7 @@ WHERE productId = %s;
             # Create new ID
             self.db_handle.parameterised_query("INSERT INTO eas_worker_host (hostname) VALUES (%s);", (name,),
                                                allow_errors=allow_errors)
+            self.commit()
             allow_errors = False
 
     def semantic_type_get_id(self, name: str):
@@ -987,6 +990,7 @@ WHERE productId = %s;
             # Create new ID
             self.db_handle.parameterised_query("INSERT INTO eas_semantic_type (name) VALUES (%s);", (name,),
                                                allow_errors=allow_errors)
+            self.commit()
             allow_errors = False
 
     def file_product_register(self, generator_task: int, directory: str, filename: str,
