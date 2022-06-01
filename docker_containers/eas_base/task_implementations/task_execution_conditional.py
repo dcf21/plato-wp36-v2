@@ -7,6 +7,7 @@ Implementation of the EAS pipeline task <execution_conditional>.
 """
 
 import json
+import logging
 
 from plato_wp36 import task_database, task_execution
 
@@ -26,10 +27,14 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     with task_database.TaskDatabaseConnection() as task_db:
         # Query value of conditional criterion
         criterion_true = bool(execution_attempt.task_object.task_description['criterion'])
-        execution_path = 'task_list' if criterion_true else 'task_list_else'
+        execution_path = 'task_list' if criterion_true else 'else_task_list'
+
+        logging.info("Criterion evaluated to <{}>".format(repr(criterion_true)))
+        logging.info("Following execution path <{}>".format(execution_path))
 
         # Extract list of tasks in this execution chain
         if execution_path not in execution_attempt.task_object.task_description:
+            logging.info("No execution path found")
             return
         task_list = execution_attempt.task_object.task_description[execution_path]
 

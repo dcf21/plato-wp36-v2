@@ -8,7 +8,6 @@ Implementation of the EAS pipeline task <execution_do_while_loop>.
 
 import json
 import logging
-import sys
 
 from plato_wp36 import task_database, task_execution, task_expression_evaluation
 from plato_wp36.task_objects import MetadataItem
@@ -48,6 +47,7 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
         # Test whether we iterate again
         already_iterating = iteration_counter > 0
         if already_iterating:
+            logging.info("Considering whether to repeat do loop")
             expression_evaluator = task_expression_evaluation.TaskExpressionEvaluation(
                 metadata=execution_attempt.task_object.metadata,
                 requested_metadata=execution_attempt.task_object.input_metadata
@@ -55,8 +55,12 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
             repeat_criterion = expression_evaluator.evaluate_expression(expression=td['repeat_criterion'])
 
             if not repeat_criterion:
-                logging.info("do while loop completed.")
-                sys.exit(0)
+                logging.info("Do loop completed.")
+                return
+            else:
+                logging.info("Do loop continuing for another cycle after iteration {:d}".format(iteration_counter))
+        else:
+            logging.info("Entering do loop for the first time")
 
         # *** Run another iteration ***
 

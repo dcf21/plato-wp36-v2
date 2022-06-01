@@ -46,7 +46,7 @@
                   "requires_metadata_from_child": [
                     "transit_detection"
                   ],
-                  "repeat_criterion": "(requested_metadata['transit_detection']['outcome'] == 'PASSED') and (metadata['tda_loop_index'] < 3)",
+                  "repeat_criterion": "(requested_metadata['transit_detection']['outcome'] == 'PASS') and (metadata['tda_loop_index'] < 3)",
                   "task_list": [
                     {
                       "task": "verify",

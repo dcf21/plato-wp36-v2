@@ -98,7 +98,7 @@ class TaskExpressionEvaluation:
                 keyword = self.evaluate_in_structure(structure=keyword_raw)
                 # Special case for nested 'taskList' entries, which contain child subprocesses, which may need
                 # metadata we don't have yet. So don't evaluate expressions within them at this time.
-                if keyword in ('task_list', 'task_list_else', 'repeat_criterion'):
+                if keyword in ('task_list', 'else_task_list', 'repeat_criterion'):
                     output[keyword] = value_raw
                 # In all other cases, evaluate nested levels immediately
                 else:
