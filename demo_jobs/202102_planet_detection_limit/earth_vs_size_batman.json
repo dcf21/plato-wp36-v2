@@ -29,6 +29,7 @@
               "task_list": [
                 {
                   "task": "synthesis_batman",
+                  "name": "lightcurve_synthesis",
                   "outputs": {
                     "lightcurve": "'evsize_batman_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                   },
@@ -44,12 +45,14 @@
                 },
                 {
                   "task": "verify",
+                  "name": "lightcurve_verification",
                   "inputs": {
                     "lightcurve": "'evsize_batman_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                   }
                 },
                 {
                   "task": "'transit_search_{tda}'.format(**metadata)",
+                  "name": "transit_detection",
                   "inputs": {
                     "lightcurve": "'evsize_batman_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                   },

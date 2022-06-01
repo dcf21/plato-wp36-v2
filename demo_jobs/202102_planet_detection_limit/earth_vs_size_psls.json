@@ -6,8 +6,8 @@
       "task": "execution_for_loop",
       "parameter": "tda",
       "values": [
-        "bls_reference",
-        "tls"
+        "tls",
+        "bls_reference"
       ],
       "task_list": [
         {
