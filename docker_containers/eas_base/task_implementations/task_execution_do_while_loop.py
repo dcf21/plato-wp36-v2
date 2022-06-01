@@ -55,10 +55,10 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
             repeat_criterion = expression_evaluator.evaluate_expression(expression=td['repeat_criterion'])
 
             if not repeat_criterion:
-                logging.info("Do loop completed.")
+                logging.info("Do loop completed after iteration {:d}".format(int(iteration_counter)))
                 return
             else:
-                logging.info("Do loop continuing for another cycle after iteration {:d}".format(iteration_counter))
+                logging.info("Do loop continuing for another cycle after iteration {:d}".format(int(iteration_counter)))
         else:
             logging.info("Entering do loop for the first time")
 

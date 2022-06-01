@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # activity_history.py
 
+import time
+
 from plato_wp36 import task_database
 
 
@@ -21,6 +23,7 @@ FROM eas_scheduling_attempt s
 INNER JOIN eas_task t on t.taskId = s.taskId
 INNER JOIN eas_task_types tt on tt.taskTypeId = t.taskTypeId
 LEFT OUTER JOIN eas_worker_host h on h.hostId = s.hostId
+WHERE s.startTime IS NOT NULL
 ORDER BY s.startTime;
 """)
 
@@ -38,15 +41,23 @@ ORDER BY s.startTime;
                     'id': item['hostId'],
                     'content': item['hostname']
                 })
+
             # Create entry for each individual task
             text = "#{:d} {}".format(item['taskId'], item['taskTypeName'])
+
+            # If task is still running, then set its end time to now
+            end_time = item['endTime']
+            if end_time is None:
+                end_time = time.time()
+
+            # Create data point for this task
             output.append({
                 'id': item['taskId'],
                 'group': item['hostId'],
                 'content': text,
                 'title': text,
                 'start': item['startTime'] * 1000,
-                'end': item['endTime'] * 1000
+                'end': end_time * 1000
             })
 
     # Return results
