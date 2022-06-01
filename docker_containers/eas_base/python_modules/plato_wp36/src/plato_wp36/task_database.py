@@ -1477,7 +1477,8 @@ ORDER BY p.inputId;
             # Find out which version of this file we should use
             input_task_runs = self.task_fetch_execution_attempts(task_id=input_task['inputId'], successful=True)
             if len(input_task_runs) > 0:
-                most_recent_task_run = input_task_runs[-1]
+                highest_attempt_id = sorted(input_task_runs.keys())[-1]
+                most_recent_task_run = input_task_runs[highest_attempt_id]
                 most_recent_task_metadata = most_recent_task_run.metadata
                 output[input_task['inputName']] = most_recent_task_metadata
 
