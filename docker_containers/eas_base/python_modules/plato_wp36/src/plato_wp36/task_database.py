@@ -1465,7 +1465,7 @@ ORDER BY p.productId;
 
         # Look up all the previous tasks which feed metadata into this task
         self.db_handle.parameterised_query("""
-SELECT i.taskName AS inputName, i.taskId AS inputTask
+SELECT i.taskName AS inputName, i.taskId AS inputId
 FROM eas_task_metadata_input p
 INNER JOIN eas_task i ON p.inputId = i.taskId
 WHERE p.taskId = %s
@@ -1475,7 +1475,7 @@ ORDER BY p.inputId;
 
         for input_task in input_list:
             # Find out which version of this file we should use
-            input_task_runs = self.task_fetch_execution_attempts(task_id=input_task, successful=True)
+            input_task_runs = self.task_fetch_execution_attempts(task_id=input_task['inputId'], successful=True)
             if len(input_task_runs) > 0:
                 most_recent_task_run = input_task_runs[-1]
                 most_recent_task_metadata = most_recent_task_run.metadata
