@@ -12,3 +12,4 @@ kubernetes
 batman-package
 psls
 python-magic
+dask
