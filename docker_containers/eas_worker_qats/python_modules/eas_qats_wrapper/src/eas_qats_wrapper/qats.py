@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # qats.py
 
-from math import floor, log
 import glob
 import logging
 import numpy as np
 import os
 import dask
 
+from math import floor, log, sqrt
 from multiprocessing.pool import ThreadPool
 from typing import Dict, List, Optional
 
@@ -18,25 +18,25 @@ from plato_wp36 import settings, task_database, task_execution, temporary_direct
 # Storing these as global variables is not thread-safe, but unfortunately is the only way to make them
 # accessible to many dask threads working on the same call to <process_lightcurve>. This is fine so
 # long as the calling process doesn't make multiple parallel calls to <process_lightcurve>.
-qats_output: List[Dict[str, float]] = []
+qats_output: Dict[str, Dict[str, float]] = {}
 s_maximum: float = 0.
-s_maximum_index: Optional[int] = None
+s_maximum_index: Optional[str] = None
 
 
 @dask.delayed
-def dask_thread(qats_path, lc_file, sigma_min, sigma_max, transit_length):
+def dask_thread(qats_path, lc_file, delta_min, delta_max, transit_length):
     global qats_output, s_maximum, s_maximum_index
 
+    run_key = "{}_{}_{}".format(delta_min, delta_max, transit_length)
+
+    # logging.info("{} {} {} {} {}".format(qats_path, lc_file, delta_min, delta_max, transit_length))
+
     qats_ok, qats_stdout = task_execution.call_subprocess_and_catch_stdout(
-        arguments=(qats_path, lc_file, sigma_min, sigma_max, transit_length)
+        arguments=(qats_path, lc_file, delta_min, delta_max, transit_length)
     )
 
     if qats_ok:
         # QATS returned no error
-
-        # Save output
-        # open(os.path.join(tmp_dir.tmp_dir, "{}_{}.qats".format(transit_length, sigma_index)), "wb").write(qats_stdout)
-
         # Loop over lines of output and read S_best and M_best
         for line in qats_stdout.decode('utf-8').split('\n'):
             line = line.strip()
@@ -51,17 +51,20 @@ def dask_thread(qats_path, lc_file, sigma_min, sigma_max, transit_length):
                     s_best = float(words[0])  # Signal strength of best-fit transit sequence
                     m_best = int(words[1])  # Number of transits in best-fit sequence
 
-                    qats_output.append({
+                    # The QATS paper is ambiguous whether this is required, but it gives better results
+                    s_best /= sqrt(m_best * transit_length)
+
+                    qats_output[run_key] = {
                         's_best': s_best,
                         'm_best': m_best,
-                        'sigma_min': sigma_min,
-                        'sigma_max': sigma_max,
+                        'delta_min': delta_min,
+                        'delta_max': delta_max,
                         'transit_length': transit_length
-                    })
+                    }
 
                     if s_best > s_maximum:
                         s_maximum = s_best
-                        s_maximum_index = len(qats_output) - 1
+                        s_maximum_index = run_key
                 except ValueError:
                     logging.warning("Could not parse QATS output")
 
@@ -88,9 +91,9 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
 
     # Reset global variables
     global qats_output, s_maximum, s_maximum_index
-    qats_output: List[Dict[str, float]] = []
-    s_maximum: float = 0.
-    s_maximum_index: Optional[int] = None
+    qats_output = {}
+    s_maximum = 0.
+    s_maximum_index = None
 
     # Fetch EAS pipeline settings to find out how many threads are allocated to each TLS worker
     with task_database.TaskDatabaseConnection() as task_db:
@@ -118,79 +121,86 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
 
     # List of transit durations to consider
     lc_time_step_days = lc_fixed_step.time_step  # days
-    duration_min = search_settings.get('duration_min', 0.05)  # days
-    duration_max = search_settings.get('duration_max', 0.2)  # days
-    duration_count = int(search_settings.get('duration_count', 12))
+    duration_min = float(search_settings.get('duration_min', 0.05))  # days
+    duration_max = float(search_settings.get('duration_max', 0.2))  # days
+    duration_count = int(search_settings.get('duration_count', 16))
     durations_days = np.linspace(duration_min, duration_max, duration_count)  # days
     durations = durations_days / lc_time_step_days  # time steps
 
     # Minimum transit period, days
-    period_min = search_settings.get('period_min', 0.5)  # days
+    period_min = search_settings.get('period_min', 4)  # days
 
     # Maximum transit period, days
     minimum_n_transits = int(search_settings.get('min_transit_count', 2))
     maximum_period = lc_duration / minimum_n_transits  # days
 
     # Maximum TTV relative magnitude f
-    max_ttv_mag = 0.005
-    sigma_spans = int(floor(log(maximum_period / period_min) / log(1 + max_ttv_mag)))
-    sigma_base = period_min / lc_time_step_days  # time steps
+    max_ttv_mag = float(search_settings.get('max_ttv_mag', 0.0001))
+    delta_spans = int(floor(log(maximum_period / period_min) / log(1 + max_ttv_mag)))
+    delta_base = period_min / lc_time_step_days  # time steps
 
     # Logging
     logging.info("QATS testing {:d} transit lengths".format(len(durations)))
-    logging.info("QATS testing {} sigma spans".format(sigma_spans))
+    logging.info("QATS testing {} delta spans".format(delta_spans))
+
+    # Path to the QATS binary
+    qats_path = os.path.join(eas_settings.settings['pythonPath'],
+                             "../../data/datadir_local/qats/qats/call_qats")
 
     # Store lightcurve to a text file in a temporary directory
     with temporary_directory.TemporaryDirectory() as tmp_dir:
         lc_file = os.path.join(tmp_dir.tmp_dir, "lc.dat")
 
-        # Store lightcurve to text file
-        np.savetxt(lc_file, lc_fixed_step.fluxes)
+        # Store lightcurve to single-column text file without scientific notation
+        np.savetxt(lc_file, lc_fixed_step.fluxes, fmt='%f')
 
         # Loop over all values of q
         delayed_processes = []
         for transit_length in durations:
-            for sigma_index in range(0, sigma_spans):
+            for delta_index in range(0, delta_spans):
                 # Equation 15
-                sigma_min = int(sigma_base * pow(1 + max_ttv_mag / 2, sigma_index))
+                delta_min = int(delta_base * pow(1 + max_ttv_mag / 2, delta_index))
 
                 # Equation 16
-                sigma_max = int(sigma_base * pow(1 + max_ttv_mag / 2, sigma_index + 1))
+                delta_max = int(delta_base * pow(1 + max_ttv_mag / 2, delta_index + 1))
 
                 # Run QATS
-                qats_path = os.path.join(eas_settings.settings['pythonPath'],
-                                         "../../data/datadir_local/qats/qats/call_qats")
-
-                # logging.info("{} {} {} {} {}".format(qats_path, lc_file, sigma_min, sigma_max, transit_length))
-
-                delayed_processes.append(dask_thread(qats_path, lc_file, sigma_min, sigma_max, transit_length))
+                delayed_processes.append(dask_thread(qats_path, lc_file, delta_min, delta_max, transit_length))
 
         # Run delayed processes
         dask.config.set(pool=ThreadPool(qats_thread_count))
         dask.compute(delayed_processes)
 
+        # Produce output file with all the results
+        with open(os.path.join(tmp_dir.tmp_dir, "grid.qats"), "wt") as f:
+            ordered_rows = sorted(qats_output.values(), key=lambda x: x['s_best'], reverse=True)
+            for row in ordered_rows:
+                f.write("{s_best:15.5f} {m_best:5d} {delta_min:15.5f} {delta_max:15.5f} {transit_length:15.5f}\n".
+                        format(**row))
+
         # Now fetch the best-fit sequence of transits
         transit_list = []
         if s_maximum_index is not None:
-            x = qats_output[int(s_maximum_index)]
+            x = qats_output[s_maximum_index]
 
             # Report results
-            logging.info("Best fit: S={.1:f} ; M={.0f}; transit length={.2f}".format(s_maximum, x['m_best'],
-                                                                                     x['transit_length']))
+            logging.info("Best fit: S={:.1f} ; M={:.0f}; transit length={:.2f} days".
+                         format(s_maximum, x['m_best'], x['transit_length'] * lc_time_step_days))
 
             # Run QATS
             qats_path = os.path.join(eas_settings.settings['pythonPath'],
                                      "../../data/datadir_local/qats/qats/call_qats_indices")
 
             qats_ok, qats_stdout = task_execution.call_subprocess_and_catch_stdout(
-                arguments=(qats_path, lc_file, x['m_best'], x['sigma_min'], x['sigma_max'], x['transit_length'])
+                arguments=(qats_path, lc_file, x['m_best'], x['delta_min'], x['delta_max'], x['transit_length'])
             )
 
             if qats_ok:
                 # QATS returned no error
 
                 # Save output
-                open(os.path.join(tmp_dir.tmp_dir, "final.qats"), "wb").write(qats_stdout)
+                with open(os.path.join(tmp_dir.tmp_dir, "final.qats"), "wb") as f:
+                    f.write(qats_stdout)
 
                 # Loop over lines of output and read S_best and M_best
                 for line in qats_stdout.decode('utf-8').split('\n'):

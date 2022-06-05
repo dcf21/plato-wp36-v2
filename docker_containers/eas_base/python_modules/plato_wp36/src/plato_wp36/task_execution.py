@@ -175,13 +175,13 @@ def do_pipeline_task(job_id: int,
                     task_description_raw = json.loads(task_description_json.value)
 
                     # Produce diagnostic logging about the metadata which is available to this task
-                    logging.info("Available input metadata keys: {}".format(attempt_info.task_object.metadata.keys()))
+                    logging.info("Available input metadata keys: {}".format(list(attempt_info.task_object.metadata.keys())))
 
                     if len(attempt_info.task_object.input_metadata) > 0:
                         logging.info("Requested metadata available from:")
                         for keyword in attempt_info.task_object.input_metadata:
                             logging.info("{} -- keys: {}".
-                                         format(keyword, attempt_info.task_object.input_metadata[keyword].keys()))
+                                         format(keyword, list(attempt_info.task_object.input_metadata[keyword].keys())))
 
                     # Evaluate any metadata expressions within our task description
                     expression_evaluator = task_expression_evaluation.TaskExpressionEvaluation(

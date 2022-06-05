@@ -83,6 +83,12 @@ def file_fetch(product_version_id, filename):
 # Index of all the tasks in the database
 @app.route("/task/<task_id>", methods=("GET", "POST"))
 def task_info(task_id):
+    # Check that task_id is integer
+    try:
+        task_id=int(task_id)
+    except ValueError:
+        return redirect(url_for('task_index'))
+
     # Fetch a list of information about all the attempts to run this task
     task_info = task_status.task_status(task_id=int(task_id))
     if task_info is None:

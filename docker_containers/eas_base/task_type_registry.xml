@@ -52,7 +52,7 @@
         <container>
             <name>eas_worker_qats</name>
             <resourceRequirements>
-                <cpu>8</cpu>
+                <cpu>2</cpu>
                 <gpu>0</gpu>
                 <memory_gb>16</memory_gb>
             </resourceRequirements>

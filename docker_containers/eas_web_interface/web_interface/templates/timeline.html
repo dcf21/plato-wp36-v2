@@ -26,7 +26,7 @@
         // Configuration for the Timeline
         var options = {
             margin: {
-                item: {horizontal: 0, vertical: 10},
+                item: {horizontal: -10, vertical: 10},
                 axis: 5
             }
         };
@@ -36,6 +36,10 @@
 
         // Bind double-click event
         timeline.on('doubleClick', function (properties) {
+            // Do nothing if no task is selected
+            if (properties.item === null) return;
+
+            // Redirect to task information page
             window.location = "/task/" + properties.item;
         });
     </script>
