@@ -22,7 +22,9 @@ app = Flask(__name__)
 def read_get_arguments(search):
     for parameter in search:
         val = request.values.get(parameter)
-        if val == '-- Any --' or val is None:
+        if val is None:
+            continue
+        elif val == '-- Any --':
             search[parameter] = None
         elif not parameter.startswith('max_'):
             try:
@@ -43,7 +45,7 @@ def task_index():
     search = {
         'job_name': None,
         'status': None,
-        'max_depth': 4
+        'max_depth': 6
     }
     read_get_arguments(search)
 
@@ -54,7 +56,7 @@ def task_index():
     self_url = url_for("task_index")
     return render_template('index.html', task_table=task_list, self_url=self_url,
                            status_options=('-- Any --', 'queued', 'waiting', 'done', 'running', 'stalled'),
-                           max_depth_options=['-- Any --'] + list(range(5)),
+                           max_depth_options=['-- Any --'] + list(range(7)),
                            job_name_options=['-- Any --'] + select_options.job_name_options(),
                            status=search['status'], job_name=search['job_name'], max_depth=search['max_depth']
                            )

@@ -41,7 +41,11 @@
         {% for log_item in log_table %}
             <tr class="log_item_{{ log_item.class }}">
                 <td>
-                    <a href="/task/{{ log_item.task_id }}">{{ log_item.attempt_id }}</a>
+                    {% if log_item.task_id %}
+                        <a href="/task/{{ log_item.task_id }}">{{ log_item.attempt_id }}</a>
+                    {% else %}
+                        {{ log_item.attempt_id }}
+                    {% endif %}
                 </td>
                 <td style="white-space: nowrap">{{ log_item.time }}</td>
                 <td>
