@@ -74,7 +74,7 @@
                           }
                         },
                         {
-                          "task": "multiplication",
+                          "task": "multiply",
                           "inputs": {
                             "lightcurve_1": "'grid2d_A_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)",
                             "lightcurve_2": "'grid2d_B_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"

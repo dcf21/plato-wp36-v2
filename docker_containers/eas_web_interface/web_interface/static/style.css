@@ -98,3 +98,6 @@ p.formlabel { padding: 3px 0; font-size:17px; color:#777; margin: 3px; }
 .log_item_error { background-color: #ffa0a0; }
 
 .vis-labelset { font-weight: bold; font-size: 13px; }
+
+.pager { margin: 20px 0; font-size: 18px; font-weight: bold; }
+.pager_item { display: inline-block; margin: 0 6px; }

@@ -29,6 +29,31 @@
 
     <hr/>
 
+    <div class="alert alert-success" role="alert">
+        {% if log_table.result_max > log_table.result_min %}
+            Showing pipeline logs {{ log_table.result_min_str }}&ndash;{{ log_table.result_max_str }} of
+            {{ log_table.result_count_str }}
+        {% elif log_table.result_max > 0 %}
+            Showing pipeline logs {{ log_table.result_max_str }} of {{ log_table.result_count_str }}
+        {% else %}
+            No matching pipeline logs
+        {% endif %}
+    </div>
+
+    {% if log_table.page_max > 1 %}
+        <div class="pager">
+            {% for pager_item in pager_list %}
+                <div class="pager_item">
+                    {% if pager_item.num != log_table.page_number %}
+                        <a href="{{ pager_item.url }}">{{ pager_item.num }}</a>
+                    {% else: %}
+                        {{ pager_item.num }}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <table class="library_list bordered bordered_compact">
         <thead>
         <tr>
@@ -38,7 +63,7 @@
         </tr>
         </thead>
         <tbody>
-        {% for log_item in log_table %}
+        {% for log_item in log_table.list %}
             <tr class="log_item_{{ log_item.class }}">
                 <td>
                     {% if log_item.task_id %}

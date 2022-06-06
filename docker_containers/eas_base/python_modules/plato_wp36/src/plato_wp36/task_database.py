@@ -438,7 +438,7 @@ WHERE {};""".format(" AND ".join(constraints)))
                 value_float = float(value.value)
 
                 if not math.isfinite(value_float):
-                    logging.warning("Ignoring non-finite value for <{}>=<{}>".format(keyword, value))
+                    logging.warning("Ignoring non-finite value for <{}>=<{}>".format(keyword, repr(value.value)))
                     continue
             except ValueError:
                 value_string = str(value.value)

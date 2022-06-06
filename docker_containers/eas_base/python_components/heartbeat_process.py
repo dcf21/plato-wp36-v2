@@ -45,6 +45,9 @@ def start_heartbeat(parent_pid: int, task_attempt_id: int, heartbeat_cadence: in
     # Log start of heartbeat
     logging.info("Starting heartbeat for <{}>".format(task_attempt_id))
 
+    # Record start time
+    time_start = time.time()
+
     # Enter an infinite processing loop
     while True:
         # Catch all exceptions, and record them in the logging database
@@ -71,8 +74,9 @@ WHERE schedulingAttemptId=%s;
             error_message = traceback.format_exc()
             logging.error(error_message)
 
-        # Wait until next heartbeat
-        time.sleep(heartbeat_cadence)
+        # Wait until next heartbeat. Do very regular checks initially, as many tasks end quickly.
+        age = time.time() - time_start
+        time.sleep(min(age+1, heartbeat_cadence))
 
 
 if __name__ == "__main__":

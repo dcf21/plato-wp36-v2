@@ -58,7 +58,7 @@
                   }
                 },
                 {
-                  "task": "multiplication",
+                  "task": "multiply",
                   "inputs": {
                     "lightcurve_1": "'christiansen_A_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)",
                     "lightcurve_2": "'christiansen_B_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"

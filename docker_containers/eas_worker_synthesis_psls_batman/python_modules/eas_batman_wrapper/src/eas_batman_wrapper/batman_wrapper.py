@@ -287,6 +287,10 @@ class BatmanWrapper:
         else:
             mes = integrated_transit_power / mes_assume_noise_per_pixel / sqrt(pixels_in_transit)
 
+        # Convert infinite MES values into a large number, since database cannot hold< inf>
+        if mes > 1e8:
+            mes = 1e8
+
         # Add noise to lightcurve
         noise = np.random.normal(0, noise_per_pixel, size=len(flux))
         flux += noise

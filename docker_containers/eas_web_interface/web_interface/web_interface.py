@@ -8,6 +8,7 @@ import magic
 import os.path
 
 from flask import Flask, Response, redirect, request, render_template, url_for
+from urllib.parse import urlencode
 
 from plato_wp36 import task_database
 from plato_wp36.diagnostics import timings_table, pass_fail_table
@@ -26,7 +27,7 @@ def read_get_arguments(search):
             continue
         elif val == '-- Any --':
             search[parameter] = None
-        elif not parameter.startswith('max_'):
+        elif not (parameter.startswith('max_') or parameter == 'page'):
             try:
                 search[parameter] = str(val)
             except (TypeError, ValueError):
@@ -36,6 +37,10 @@ def read_get_arguments(search):
                 search[parameter] = int(val)
             except (TypeError, ValueError):
                 pass
+
+
+def write_get_arguments(search):
+    return urlencode(search)
 
 
 # Index of all the tasks in the database
@@ -189,16 +194,26 @@ def progress_index():
 def log_index():
     # Fetch page search parameters
     search = {
-        'min_severity': 'warning'
+        'min_severity': 'warning',
+        'page': 1
     }
     read_get_arguments(search)
 
     # Fetch a list of all the log messages in the database
     log_list = log_messages.fetch_log_messages(**search)
 
-    # Render list of log messages into HTML
+    # Write pager list
     self_url = url_for("log_index")
+    pager_list = []
+    for page_num in range(log_list['show_page_min'], log_list['show_page_max']):
+        pager_list.append({
+            'num': page_num,
+            'url': "{}?{}".format(self_url, write_get_arguments({**search, 'page': page_num}))
+        })
+
+    # Render list of log messages into HTML
     return render_template('logs.html', log_table=log_list, self_url=self_url, min_severity=search['min_severity'],
+                           pager_list=pager_list,
                            severity_options=('-- Any --', 'warning', 'error'))
 
 

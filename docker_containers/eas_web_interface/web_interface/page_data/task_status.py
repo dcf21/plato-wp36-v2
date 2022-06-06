@@ -139,7 +139,7 @@ ORDER BY queuedTime;
                 'errorFail': task_run['errorFail'],
                 'output_metadata': output_metadata_list,
                 'file_output_info': file_output_info,
-                'log_table': fetch_log_messages(attempt_id=task_run['schedulingAttemptId'])
+                'log_table': fetch_log_messages(attempt_id=task_run['schedulingAttemptId'], page_size=1e6)['list']
             }
 
         # Append this item to the list of results
