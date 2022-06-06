@@ -40,7 +40,9 @@
         <tbody>
         {% for log_item in log_table %}
             <tr class="log_item_{{ log_item.class }}">
-                <td>{{ log_item.attempt_id }}</td>
+                <td>
+                    <a href="/task/{{ log_item.task_id }}">{{ log_item.attempt_id }}</a>
+                </td>
                 <td style="white-space: nowrap">{{ log_item.time }}</td>
                 <td>
                     <pre style="font-size: 12px; margin-bottom:0;">{{ log_item.message }}</pre>

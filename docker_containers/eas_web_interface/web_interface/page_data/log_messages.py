@@ -48,7 +48,7 @@ def fetch_log_messages(attempt_id: Optional[int] = None,
 
         # Search for all matching log messages
         task_db.db_handle.parameterised_query("""
-SELECT l.timestamp, l.generatedByTaskExecution, l.severity, l.message
+SELECT l.timestamp, l.generatedByTaskExecution, l.severity, l.message, et.taskId
 FROM eas_log_messages l
 LEFT JOIN eas_scheduling_attempt esa on l.generatedByTaskExecution = esa.schedulingAttemptId
 LEFT JOIN eas_task et on esa.taskId = et.taskId
@@ -68,6 +68,7 @@ ORDER BY generatedByTaskExecution, timestamp;
 
             output.append({
                 'attempt_id': item['generatedByTaskExecution'],
+                'taskId': item['taskId'],
                 'time': datetime.utcfromtimestamp(item['timestamp']).strftime('%Y-%m-%d %H:%M:%S'),
                 'class': message_class,
                 'message': item['message'].strip()

@@ -42,13 +42,17 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
             tmp_path = os.path.join(tmp_dir.tmp_dir, filename)
             file_metadata = lc_object.to_file(target_path=tmp_path)
 
+            final_metadata = {**lc_object.metadata, **file_metadata}
+
+            logging.info("Registering LC metadata: {}".format(repr(final_metadata)))
+
             # Import lightcurve into the task database
             task_db.execution_attempt_register_output(
                 execution_attempt=execution_attempt,
                 output_name="lightcurve",
                 file_path=tmp_path,
                 preserve=False,
-                file_metadata={**lc_object.metadata, **file_metadata}
+                file_metadata=final_metadata
             )
 
         # Associate lightcurve metadata to the synthesis task in the task database

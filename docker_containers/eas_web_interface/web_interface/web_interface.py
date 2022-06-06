@@ -43,7 +43,7 @@ def task_index():
     search = {
         'job_name': None,
         'status': None,
-        'max_depth': None
+        'max_depth': 4
     }
     read_get_arguments(search)
 
@@ -85,7 +85,7 @@ def file_fetch(product_version_id, filename):
 def task_info(task_id):
     # Check that task_id is integer
     try:
-        task_id=int(task_id)
+        task_id = int(task_id)
     except ValueError:
         return redirect(url_for('task_index'))
 
@@ -187,7 +187,7 @@ def progress_index():
 def log_index():
     # Fetch page search parameters
     search = {
-        'min_severity': None
+        'min_severity': 'warning'
     }
     read_get_arguments(search)
 

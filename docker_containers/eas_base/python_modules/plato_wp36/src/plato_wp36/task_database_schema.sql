@@ -80,6 +80,11 @@ CREATE TABLE eas_scheduling_attempt
     FOREIGN KEY (hostId) REFERENCES eas_worker_host (hostId) ON DELETE CASCADE
 );
 
+CREATE INDEX eas_scheduling_attempt_1 ON eas_scheduling_attempt (isQueued);
+CREATE INDEX eas_scheduling_attempt_2 ON eas_scheduling_attempt (isRunning);
+CREATE INDEX eas_scheduling_attempt_3 ON eas_scheduling_attempt (isFinished);
+CREATE INDEX eas_scheduling_attempt_4 ON eas_scheduling_attempt (errorFail, taskId);
+
 -- Log messages associated with each attempt to run a task
 CREATE TABLE eas_log_messages
 (

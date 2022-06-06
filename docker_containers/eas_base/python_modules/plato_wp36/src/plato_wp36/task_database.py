@@ -7,11 +7,11 @@ Module for reading and writing task objects to the database.
 
 import hashlib
 import logging
+import math
 import os
 import re
 import shutil
 import time
-import json
 
 from typing import Any, Dict, Optional
 
@@ -436,6 +436,10 @@ WHERE {};""".format(" AND ".join(constraints)))
             # Work out whether metadata is float-like or string-like
             try:
                 value_float = float(value.value)
+
+                if not math.isfinite(value_float):
+                    logging.warning("Ignoring non-finite value for <{}>=<{}>".format(keyword, value))
+                    continue
             except ValueError:
                 value_string = str(value.value)
 
