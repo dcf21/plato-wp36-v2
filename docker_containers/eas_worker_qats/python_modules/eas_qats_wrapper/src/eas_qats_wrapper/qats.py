@@ -51,8 +51,8 @@ def dask_thread(qats_path, lc_file, delta_min, delta_max, transit_length):
                     s_best = float(words[0])  # Signal strength of best-fit transit sequence
                     m_best = int(words[1])  # Number of transits in best-fit sequence
 
-                    # The QATS paper is ambiguous whether this is required, but it gives better results
-                    s_best /= sqrt(m_best * transit_length)
+                    # The QATS paper is ambiguous whether this is required
+                    # s_best /= sqrt(m_best * transit_length)
 
                     qats_output[run_key] = {
                         's_best': s_best,

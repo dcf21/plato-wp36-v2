@@ -20,9 +20,9 @@
               "task": "execution_for_loop",
               "parameter": "size",
               "log_range": [
-                "(constants.Rearth * 10)",
-                "(constants.Rearth * 50)",
-                6
+                "(constants.Rearth / 4)",
+                "(constants.Rearth * 4)",
+                10
               ],
               "task_list": [
                 {
