@@ -1,0 +1,112 @@
+{
+  "job_name": "detection_grid_2d",
+  "working_directory": "detection_grid_2d",
+  "task_list": [
+    {
+      "task": "execution_for_loop",
+      "parameter": "tda",
+      "values": [
+        "tls",
+        "bls_reference",
+        "qats"
+      ],
+      "task_list": [
+        {
+          "task": "execution_for_loop",
+          "parameter": "cadence",
+          "values": [
+            900
+          ],
+          "task_list": [
+            {
+              "task": "execution_for_loop",
+              "parameter": "size",
+              "linear_range": [
+                "(constants.Rearth * 0.25)",
+                "(constants.Rearth * 2)",
+                24
+              ],
+              "task_list": [
+                {
+                  "task": "execution_for_loop",
+                  "parameter": "period",
+                  "linear_range": [
+                    0.5,
+                    380,
+                    24
+                  ],
+                  "task_list": [
+                    {
+                      "task": "execution_for_loop",
+                      "parameter": "impact",
+                      "linear_range": [
+                        0,
+                        1,
+                        12
+                      ],
+                      "task_list": [
+                        {
+                          "task": "synthesis_psls",
+                          "outputs": {
+                            "lightcurve": "'grid2d_A_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
+                          },
+                          "specs": {
+                            "duration": 730,
+                            "sampling_cadence": "(metadata['cadence'])",
+                            "enable_transits": 0
+                          }
+                        },
+                        {
+                          "task": "synthesis_batman",
+                          "outputs": {
+                            "lightcurve": "'grid2d_B_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
+                          },
+                          "specs": {
+                            "duration": 730,
+                            "planet_radius": "(metadata['size'])",
+                            "t0": "(random.random() * 200)",
+                            "orbital_period": "(metadata['period'])",
+                            "impact_parameter": "(metadata['impact'])",
+                            "semi_major_axis": "(pow(metadata['period'])/365.25, 2/3))",
+                            "noise": 0,
+                            "mes_assume_noise": "(constants.plato_noise)",
+                            "sampling_cadence": "(metadata['cadence'])"
+                          }
+                        },
+                        {
+                          "task": "multiplication",
+                          "inputs": {
+                            "lightcurve_1": "'grid2d_A_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)",
+                            "lightcurve_2": "'grid2d_B_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
+                          },
+                          "outputs": {
+                            "lightcurve": "'grid2d_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
+                          }
+                        },
+                        {
+                          "task": "verify",
+                          "name": "lightcurve_verification",
+                          "inputs": {
+                            "lightcurve": "'grid2d_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
+                          }
+                        },
+                        {
+                          "task": "'transit_search_{tda}'.format(**metadata)",
+                          "name": "transit_detection",
+                          "inputs": {
+                            "lightcurve": "'grid2d_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
+                          },
+                          "lc_duration": 730
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

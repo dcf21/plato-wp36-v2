@@ -1,0 +1,77 @@
+{
+  "job_name": "detection_grid_1d",
+  "working_directory": "detection_grid_1d",
+  "task_list": [
+    {
+      "task": "execution_for_loop",
+      "parameter": "synthesis_tool",
+      "values": [
+        "psls",
+        "batman"
+      ],
+      "task_list": [
+        {
+          "task": "execution_for_loop",
+          "parameter": "tda",
+          "values": [
+            "tls",
+            "bls_reference",
+            "qats"
+          ],
+          "task_list": [
+            {
+              "task": "execution_for_loop",
+              "parameter": "cadence",
+              "values": [
+                900
+              ],
+              "task_list": [
+                {
+                  "task": "execution_for_loop",
+                  "parameter": "size",
+                  "log_range": [
+                    "(constants.Rearth / 4)",
+                    "(constants.Rearth * 4)",
+                    10
+                  ],
+                  "task_list": [
+                    {
+                      "task": "'synthesis_{synthesis_tool}'.format(**metadata)",
+                      "name": "lightcurve_synthesis",
+                      "outputs": {
+                        "lightcurve": "'evsize_{synthesis_tool_index}_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
+                      },
+                      "specs": {
+                        "duration": 730,
+                        "planet_radius": "(metadata['size'])",
+                        "orbital_period": 240,
+                        "semi_major_axis": 1,
+                        "orbital_angle": 0,
+                        "sampling_cadence": "(metadata['cadence'])"
+                      }
+                    },
+                    {
+                      "task": "verify",
+                      "name": "lightcurve_verification",
+                      "inputs": {
+                        "lightcurve": "'evsize_{synthesis_tool_index}_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
+                      }
+                    },
+                    {
+                      "task": "'transit_search_{tda}'.format(**metadata)",
+                      "name": "transit_detection",
+                      "inputs": {
+                        "lightcurve": "'evsize_{synthesis_tool_index}_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
+                      },
+                      "lc_duration": 730
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
