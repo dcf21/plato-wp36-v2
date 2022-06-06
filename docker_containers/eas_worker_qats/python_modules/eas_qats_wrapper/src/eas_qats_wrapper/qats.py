@@ -9,7 +9,7 @@ import dask
 
 from math import floor, log, sqrt
 from multiprocessing.pool import ThreadPool
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from plato_wp36.lightcurve import LightcurveArbitraryRaster
 from plato_wp36 import settings, task_database, task_execution, temporary_directory
@@ -73,6 +73,8 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
     """
     Perform a transit search on a light curve, using the QATS code.
 
+    This wrapper is quite inefficient, since it spends a lot of time forking child processes.
+
     :param lc:
         The lightcurve object containing the input lightcurve.
     :type lc:
@@ -135,8 +137,8 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
     maximum_period = lc_duration / minimum_n_transits  # days
 
     # Maximum TTV relative magnitude f
-    max_ttv_mag = float(search_settings.get('max_ttv_mag', 0.0001))
-    delta_spans = int(floor(log(maximum_period / period_min) / log(1 + max_ttv_mag)))
+    max_ttv_mag = float(search_settings.get('max_ttv_mag', 0.0005))
+    delta_spans = int(floor(log(maximum_period / period_min) / log(1 + max_ttv_mag / 2)))
     delta_base = period_min / lc_time_step_days  # time steps
 
     # Logging
@@ -163,6 +165,10 @@ def process_lightcurve(lc: LightcurveArbitraryRaster, lc_duration: Optional[floa
 
                 # Equation 16
                 delta_max = int(delta_base * pow(1 + max_ttv_mag / 2, delta_index + 1))
+
+                # Ignore grid points with zero span in period
+                if delta_min == delta_max:
+                    continue
 
                 # Run QATS
                 delayed_processes.append(dask_thread(qats_path, lc_file, delta_min, delta_max, transit_length))
