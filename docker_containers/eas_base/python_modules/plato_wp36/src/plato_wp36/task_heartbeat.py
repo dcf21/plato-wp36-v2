@@ -94,5 +94,13 @@ class TaskHeartbeat:
         :return:
         """
 
-        # Terminate the heartbeat process
-        self.process.terminate()
+        # Allow multiple calls to this clean-up function
+        if self.process is not None:
+            # Terminate the heartbeat process
+            self.process.terminate()
+
+            # Clear up zombie processes
+            self.process.wait()
+
+            # Mark this process as completed
+            self.process = None

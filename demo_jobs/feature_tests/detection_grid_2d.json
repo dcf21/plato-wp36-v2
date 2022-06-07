@@ -96,6 +96,9 @@
                           "inputs": {
                             "lightcurve": "'grid2d_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.gz'.format(**metadata)"
                           },
+                          "outputs": {
+                            "debugging": "'grid2d_{tda_index}_{cadence_index}_{size_index}_{period_index}_{impact_index}.tar.gz'.format(**metadata)"
+                          },
                           "lc_duration": 730
                         }
                       ]

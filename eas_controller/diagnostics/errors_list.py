@@ -57,7 +57,7 @@ ORDER BY l.timestamp;
             # Display results
             time_string = datetime.utcfromtimestamp(item['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
             output.write("{} |{:36s}|{:18s}|{}\n".format(
-                time_string, item['jobName'], item['taskType'], item['message'].strip()
+                str(time_string), str(item['jobName']), str(item['taskType']), str(item['message']).strip()
             ))
 
 

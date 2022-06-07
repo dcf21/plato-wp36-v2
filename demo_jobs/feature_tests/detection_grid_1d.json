@@ -63,6 +63,9 @@
                       "inputs": {
                         "lightcurve": "'evsize_{synthesis_tool_index}_{tda_index}_{cadence_index}_{size_index}.gz'.format(**metadata)"
                       },
+                      "outputs": {
+                        "debugging": "'evsize_{synthesis_tool_index}_{tda_index}_{cadence_index}_{size_index}.tar.gz'.format(**metadata)"
+                      },
                       "lc_duration": 730
                     }
                   ]
