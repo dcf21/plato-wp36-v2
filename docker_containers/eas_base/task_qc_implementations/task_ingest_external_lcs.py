@@ -1,9 +1,9 @@
 #!../../../data/datadir_local/virtualenv/bin/python3
 # -*- coding: utf-8 -*-
-# task_synthesis_psls.py
+# task_ingest_external_lcs.py
 
 """
-Quality control implementation of the EAS pipeline task <synthesis_psls>.
+Quality control implementation of the EAS pipeline task <ingest_external_lcs>.
 """
 
 from plato_wp36 import task_database, task_execution
@@ -12,7 +12,7 @@ from plato_wp36 import task_database, task_execution
 @task_execution.eas_pipeline_task
 def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
     """
-    Implementation of the QC validation process which happens after the EAS pipeline task <synthesis_psls>.
+    Implementation of the QC validation process which happens after the EAS pipeline task <ingest_external_lcs>.
 
     :param execution_attempt:
         Object describing this attempt by the job scheduler to run this task.

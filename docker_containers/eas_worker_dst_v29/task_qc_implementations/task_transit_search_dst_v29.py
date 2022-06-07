@@ -6,8 +6,6 @@
 Quality control implementation of the EAS pipeline task <transit_search_dst_v29>.
 """
 
-from typing import Dict
-
 from plato_wp36 import task_database, task_execution
 
 

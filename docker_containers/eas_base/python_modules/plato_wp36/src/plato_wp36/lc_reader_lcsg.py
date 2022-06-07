@@ -13,51 +13,49 @@ import gzip
 from typing import Optional
 
 from .lightcurve import LightcurveArbitraryRaster
-from .settings import Settings
 
 
-def read_lcsg_lightcurve(filename: str, gzipped: bool = True, cut_off_time: Optional[float] = None,
-                         directory: str = "lightcurves_v2"):
+def read_lcsg_lightcurve(file_path: str, gzipped: Optional[bool] = None, cut_off_time: Optional[float] = None):
     """
     Read a lightcurve from an ASCII data file.
 
     ASCII file should have three columns:
     time [days] ; flux ; flag
 
-    :param filename:
-        The filename of the input data file.
-    :type filename:
+    :param file_path:
+        The full path to the input data file.
+    :type file_path:
         str
     :param gzipped:
-        Boolean flag indicating whether the input datafiles have been gzipped
+        Boolean flag indicating whether the input datafiles have been gzipped. If this is not set, a guess is made
+        from the filename suffix.
     :type gzipped:
         bool
     :param cut_off_time:
         Only read lightcurve up to some cut off time
     :type cut_off_time:
         float
-    :param directory:
-        The directory in which the LCSG lightcurves are stored.
-    :type directory:
-        str
     :return:
         A <LightcurveArbitraryRaster> object.
     """
 
+    # Empty data structures to hold lightcurve data
     times = []  # days
     fluxes = []
     uncertainties = []
     flags = []
+
+    # Extract the filename from the supplied file path
+    filename = os.path.split(file_path)[1]
+
+    # Build a dictionary of metadata to associate with this lightcurve
     metadata = {
-        'directory': directory,
         'filename': filename
     }
 
-    # Fetch EAS settings
-    settings = Settings().settings
-
-    # Full path for this lightcurve
-    file_path = os.path.join(settings['lcPath'], directory, filename)
+    # Determine whether input file is gzipped
+    if gzipped is None:
+        gzipped = file_path.endswith(".gz")
 
     # Look up file open function
     file_opener = gzip.open if gzipped else open
@@ -73,7 +71,7 @@ def read_lcsg_lightcurve(filename: str, gzipped: bool = True, cut_off_time: Opti
                     metadata_key = test.group(1).strip()
                     metadata_value = test.group(2).strip()
 
-                    # If metadata value is a float, convert it to a float. Otherwise keep it as string.
+                    # If metadata value is a float, convert it to a float. Otherwise, keep it as string.
                     try:
                         metadata_value = float(metadata_value)
                     except ValueError:

@@ -108,6 +108,10 @@
             <container>all</container>
         </task>
         <task>
+            <name>ingest_external_lcs</name>
+            <container>all</container>
+        </task>
+        <task>
             <name>multiply</name>
             <container>all</container>
         </task>

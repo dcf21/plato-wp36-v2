@@ -1,0 +1,11 @@
+{
+  "job_name": "ingest_lcsg",
+  "working_directory": "ingest_lcsg",
+  "task_list": [
+    {
+      "task": "ingest_external_lcs",
+      "lc_type": "lcsg",
+      "input_path": "lightcurves_v2/csvs/bright/plato_bright*"
+    }
+  ]
+}

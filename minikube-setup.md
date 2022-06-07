@@ -86,8 +86,8 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
    commands each need keep running, so execute them in two separate `screen` sessions:
 
     ```
-    minikube mount --uid 999 ../data/datadir_output/:/mnt/datadir_output/
-    minikube mount --uid 999 ../data/datadir_input/:/mnt/datadir_input/
+    minikube mount --uid 999 datadir_output/:/mnt/datadir_output/
+    minikube mount --uid 999 datadir_input/:/mnt/datadir_input/
     ```
 
 5. **Create a Python virtual environment**

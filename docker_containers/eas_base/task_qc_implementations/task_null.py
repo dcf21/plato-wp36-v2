@@ -8,8 +8,6 @@ Quality control implementation of the EAS pipeline task <null>, which does nothi
 This is a useful template for the minimal code needed to create a new EAS module from scratch.
 """
 
-from typing import Dict
-
 from plato_wp36 import task_database, task_execution
 
 
