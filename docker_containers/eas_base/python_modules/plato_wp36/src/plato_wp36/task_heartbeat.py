@@ -11,7 +11,9 @@ with TaskHeartbeat( <settings> ):
 """
 
 import os
+import logging
 import subprocess
+import time
 
 from typing import Optional
 
@@ -56,11 +58,25 @@ class TaskHeartbeat:
         """
 
         # Create a heartbeat subprocess
-        self.process = subprocess.Popen(args=[self.heartbeat_script,
-                                              "--pid", str(os.getpid()),
-                                              "--attempt-id", str(self.task_attempt_id),
-                                              "--cadence", str(self.heartbeat_cadence)
-                                              ])
+        allowed_failures = 5
+        self.process = None
+
+        # Sometimes there are no file handles available, in which case we back off to let old processes get around
+        # to exiting
+        while self.process is None:
+            try:
+                self.process = subprocess.Popen(args=[self.heartbeat_script,
+                                                      "--pid", str(os.getpid()),
+                                                      "--attempt-id", str(self.task_attempt_id),
+                                                      "--cadence", str(self.heartbeat_cadence)
+                                                      ])
+            except BlockingIOError:
+                if allowed_failures < 1:
+                    raise
+                allowed_failures -= 1
+                self.process = None
+                logging.info("Heartbeat process creation failed. Backing off.")
+                time.sleep(60)
 
         # Finished
         return self

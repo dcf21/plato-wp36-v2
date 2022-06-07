@@ -36,14 +36,14 @@ def fetch_progress_summary(job_name: Optional[str] = None):
         # Search for all matching tasks
         task_db.db_handle.parameterised_query("""
 SELECT tt.taskTypeName,
-   NOT (s.isQueued OR s.isRunning OR s.isFinished OR s.errorFail) AS run_waiting,
+   s.isQueued IS NULL AS run_waiting,
    s.isQueued AS run_queued,
    s.errorFail OR (s.isRunning AND s.latestHeartbeat < {min_heartbeat:f}) AS run_stalled,
    s.isRunning AND NOT s.errorFail AND s.latestHeartbeat > {min_heartbeat:f} AS run_running,
    s.isFinished AND NOT s.errorFail AS run_done
-FROM eas_scheduling_attempt s
-INNER JOIN eas_task t on t.taskId = s.taskId
-INNER JOIN eas_task_types tt on tt.taskTypeId = t.taskTypeId
+FROM eas_task t
+LEFT OUTER JOIN eas_scheduling_attempt s ON t.taskId = s.taskId
+INNER JOIN eas_task_types tt ON tt.taskTypeId = t.taskTypeId
 WHERE {constraint};
 """.format(constraint=" AND ".join(constraints), min_heartbeat=threshold_heartbeat_time), tuple(parameters))
 
@@ -54,11 +54,13 @@ WHERE {constraint};
         for item in task_list:
             if item['taskTypeName'] not in output_table:
                 output_table[item['taskTypeName']] = [0] * 5
-            output_table[item['taskTypeName']][0] += item['run_waiting']
-            output_table[item['taskTypeName']][1] += item['run_queued']
-            output_table[item['taskTypeName']][2] += item['run_stalled']
-            output_table[item['taskTypeName']][3] += item['run_running']
-            output_table[item['taskTypeName']][4] += item['run_done']
+            if item['run_waiting']:
+                output_table[item['taskTypeName']][0] += item['run_waiting']
+            else:
+                output_table[item['taskTypeName']][1] += item['run_queued']
+                output_table[item['taskTypeName']][2] += item['run_stalled']
+                output_table[item['taskTypeName']][3] += item['run_running']
+                output_table[item['taskTypeName']][4] += item['run_done']
 
         # Format table
         output = {
