@@ -8,6 +8,12 @@ from plato_wp36 import task_database
 
 
 def render_run_time(input: Optional[float]):
+    """
+    Render the run-time of a task (in seconds) as a human-readable string.
+
+    :param input:
+        The run-time to render (or None)
+    """
     if input is None:
         return "-"
     else:

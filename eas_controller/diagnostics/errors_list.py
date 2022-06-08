@@ -6,6 +6,7 @@
 Produce a list of all the error messages in the task database
 """
 
+import argparse
 import logging
 import os
 import sys
@@ -13,7 +14,6 @@ from datetime import datetime
 
 from typing import Optional
 
-import argparse
 from plato_wp36 import settings, task_database
 
 

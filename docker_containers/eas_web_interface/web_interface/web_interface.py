@@ -11,9 +11,9 @@ from flask import Flask, Response, redirect, request, render_template, url_for
 from urllib.parse import urlencode
 
 from plato_wp36 import task_database
-from plato_wp36.diagnostics import timings_table, pass_fail_table
+from plato_wp36.diagnostics import pass_fail_table, progress_summary, timings_table
 
-from page_data import activity_history, file_explorer, log_messages, progress_summary, select_options, \
+from page_data import activity_history, file_explorer, log_messages, select_options, \
     task_status, task_tree
 
 # Instantiate flask http server

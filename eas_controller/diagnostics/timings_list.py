@@ -16,7 +16,14 @@ from typing import Optional
 
 from plato_wp36 import settings, task_database
 
+
 def render_time(timestamp):
+    """
+    Render a unix time stamp as a human-readable string.
+
+    :param timestamp:
+        Unix timestamp (or None)
+    """
     if timestamp is None:
         return "-"
     else:
@@ -24,6 +31,12 @@ def render_time(timestamp):
 
 
 def render_run_time(input):
+    """
+    Render the run-time of a task, in seconds.
+
+    :param input:
+        The run time (or None)
+    """
     if input is None:
         return "-"
     else:
