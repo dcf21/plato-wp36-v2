@@ -31,7 +31,7 @@
 
     <div class="alert alert-success" role="alert">
         {% if log_table.result_max > log_table.result_min %}
-            Showing pipeline logs {{ log_table.result_min_str }}&ndash;{{ log_table.result_max_str }} of
+            Showing pipeline logs {{ log_table.result_min_str }} &ndash; {{ log_table.result_max_str }} of
             {{ log_table.result_count_str }}
         {% elif log_table.result_max > 0 %}
             Showing pipeline logs {{ log_table.result_max_str }} of {{ log_table.result_count_str }}

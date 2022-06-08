@@ -9,6 +9,31 @@
         File explorer: Directories
     </div>
 
+    <div class="alert alert-success" role="alert">
+        {% if item_table.result_max > item_table.result_min %}
+            Showing directories {{ item_table.result_min_str }} &ndash; {{ item_table.result_max_str }} of
+            {{ item_table.result_count_str }}
+        {% elif item_table.result_max > 0 %}
+            Showing directory {{ item_table.result_max_str }} of {{ item_table.result_count_str }}
+        {% else %}
+            No matching directories
+        {% endif %}
+    </div>
+
+    {% if item_table.page_max > 1 %}
+        <div class="pager">
+            {% for pager_item in pager_list %}
+                <div class="pager_item">
+                    {% if pager_item.num != item_table.page_number %}
+                        <a href="{{ pager_item.url }}">{{ pager_item.num }}</a>
+                    {% else: %}
+                        {{ pager_item.num }}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <h5>Select intermediate file product directory to view:</h5>
 
     <table class="library_list bordered bordered_compact" style="margin: 20px;">
@@ -19,7 +44,7 @@
         </tr>
         </thead>
         <tbody>
-        {% for item in item_list %}
+        {% for item in item_table.list %}
             <tr>
                 <td>
                     <a href="/files/{{ item.name }}">

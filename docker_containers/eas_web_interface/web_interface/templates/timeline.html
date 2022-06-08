@@ -9,6 +9,36 @@
         Showing pipeline activity history
     </div>
 
+    <form method="GET" action="{{ self_url }}">
+        <div class="form-item-holder">
+            <div class="form-item">
+                <p class="formlabel">Filter tasks</p>
+                <select class="slt" name="filter">
+                    {% for option in filter_options %}
+                        <option value="{{ option[0] }}" {% if option[0] == filter %}selected="selected"{% endif %}>
+                            {{ option[1] }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-item form-item-notitle">
+                <input type="submit" class="btn btn-sm btn-success" value="Update...">
+            </div>
+        </div>
+    </form>
+
+    <hr/>
+
+    <div class="alert alert-success" role="alert">
+        {% if item_table.item_count == 1 %}
+            Showing {{ item_table.item_count }} task of {{ item_table.total_items }}
+        {% elif item_table.item_count > 1 %}
+            Showing {{ item_table.item_count }} tasks of {{ item_table.total_items }}
+        {% else %}
+            No matching tasks
+        {% endif %}
+    </div>
+
     <p>
         Double click on tasks to view more information.
     </p>
@@ -20,8 +50,8 @@
         var container = document.getElementById('visualization');
 
         // Create a DataSet (allows two way data-binding)
-        var groups = new vis.DataSet({{ groups|safe }});
-        var items = new vis.DataSet({{ activity_history|safe }});
+        var groups = new vis.DataSet({{ item_table.groups|safe }});
+        var items = new vis.DataSet({{ item_table.item_list|safe }});
 
         // Configuration for the Timeline
         var options = {

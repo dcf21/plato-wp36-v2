@@ -20,7 +20,13 @@ from page_data import activity_history, file_explorer, log_messages, select_opti
 app = Flask(__name__)
 
 
-def read_get_arguments(search):
+def read_get_arguments(search: dict):
+    """
+    Read the GET arguments received by flask into a dictionary, overriding default values.
+
+    :param search:
+        Default parameter values for every GET argument we are to look for.
+    """
     for parameter in search:
         val = request.values.get(parameter)
         if val is None:
@@ -39,8 +45,31 @@ def read_get_arguments(search):
                 pass
 
 
-def write_get_arguments(search):
+def write_get_arguments(search: dict):
+    """
+    Write a safe URL string containing all the GET arguments listed in the dictionary <search>
+    """
     return urlencode(search)
+
+
+def write_pager_list(result_list, get_data, self_url):
+    """
+    Write a list of the URLs used to display paginated results
+
+    :param result_list:
+        Data structure returned from our database search.
+    :param get_data:
+        The GET arguments which need to be preserved in the URL for each page
+    :param self_url:
+        The base URL for this webpage.
+    """
+    pager_list = []
+    for page_num in range(result_list['show_page_min'], result_list['show_page_max'] + 1):
+        pager_list.append({
+            'num': page_num,
+            'url': "{}?{}".format(self_url, write_get_arguments({**get_data, 'page': page_num}))
+        })
+    return pager_list
 
 
 # Index of all the tasks in the database
@@ -108,21 +137,41 @@ def task_info(task_id):
 # Index of all the file directories in the database
 @app.route("/directories")
 def directory_index():
+    # Fetch page search parameters
+    search = {
+        'page': 1
+    }
+    read_get_arguments(search)
+
     # Fetch a list of all the directories in the database
-    directory_list = file_explorer.fetch_directory_list()
+    directory_table = file_explorer.fetch_directory_list(page=search['page'])
+
+    # Write pager list
+    self_url = url_for("directory_index")
+    pager_list = write_pager_list(result_list=directory_table, get_data=search, self_url=self_url)
 
     # Render list of directories into HTML
-    return render_template('directories.html', item_list=directory_list)
+    return render_template('directories.html', item_table=directory_table, pager_list=pager_list)
 
 
 # Index of all the file directories in the database
 @app.route("/files/<directory>", methods=("GET", "POST"))
 def file_index(directory):
+    # Fetch page search parameters
+    search = {
+        'page': 1
+    }
+    read_get_arguments(search)
+
     # Fetch a list of all the files in the directory
-    file_list = file_explorer.fetch_file_list(directory=directory)
+    file_table = file_explorer.fetch_file_list(directory=directory, page=search['page'])
+
+    # Write pager list
+    self_url = url_for("file_index", directory=directory)
+    pager_list = write_pager_list(result_list=file_table, get_data=search, self_url=self_url)
 
     # Render list of files into HTML
-    return render_template('files.html', item_list=file_list)
+    return render_template('files.html', item_table=file_table, pager_list=pager_list)
 
 
 # Index of all the task timing data in the database
@@ -204,12 +253,7 @@ def log_index():
 
     # Write pager list
     self_url = url_for("log_index")
-    pager_list = []
-    for page_num in range(log_list['show_page_min'], log_list['show_page_max']):
-        pager_list.append({
-            'num': page_num,
-            'url': "{}?{}".format(self_url, write_get_arguments({**search, 'page': page_num}))
-        })
+    pager_list = write_pager_list(result_list=log_list, get_data=search, self_url=self_url)
 
     # Render list of log messages into HTML
     return render_template('logs.html', log_table=log_list, self_url=self_url, min_severity=search['min_severity'],
@@ -220,12 +264,22 @@ def log_index():
 # Show a timeline of tasks running on the cluster
 @app.route("/timeline")
 def activity_timeline():
-    groups, timeline = activity_history.fetch_timeline()
+    # Fetch page search parameters
+    search = {
+        'filter': 0
+    }
+    read_get_arguments(search)
+    item_table = activity_history.fetch_timeline(filter_type=int(search['filter']))
 
     # Render page
     self_url = url_for("activity_timeline")
-    return render_template('timeline.html', self_url=self_url, groups=groups,
-                           activity_history=json.dumps(timeline))
+    return render_template('timeline.html', self_url=self_url, item_table=item_table, filter=int(search['filter']),
+                           filter_options=(
+                               (0, "Latest 200 tasks"),
+                               (1, "Tasks running for over 60 seconds"),
+                               (2, "Tasks running for over 2 seconds"),
+                               (99, "All tasks")
+                           ))
 
 
 if __name__ == "__main__":
