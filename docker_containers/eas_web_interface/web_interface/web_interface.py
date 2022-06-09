@@ -3,7 +3,6 @@
 # web_interface.py
 
 import argparse
-import json
 import magic
 import os.path
 
@@ -33,7 +32,7 @@ def read_get_arguments(search: dict):
             continue
         elif val == '-- Any --':
             search[parameter] = None
-        elif not (parameter.startswith('max_') or parameter == 'page'):
+        elif not (parameter.startswith('max_') or parameter in ('filter', 'include_recent', 'page', 'task_id')):
             try:
                 search[parameter] = str(val)
             except (TypeError, ValueError):
@@ -78,21 +77,46 @@ def task_index():
     # Fetch page search parameters
     search = {
         'job_name': None,
-        'status': None,
-        'max_depth': 6
+        'task_id': None,
+        'max_depth': 5
     }
     read_get_arguments(search)
 
     # Fetch a list of all the tasks in the database
-    task_list = task_tree.fetch_job_tree(**search)
+    self_url = url_for("task_index")
+    task_list = task_tree.fetch_job_tree(**search, running_only=False, self_url=self_url)
 
     # Render list of tasks into HTML
-    self_url = url_for("task_index")
     return render_template('index.html', task_table=task_list, self_url=self_url,
-                           status_options=('-- Any --', 'queued', 'waiting', 'done', 'running', 'stalled'),
+                           show_include_recent=False, show_max_depth=True,
                            max_depth_options=['-- Any --'] + list(range(7)),
                            job_name_options=['-- Any --'] + select_options.job_name_options(),
-                           status=search['status'], job_name=search['job_name'], max_depth=search['max_depth']
+                           job_name=search['job_name'], max_depth=search['max_depth'],
+                           show_back_arrow=bool(search['task_id'])
+                           )
+
+
+# Index of all the running tasks in the database
+@app.route("/running", methods=('GET', 'POST'))
+def task_running_index():
+    # Fetch page search parameters
+    search = {
+        'job_name': None,
+        'include_recent': 0,
+        'max_depth': None
+    }
+    read_get_arguments(search)
+
+    # Fetch a list of all the tasks in the database
+    self_url = url_for("task_running_index")
+    task_list = task_tree.fetch_job_tree(**search, running_only=True, self_url=self_url)
+
+    # Render list of tasks into HTML
+    return render_template('index.html', task_table=task_list, self_url=self_url,
+                           show_include_recent=True, show_max_depth=False,
+                           job_name_options=['-- Any --'] + select_options.job_name_options(),
+                           job_name=search['job_name'], include_recent=search['include_recent'],
+                           show_back_arrow=False
                            )
 
 

@@ -12,16 +12,6 @@
     <form method="GET" action="{{ self_url }}">
         <div class="form-item-holder">
             <div class="form-item">
-                <p class="formlabel">Filter by status</p>
-                <select class="slt" name="status">
-                    {% for option in status_options %}
-                        <option value="{{ option }}" {% if option == status %}selected="selected"{% endif %}>
-                            {{ option }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-item">
                 <p class="formlabel">Job name</p>
                 <select class="slt" name="job_name">
                     {% for option in job_name_options %}
@@ -31,16 +21,27 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="form-item">
-                <p class="formlabel">Max depth</p>
-                <select class="slt" name="max_depth">
-                    {% for option in max_depth_options %}
-                        <option value="{{ option }}" {% if option == max_depth %}selected="selected"{% endif %}>
-                            {{ option }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
+            {% if show_max_depth %}
+                <div class="form-item">
+                    <p class="formlabel">Max depth</p>
+                    <select class="slt" name="max_depth">
+                        {% for option in max_depth_options %}
+                            <option value="{{ option }}" {% if option == max_depth %}selected="selected"{% endif %}>
+                                {{ option }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+            {% if show_include_recent %}
+                <div class="form-item">
+                    <p class="formlabel">Include recent tasks</p>
+                    <select class="slt" name="include_recent">
+                        <option value="0" {% if include_recent == 0 %}selected="selected"{% endif %}>No</option>
+                        <option value="1" {% if include_recent == 1 %}selected="selected"{% endif %}>Yes</option>
+                    </select>
+                </div>
+            {% endif %}
             <div class="form-item form-item-notitle">
                 <input type="submit" class="btn btn-sm btn-success" value="Update...">
             </div>
@@ -48,6 +49,12 @@
     </form>
 
     <hr/>
+
+    {% if show_back_arrow %}
+        <div>
+            <a href="{{ self_url }}">Go back to all tasks</a>
+        </div>
+    {% endif %}
 
     <table class="library_list bordered bordered_slim stripy">
         <thead>
@@ -65,10 +72,13 @@
                 <td>
                     {{ task_item.indent|safe }}
                     <a href="/task/{{ task_item.task_id }}">
-                <span class="item_{{ task_item.class }}">
-                    #{{ task_item.task_id }} {{ task_item.job_name }}/{{ task_item.task_type_name }}
-                </span>
+                        <span class="item_{{ task_item.class }}">
+                            #{{ task_item.task_id }} {{ task_item.job_name }}/{{ task_item.task_type_name }}
+                        </span>
                     </a>
+                    {% if task_item.tree_truncated %}
+                        <a href="{{ task_item.more_link }}">&#x2794;</a>
+                    {% endif %}
                 </td>
                 <td>{{ task_item.w }}</td>
                 <td>{{ task_item.r }}</td>

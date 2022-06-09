@@ -51,7 +51,7 @@
                     "t0": "(random.random() * 200)",
                     "orbital_period": "(metadata['period'])",
                     "impact_parameter": "(metadata['impact'])",
-                    "semi_major_axis": "(pow(metadata['period'])/365.25, 2/3))",
+                    "semi_major_axis": "(pow(metadata['period'])/365.25, 2/3)",
                     "noise": 0,
                     "mes_assume_noise": "(constants.plato_noise)",
                     "sampling_cadence": 600

@@ -64,13 +64,13 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
    host machine, so don't allocate too much, but you need at least 4-8 GB if you want to synthesise two-year lightcurves
    at 25-second cadence.
 
-   Under MacOS, it is essential that you specify:
+   Under macOS, it is essential that you specify:
 
    ```
    --driver=virtualbox
    ```
 
-   By default `minikube` will use the `docker` driver under MacOS, but this makes it impossible to access services from
+   By default `minikube` will use the `docker` driver under macOS, but this makes it impossible to access services from
    the host machine. This is a killer, because it means EAS Control can't access the database or job queue,
 
 4. **Mount data directories**
@@ -86,8 +86,8 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
    commands each need keep running, so execute them in two separate `screen` sessions:
 
     ```
-    minikube mount --uid 999 datadir_output/:/mnt/datadir_output/
-    minikube mount --uid 999 datadir_input/:/mnt/datadir_input/
+    minikube mount --uid 999 data/datadir_output/:/mnt/datadir_output/
+    minikube mount --uid 999 data/datadir_input/:/mnt/datadir_input/
     ```
 
 5. **Create a Python virtual environment**
@@ -97,7 +97,7 @@ The prerequisites to deploy the EAS pipeline via minikube are as follows:
    cd build_scripts
    ./create-virtual-environment.sh
    ```
-   The resulting Python environment is built in `data/datadir_local`. All of the EAS Control Python scripts include
+   The resulting Python environment is built in `data/datadir_local`. All the EAS Control Python scripts include
    shebang lines which automatically use this virtual environment.
 
 6. **Prepare third-party vendor code required by the web interface**
