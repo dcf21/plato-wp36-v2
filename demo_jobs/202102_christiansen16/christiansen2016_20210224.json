@@ -39,7 +39,7 @@
                     "planet_radius": "(metadata['size'])",
                     "orbital_period": "(metadata['period'])",
                     "impact_parameter": "(metadata['impact'])",
-                    "semi_major_axis": "(pow(metadata['period'])/365.25, 2/3)",
+                    "semi_major_axis": "(pow(metadata['period']/365.25, 2/3))",
                     "sampling_cadence": 900
                   }
                 },

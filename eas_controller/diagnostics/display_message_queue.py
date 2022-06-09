@@ -35,11 +35,13 @@ def print_queues():
             logging.info("{:s} ({:d} messages waiting)".format(queue_name, message_count))
 
             # Fetch messages from queue, one by one, until no more messages are found
-            message_list = message_bus.queue_fetch_list(queue_name=queue_name)
+            # Only display individual messages if there are relatively few of them
+            if 0 < message_count < 12:
+                message_list = message_bus.queue_fetch_list(queue_name=queue_name)
 
-            # Display list of all the messages
-            if len(message_list) > 0:
-                logging.info(str(message_list))
+                # Display list of all the messages
+                if len(message_list) > 0:
+                    logging.info(str(message_list))
 
 
 if __name__ == "__main__":

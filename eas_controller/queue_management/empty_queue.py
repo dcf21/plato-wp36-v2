@@ -29,9 +29,18 @@ def flush_queues():
     with task_queues.TaskQueueConnector().interface() as message_bus:
         # Query each queue in turn
         for queue_name in tasks.task_type_names():
+            # Count how many queue items we have removed
+            counter = 0
             # Fetch messages from queue, one by one, until no more messages are found
             while True:
+                if counter % 1000 == 0:
+                    queue_count = message_bus.queue_length(queue_name=queue_name)
+                    logging.info("Removing items from queue <{}> -- {:6d} items".format(queue_name, queue_count))
+
+                # Remove an item from the queue
                 task_id = message_bus.queue_fetch_and_acknowledge(queue_name=queue_name, set_running=False)
+
+                counter += 1
 
                 if task_id is None:
                     # Message queue was empty
