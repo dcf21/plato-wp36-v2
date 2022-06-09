@@ -382,7 +382,7 @@ WHERE schedulingAttemptId=%s;
 
             # If we received an item, acknowledge it now so it will not be sent to other workers
             if received_item:
-                output.append(int(method_frame))
+                output.append(int(body))
             else:
                 break
 
