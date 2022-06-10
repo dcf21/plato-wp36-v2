@@ -13,7 +13,7 @@ import os
 import re
 import time
 
-from plato_wp36 import logging_database, settings, task_database, task_execution, task_queues
+from plato_wp36 import connect_db, logging_database, settings, task_database, task_execution, task_queues
 
 EasLoggingHandlerInstance = logging_database.EasLoggingHandler()
 
@@ -38,14 +38,49 @@ def error_fail(attempt_id: int, error_message: str):
                                          error_fail=True, error_text=error_message)
 
 
-def enter_service_mode():
+def enter_service_mode(db_engine: str, db_user: str, db_passwd: str, db_host: str, db_port: int, db_name: str,
+                       queue_implementation: str, mq_user: str, mq_passwd: str, mq_host: str, mq_port: int):
     """
     Start working on tasks in an infinite loop in service mode, listening to the message bus to receive the integer
     IDs of the tasks we should work on.
 
+    :param db_engine:
+        The name of the SQL database engine we are using. Either <mysql> or <sqlite3>.
+    :param db_name:
+        The name of the database we should connect to
+    :param db_user:
+        The name of the database user (not used by sqlite3)
+    :param db_passwd:
+        The password for the database user (not used by sqlite3)
+    :param db_host:
+        The host on which the database server is running (not used by sqlite3)
+    :param db_port:
+        The port on which the database server is running (not used by sqlite3)
+    :param queue_implementation:
+        The name of the task queue implementation we are using. Either <amqp> or <sql>.
+    :param mq_user:
+        The username to use when connecting to an AMQP-based task queue.
+    :param mq_passwd:
+        The password to use when connecting to an AMQP-based task queue.
+    :param mq_host:
+        The host to use when connecting to an AMQP-based task queue.
+    :param mq_port:
+        The port number to use when connecting to an AMQP-based task queue.
+
     :return:
         None
     """
+
+    # Write configuration files, so we know how to connect to the task database and message queue
+    with connect_db.DatabaseConnector(db_engine=db_engine, db_database=db_name,
+                                      db_user=db_user, db_passwd=db_passwd,
+                                      db_host=db_host, db_port=db_port).interface(connect=False) as db:
+        db.make_sql_login_config()
+
+    # Create message queue connection config file
+    task_queues.TaskQueueConnector.make_task_queue_config(queue_implementation=queue_implementation,
+                                                          mq_user=mq_user, mq_passwd=mq_passwd,
+                                                          mq_host=mq_host, mq_port=mq_port)
 
     # Read list of task types that we are capable of performing, by looking at what Python scripts are
     # available in the <task_implementations> directory
@@ -163,6 +198,19 @@ def enter_service_mode():
 if __name__ == "__main__":
     # Read command-line arguments
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--db_engine', default="mysql", type=str, dest='db_engine', help='Database engine')
+    parser.add_argument('--db_user', default="root", type=str, dest='db_user', help='Database user')
+    parser.add_argument('--db_passwd', default="plato", type=str, dest='db_passwd', help='Database password')
+    parser.add_argument('--db_host', default="localhost", type=str, dest='db_host', help='Database host')
+    parser.add_argument('--db_port', default=30036, type=int, dest='db_port', help='Database port')
+    parser.add_argument('--db_name', default="plato", type=str, dest='db_name', help='Database name')
+    parser.add_argument('--queue_implementation', default="amqp", type=str, dest='queue_implementation',
+                        choices=("amqp", "sql"),
+                        help='The name of the task queue implementation we are using. Either <amqp> or <sql>.')
+    parser.add_argument('--mq_user', default="guest", type=str, dest='mq_user', help='AMQP username')
+    parser.add_argument('--mq_passwd', default="guest", type=str, dest='mq_passwd', help='AMQP password')
+    parser.add_argument('--mq_host', default="localhost", type=str, dest='mq_host', help='AMQP host')
+    parser.add_argument('--mq_port', default=5672, type=int, dest='mq_port', help='AMQP port')
     args = parser.parse_args()
 
     # Set up logging
@@ -175,4 +223,11 @@ if __name__ == "__main__":
     logger.info(__doc__.strip())
 
     # List for jobs from the message queues
-    enter_service_mode()
+    enter_service_mode(db_engine=args.db_engine,
+                       db_user=args.db_user, db_passwd=args.db_passwd,
+                       db_host=args.db_host, db_port=args.db_port,
+                       db_name=args.db_name,
+                       queue_implementation=args.queue_implementation,
+                       mq_user=args.mq_user, mq_passwd=args.mq_passwd,
+                       mq_host=args.mq_host, mq_port=args.mq_port
+                       )

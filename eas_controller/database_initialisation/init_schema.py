@@ -17,6 +17,19 @@ def init_schema(db_engine: str, db_user: str, db_passwd: str, db_host: str, db_p
     """
     Create database tables, using schema defined in <schema.sql>.
 
+    :param db_engine:
+        The name of the SQL database engine we are using. Either <mysql> or <sqlite3>.
+    :param db_name:
+        The name of the database we should connect to
+    :param db_user:
+        The name of the database user (not used by sqlite3)
+    :param db_passwd:
+        The password for the database user (not used by sqlite3)
+    :param db_host:
+        The host on which the database server is running (not used by sqlite3)
+    :param db_port:
+        The port on which the database server is running (not used by sqlite3)
+
     :return:
         None
     """

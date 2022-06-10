@@ -1,21 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {pod_name:s}
+  name: { pod_name:s }
 spec:
   selector:
     matchLabels:
-      app: {pod_name:s}
+      app: { pod_name:s }
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: {pod_name:s}
+        app: { pod_name:s }
     spec:
+      replicas: 1
       containers:
         - image: plato/{container_name:s}:v1
-          name: {pod_name:s}
+          name: { pod_name:s }
           resources:
             requests:
               memory: "{memory_requirement:s}"
@@ -26,7 +27,10 @@ spec:
               cpu: "{cpu_requirement:f}"
               nvidia.com/gpu: "{gpu_requirement:d}"
           command: [ './launch_service_mode.py' ]
-          args: [  ]
+          args: [ '--db_engine', '{db_engine:s}', '--db_user', '{db_user:s}', '--db_passwd', '{db_passwd:s}',
+                  '--db_host', '{db_host:s}', '--db_port', '{db_port:d}', '--db_name', '{db_name:s}',
+                  '--queue_implementation', '{queue_implementation:s}', '--mq_user', '{mq_user:s}',
+                  '--mq_passwd', '{mq_passwd:s}', '--mq_host', '{mq_host:s}', '--mq_port', '{mq_port:d}' ]
           volumeMounts:
             - name: output-persistent-storage
               mountPath: /plato-wp36-v2/data/datadir_output

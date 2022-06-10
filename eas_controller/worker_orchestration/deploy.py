@@ -16,7 +16,7 @@ import re
 import sys
 from typing import Iterable, Optional
 
-from plato_wp36 import temporary_directory, task_database
+from plato_wp36 import settings, temporary_directory, task_database
 
 
 def fetch_component_list(include_workers: bool = True):
@@ -114,6 +114,9 @@ def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False,
         None
     """
 
+    # Fetch EAS pipeline settings
+    s = settings.Settings()
+
     if not delete:
         logging.info("Creating <{}>".format(item_name))
         kubernetes_action = "apply"
@@ -166,7 +169,18 @@ def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False,
             container_name=container_name,
             memory_requirement="{:.0f}Mi".format(ram_request * 1024),
             cpu_requirement=cpu_request,
-            gpu_requirement=gpu_request
+            gpu_requirement=gpu_request,
+            db_engine=s.installation_info['db_engine'],
+            db_user=s.installation_info['db_user'],
+            db_passwd=s.installation_info['db_password'],
+            db_host=s.installation_info['db_host'],
+            db_port=int(s.installation_info['db_port']),
+            db_name=s.installation_info['db_database'],
+            queue_implementation=s.installation_info['queue_implementation'],
+            mq_user=s.installation_info['mq_user'],
+            mq_passwd=s.installation_info['mq_password'],
+            mq_host=s.installation_info['mq_host'],
+            mq_port=int(s.installation_info['mq_port'])
         )
 
         # Save YAML description to file

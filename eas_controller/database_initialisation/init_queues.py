@@ -31,7 +31,7 @@ def init_queues(queue_implementation: str, mq_user: str, mq_passwd: str, mq_host
         None
     """
 
-    # Create mysql login config file
+    # Create message queue connection config file
     task_queues.TaskQueueConnector.make_task_queue_config(queue_implementation=queue_implementation,
                                                           mq_user=mq_user, mq_passwd=mq_passwd,
                                                           mq_host=mq_host, mq_port=mq_port)
