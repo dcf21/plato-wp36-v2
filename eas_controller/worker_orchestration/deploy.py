@@ -18,6 +18,16 @@ from typing import Iterable, Optional
 
 from plato_wp36 import settings, temporary_directory, task_database
 
+def item_is_worker(item_name: str):
+    """
+    Test if an infrastructure element is core infrastructure (always deployed), or a worker node that we scale
+    according to demand
+
+    :param item_name:
+        The name of the Docker container to query
+    """
+    return item_name.startswith("eas-worker-") or item_name == "eas-base"
+
 
 def fetch_component_list(include_workers: bool = True):
     """
@@ -79,7 +89,7 @@ def deploy_all(namespace: str, worker_types: Iterable, resource_limit_fraction: 
     for item in components:
         # Work out whether this item is needed. We may not deploy all worker types, unless requested by the user
         item_needed = True
-        if item.startswith("eas-worker-") and item not in worker_types:
+        if item_is_worker(item_name=item) and item not in worker_types:
             item_needed = False
 
         # If this component is needed, deploy it now
@@ -124,7 +134,7 @@ def deploy_or_delete_item(item_name: str, namespace: str, delete: bool = False,
         logging.info("Deleting <{}>".format(item_name))
         kubernetes_action = "delete"
 
-    if not item_name.startswith("eas-worker-"):
+    if not item_is_worker(item_name=item_name):
         yaml_filename = os.path.join(os.path.dirname(__file__), "../kubernetes_yaml", "{}.yaml".format(item_name))
         os.system("kubectl {} -f {} -n={}".format(kubernetes_action, yaml_filename, namespace))
     else:
