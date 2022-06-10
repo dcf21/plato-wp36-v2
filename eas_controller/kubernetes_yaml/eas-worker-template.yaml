@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: { pod_name:s }
+  name: {pod_name:s}
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: { pod_name:s }
+      app: {pod_name:s}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: { pod_name:s }
+        app: {pod_name:s}
     spec:
-      replicas: 1
       containers:
         - image: plato/{container_name:s}:v1
-          name: { pod_name:s }
+          name: {pod_name:s}
           resources:
             requests:
               memory: "{memory_requirement:s}"
