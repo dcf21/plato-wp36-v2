@@ -518,16 +518,20 @@ WHERE hostId=%s;
 
         # Fetch an item from the job queue
         self.db.db_handle.parameterised_query("""
-UPDATE eas_scheduling_attempt
-SET isQueued=0, isRunning=1, hostId=%s
-WHERE schedulingAttemptId = (
-    SELECT schedulingAttemptId FROM eas_scheduling_attempt s
-    INNER JOIN eas_task t ON t.taskId = s.taskId
-    INNER JOIN eas_task_types ty ON ty.taskTypeId = t.taskTypeId
-    WHERE ty.taskTypeName=%s AND s.isQueued
-    ORDER BY s.queuedTime LIMIT 1
-);
-""", (host_id, queue_name))
+SELECT s.schedulingAttemptId
+FROM eas_scheduling_attempt s
+INNER JOIN eas_task t ON t.taskId = s.taskId
+INNER JOIN eas_task_types ty ON ty.taskTypeId = t.taskTypeId
+WHERE ty.taskTypeName=%s AND s.isQueued
+ORDER BY s.queuedTime LIMIT 1 FOR UPDATE;
+""", (queue_name,))
+
+        for item_id in self.db.db_handle.fetchall():
+            self.db.db_handle.parameterised_query("""
+UPDATE eas_scheduling_attempt x
+SET x.isQueued=0, x.isRunning=1, x.hostId=%s
+WHERE x.schedulingAttemptId = %s;
+""", (host_id, item_id['schedulingAttemptId']))
         self.db.commit()
 
         # Look up the integer ID of the item we got
