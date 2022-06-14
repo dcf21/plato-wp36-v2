@@ -515,12 +515,7 @@ UPDATE eas_scheduling_attempt
 SET isRunning=0
 WHERE hostId=%s;
 """, (host_id,))
-
-        # Lock table (without this, deadlock can occur)
         self.db.commit()
-        self.db.db_handle.parameterised_query("""
-LOCK TABLE eas_scheduling_attempt s WRITE, eas_task t WRITE, eas_task_types ty WRITE;
-""")
 
         # Fetch an item from the job queue
         self.db.db_handle.parameterised_query("""
@@ -529,16 +524,17 @@ FROM eas_scheduling_attempt s
 INNER JOIN eas_task t ON t.taskId = s.taskId
 INNER JOIN eas_task_types ty ON ty.taskTypeId = t.taskTypeId
 WHERE ty.taskTypeName=%s AND s.isQueued
-ORDER BY s.queuedTime LIMIT 1 FOR UPDATE;
+ORDER BY s.queuedTime LIMIT 1;
 """, (queue_name,))
 
+        # Start running the item we took, but only if nobody else has marked it running first
         for item_id in self.db.db_handle.fetchall():
             self.db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt s
 SET s.isQueued=0, s.isRunning=1, s.hostId=%s
-WHERE s.schedulingAttemptId = %s;
+WHERE s.schedulingAttemptId = %s AND s.isQueued;
 """, (host_id, item_id['schedulingAttemptId']))
-        self.db.commit()
+            self.db.commit()
 
         # Look up the integer ID of the item we got
         self.db.db_handle.parameterised_query("""
@@ -562,8 +558,7 @@ SET s.isQueued=%s, s.isRunning=0, s.errorFail=%s, s.hostId=NULL
 WHERE s.schedulingAttemptId = %s;
 """, (int(not acknowledge), acknowledge, item_id))
 
-        # Unlock table
-        self.db.db_handle.parameterised_query("UNLOCK TABLES;")
+        # Commit task table to reflect the job we have just taken
         self.db.commit()
 
         # Return item
