@@ -516,6 +516,12 @@ SET isRunning=0
 WHERE hostId=%s;
 """, (host_id,))
 
+        # Lock table (without this, deadlock can occur)
+        self.db.commit()
+        self.db.db_handle.parameterised_query("""
+LOCK TABLE eas_scheduling_attempt s WRITE, eas_task t WRITE, eas_task_types ty WRITE;
+""")
+
         # Fetch an item from the job queue
         self.db.db_handle.parameterised_query("""
 SELECT s.schedulingAttemptId
@@ -528,17 +534,17 @@ ORDER BY s.queuedTime LIMIT 1 FOR UPDATE;
 
         for item_id in self.db.db_handle.fetchall():
             self.db.db_handle.parameterised_query("""
-UPDATE eas_scheduling_attempt x
-SET x.isQueued=0, x.isRunning=1, x.hostId=%s
-WHERE x.schedulingAttemptId = %s;
+UPDATE eas_scheduling_attempt s
+SET s.isQueued=0, s.isRunning=1, s.hostId=%s
+WHERE s.schedulingAttemptId = %s;
 """, (host_id, item_id['schedulingAttemptId']))
         self.db.commit()
 
         # Look up the integer ID of the item we got
         self.db.db_handle.parameterised_query("""
-SELECT schedulingAttemptId
-FROM eas_scheduling_attempt
-WHERE isRunning AND hostId=%s;
+SELECT s.schedulingAttemptId
+FROM eas_scheduling_attempt s
+WHERE s.isRunning AND s.hostId=%s;
 """, (host_id,))
         results = self.db.db_handle.fetchall()
 
@@ -551,10 +557,13 @@ WHERE isRunning AND hostId=%s;
         # If the user didn't want this item acknowledged and/or set running, put the item back into the queue
         if (item_id is not None) and ((not acknowledge) or (not set_running)):
             self.db.db_handle.parameterised_query("""
-UPDATE eas_scheduling_attempt
-SET isQueued=%s, isRunning=0, errorFail=%s, hostId=NULL
-WHERE schedulingAttemptId = %s;
+UPDATE eas_scheduling_attempt s
+SET s.isQueued=%s, s.isRunning=0, s.errorFail=%s, s.hostId=NULL
+WHERE s.schedulingAttemptId = %s;
 """, (int(not acknowledge), acknowledge, item_id))
+
+        # Unlock table
+        self.db.db_handle.parameterised_query("UNLOCK TABLES;")
         self.db.commit()
 
         # Return item
