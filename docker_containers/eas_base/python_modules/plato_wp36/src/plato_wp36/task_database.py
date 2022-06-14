@@ -738,6 +738,7 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
             self.metadata_register(product_version_id=product_version_id, metadata=metadata)
 
         # Return integer product version id
+        self.commit()
         return product_version_id
 
     def file_version_update(self, product_version_id: int,
@@ -1043,6 +1044,7 @@ VALUES (%s, %s, %s, %s, %s, %s);
             self.metadata_register(product_id=product_id, metadata=metadata)
 
         # Return integer product id
+        self.commit()
         return product_id
 
     def file_product_update(self, product_id: int,
@@ -1118,6 +1120,7 @@ SELECT productVersionId FROM eas_product_version WHERE generatedByTaskExecution 
         self.db_handle.parameterised_query("""
 DELETE FROM eas_scheduling_attempt WHERE schedulingAttemptId = %s;
 """, (attempt_id,))
+        self.commit()
 
     def execution_attempt_fetch_output_files(self, attempt_id: int):
         """
@@ -1280,6 +1283,9 @@ VALUES (%s, %s);
         if metadata is not None:
             self.metadata_register(scheduling_attempt_id=output_id, metadata=metadata)
 
+        # Avoid locking scheduling attempt table
+        self.commit()
+
         # Return integer id
         return output_id
 
@@ -1396,6 +1402,9 @@ UPDATE eas_scheduling_attempt SET runTimeCpuIncChildren=%s WHERE schedulingAttem
         # Register execution attempt metadata
         if metadata is not None:
             self.metadata_register(scheduling_attempt_id=attempt_id, metadata=metadata)
+
+        # Avoid locking the scheduling attempt table
+        self.commit()
 
     # *** Functions relating to tasks
     def task_exists_in_db(self, task_id: int):
@@ -1729,6 +1738,7 @@ REPLACE INTO eas_task_input (taskId, inputId, semanticType) VALUES (%s, %s, %s);
 """, (output_id, input_file.product_id, semantic_type_id))
 
         # Return integer id
+        self.commit()
         return output_id
 
     def task_update(self, task_id: Optional[int] = None,
