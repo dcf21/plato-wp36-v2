@@ -134,11 +134,13 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
 
             # Create entry for this task
             subtask_id = task_db.task_register(parent_id=execution_attempt.task_object.task_id,
+                                               fully_configured=False,
                                                job_name=job_name,
                                                task_name=task_name,
                                                working_directory=working_directory,
                                                task_type=subtask_type,
                                                metadata=subtask_metadata)
+            task_db.commit()
 
             # Register this task by name
             if task_name:
@@ -168,6 +170,10 @@ INSERT INTO eas_task_metadata_input (taskId, inputId) VALUES (%s, %s);
                                               planned_time=time.time(),
                                               mime_type="null")
 
+            # Mark task as fully configured and ready to run
+            task_db.db_handle.parameterised_query("""
+UPDATE eas_task SET isFullyConfigured=1 WHERE taskId=%s;
+""", (subtask_id,))
 
 if __name__ == "__main__":
     # Run task

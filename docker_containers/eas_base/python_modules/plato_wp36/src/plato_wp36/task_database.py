@@ -1682,6 +1682,7 @@ WHERE taskId = %s;
 
     def task_register(self, parent_id: Optional[int] = None,
                       created_time: Optional[float] = None,
+                      fully_configured: bool = True,
                       task_type: Optional[str] = None, job_name: Optional[str] = None, task_name: Optional[str] = None,
                       working_directory: Optional[str] = None,
                       input_files: Optional[Dict[str, FileProduct]] = None,
@@ -1694,6 +1695,9 @@ WHERE taskId = %s;
             (e.g. a task execution chain)
         :param created_time:
             The unix timestamp when this task was created
+        :param fully_configured:
+            Boolean flag indicating whether this task should be marked in the database as fully configured and ready
+            to be scheduled.
         :param task_type:
             The string name of this type of task, as defined in <task_type_registry.xml>
         :param job_name:
@@ -1720,10 +1724,11 @@ WHERE taskId = %s;
 
         # Insert record into the database
         self.db_handle.parameterised_query("""
-INSERT INTO eas_task (parentTask, createdTime, taskTypeId, jobName, taskName, workingDirectory)
-VALUES (%s, %s, %s, %s, %s, %s);
+INSERT INTO eas_task (parentTask, createdTime, isFullyConfigured, taskTypeId, jobName, taskName, workingDirectory)
+VALUES (%s, %s, 0, %s, %s, %s, %s);
 """, (parent_id, created_time, task_type_id, job_name, task_name, working_directory))
         output_id = self.db_handle.lastrowid()
+        self.db_handle.commit()
 
         # Register task metadata
         if metadata is not None:
@@ -1736,6 +1741,12 @@ VALUES (%s, %s, %s, %s, %s, %s);
                 self.db_handle.parameterised_query("""
 REPLACE INTO eas_task_input (taskId, inputId, semanticType) VALUES (%s, %s, %s);
 """, (output_id, input_file.product_id, semantic_type_id))
+
+        # Mark task as fully configured
+        if fully_configured:
+            self.db_handle.parameterised_query("""
+UPDATE eas_task SET isFullyConfigured=1 WHERE taskId=%s;
+""", (output_id,))
 
         # Return integer id
         self.commit()

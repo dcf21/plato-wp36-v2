@@ -96,6 +96,8 @@ WHERE t.taskId = %s;
 SELECT t.taskId
 FROM eas_task t
 WHERE
+  t.isFullyConfigured
+    AND
   NOT EXISTS (SELECT 1 FROM eas_scheduling_attempt x WHERE x.taskId = t.taskId AND {})
     AND
   NOT EXISTS (SELECT 1 FROM eas_task_input y WHERE y.taskId = t.taskId

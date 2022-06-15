@@ -36,13 +36,14 @@ CREATE UNIQUE INDEX eas_task_containers_1 ON eas_task_containers (taskTypeId, co
 -- Table of specific tasks EAS is scheduled to run (e.g. run tool X on lightcurve Y)
 CREATE TABLE eas_task
 (
-    taskId           INTEGER PRIMARY KEY AUTO_INCREMENT,
-    parentTask       INTEGER,
-    createdTime      REAL,
-    taskTypeId       INTEGER       NOT NULL,
-    jobName          VARCHAR(256),
-    taskName         VARCHAR(256),
-    workingDirectory VARCHAR(1024) NOT NULL,
+    taskId            INTEGER PRIMARY KEY AUTO_INCREMENT,
+    parentTask        INTEGER,
+    createdTime       REAL,
+    isFullyConfigured BOOLEAN DEFAULT FALSE,
+    taskTypeId        INTEGER       NOT NULL,
+    jobName           VARCHAR(256),
+    taskName          VARCHAR(256),
+    workingDirectory  VARCHAR(1024) NOT NULL,
     FOREIGN KEY (parentTask) REFERENCES eas_task (taskId) ON DELETE CASCADE,
     FOREIGN KEY (taskTypeId) REFERENCES eas_task_types (taskTypeId) ON DELETE CASCADE
 );
