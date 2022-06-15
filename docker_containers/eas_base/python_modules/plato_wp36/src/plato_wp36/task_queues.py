@@ -37,6 +37,15 @@ class TaskScheduler:
         if queue_implementation is not None:
             self.queue_implementation = queue_implementation
 
+    def __del__(self):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__del__()
+
     def schedule_a_task(self, task_id: int):
         """
         Schedule a single task to run, by adding it to the job queue.
@@ -510,6 +519,7 @@ WHERE schedulingAttemptId=%s;
         host_id = self.db.hostname_get_id(name=my_hostname)
 
         # We are not currently run any tasks
+        self.db.commit()
         self.db.db_handle.parameterised_query("""
 UPDATE eas_scheduling_attempt
 SET isRunning=0
@@ -530,9 +540,9 @@ ORDER BY s.queuedTime LIMIT 1;
         # Start running the item we took, but only if nobody else has marked it running first
         for item_id in self.db.db_handle.fetchall():
             self.db.db_handle.parameterised_query("""
-UPDATE eas_scheduling_attempt s
-SET s.isQueued=0, s.isRunning=1, s.hostId=%s
-WHERE s.schedulingAttemptId = %s AND s.isQueued;
+UPDATE eas_scheduling_attempt
+SET isQueued=0, isRunning=1, hostId=%s
+WHERE schedulingAttemptId = %s AND isQueued;
 """, (host_id, item_id['schedulingAttemptId']))
             self.db.commit()
 
@@ -553,9 +563,9 @@ WHERE s.isRunning AND s.hostId=%s;
         # If the user didn't want this item acknowledged and/or set running, put the item back into the queue
         if (item_id is not None) and ((not acknowledge) or (not set_running)):
             self.db.db_handle.parameterised_query("""
-UPDATE eas_scheduling_attempt s
-SET s.isQueued=%s, s.isRunning=0, s.errorFail=%s, s.hostId=NULL
-WHERE s.schedulingAttemptId = %s;
+UPDATE eas_scheduling_attempt
+SET isQueued=%s, isRunning=0, errorFail=%s, hostId=NULL
+WHERE schedulingAttemptId = %s;
 """, (int(not acknowledge), acknowledge, item_id))
 
         # Commit task table to reflect the job we have just taken

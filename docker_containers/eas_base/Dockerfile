@@ -26,13 +26,17 @@ RUN /plato-wp36-v2/docker_containers/eas_base/build/install_python_dependencies.
 # Copy configuration into container
 ADD configuration configuration
 
-# Copy PLATO EAS Python modules into Docker container
+# Copy PLATO EAS Python modules and other core code into Docker container
 ADD python_modules python_modules
 ADD python_components python_components
 ADD worker_diagnostics worker_diagnostics
+ADD launch_worker launch_worker
+ADD task_type_registry.xml task_type_registry.xml
+
+# Copy task implementations for EAS core tasks
 ADD task_implementations task_implementations
 ADD task_qc_implementations task_qc_implementations
-ADD launch_worker launch_worker
+ADD test_task_configs test_task_configs
 
 # Build and install plato_wp36 modules
 RUN /plato-wp36-v2/docker_containers/eas_base/build/install_custom_packages.sh

@@ -36,7 +36,15 @@ def call_subprocess_and_log_output(arguments: Iterable, shell: Optional[bool] = 
     """
 
     # Run subprocess
-    return call_subprocess_and_catch_stdout(arguments=arguments, shell=shell)[0]
+    proc = call_subprocess_and_catch_stdout(arguments=arguments, shell=shell)
+
+    # If process produced any output to stdout, send that to the terminal now
+    stdout = proc[1].decode('utf-8').strip()
+    if stdout:
+        print(stdout)
+
+    # Return the process's exit code
+    return proc[0]
 
 
 def call_subprocess_and_catch_stdout(arguments: Iterable, shell: Optional[bool] = None):
@@ -175,7 +183,8 @@ def do_pipeline_task(job_id: int,
                     task_description_raw = json.loads(task_description_json.value)
 
                     # Produce diagnostic logging about the metadata which is available to this task
-                    logging.info("Available input metadata keys: {}".format(list(attempt_info.task_object.metadata.keys())))
+                    logging.info(
+                        "Available input metadata keys: {}".format(list(attempt_info.task_object.metadata.keys())))
 
                     if len(attempt_info.task_object.input_metadata) > 0:
                         logging.info("Requested metadata available from:")

@@ -17,6 +17,7 @@ ADD build build
 ADD python_modules python_modules
 ADD task_implementations task_implementations
 ADD task_qc_implementations task_qc_implementations
+ADD test_task_configs test_task_configs
 
 # Build the transit-detection code
 RUN ./build/build.sh

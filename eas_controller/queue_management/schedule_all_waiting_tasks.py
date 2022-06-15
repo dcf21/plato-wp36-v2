@@ -22,7 +22,8 @@ def schedule_jobs():
         None
     """
 
-    task_queues.TaskScheduler().schedule_all_waiting_jobs()
+    with task_queues.TaskScheduler() as scheduler:
+        scheduler.schedule_all_waiting_jobs()
 
 
 if __name__ == "__main__":

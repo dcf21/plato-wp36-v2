@@ -39,7 +39,8 @@ def error_fail(attempt_id: int, error_message: str):
 
 
 def enter_service_mode(db_engine: str, db_user: str, db_passwd: str, db_host: str, db_port: int, db_name: str,
-                       queue_implementation: str, mq_user: str, mq_passwd: str, mq_host: str, mq_port: int):
+                       queue_implementation: str, mq_user: str, mq_passwd: str, mq_host: str, mq_port: int,
+                       infinite_loop: bool = True):
     """
     Start working on tasks in an infinite loop in service mode, listening to the message bus to receive the integer
     IDs of the tasks we should work on.
@@ -66,6 +67,9 @@ def enter_service_mode(db_engine: str, db_user: str, db_passwd: str, db_host: st
         The host to use when connecting to an AMQP-based task queue.
     :param mq_port:
         The port number to use when connecting to an AMQP-based task queue.
+    :param infinite_loop:
+        If true then we loop forever, waiting for new tasks to enter the job queue. If false, then we exit when
+        job queue is empty.
 
     :return:
         None
@@ -191,8 +195,12 @@ def enter_service_mode(db_engine: str, db_user: str, db_passwd: str, db_host: st
                 # Announce that we've finished a task
                 logging.info("Finished task execution attempt <{} - {}>".format(attempt_id, task_type_name))
 
-        # To avoid clobbering the database, have a quick snooze between polling to see if we have work to do
-        time.sleep(2)
+        if not infinite_loop:
+            # If we're not running in an infinite loop, then exit after we've emptied the job queues
+            break
+        else:
+            # To avoid clobbering the database, have a quick snooze between polling to see if we have work to do
+            time.sleep(2)
 
 
 if __name__ == "__main__":
@@ -222,7 +230,7 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logger.info(__doc__.strip())
 
-    # List for jobs from the message queues
+    # Listen for jobs from the message queues
     enter_service_mode(db_engine=args.db_engine,
                        db_user=args.db_user, db_passwd=args.db_passwd,
                        db_host=args.db_host, db_port=args.db_port,

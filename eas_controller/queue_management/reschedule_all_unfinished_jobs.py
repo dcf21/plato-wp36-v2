@@ -21,7 +21,8 @@ def schedule_jobs():
         None
     """
 
-    task_queues.TaskScheduler().reschedule_all_unfinished_jobs()
+    with task_queues.TaskScheduler() as scheduler:
+        scheduler.reschedule_all_unfinished_jobs()
 
 
 if __name__ == "__main__":

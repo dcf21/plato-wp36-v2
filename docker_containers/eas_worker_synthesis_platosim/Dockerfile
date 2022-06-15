@@ -6,6 +6,7 @@ WORKDIR /plato-wp36-v2/docker_containers/eas_worker_synthesis_platosim
 ADD build build
 ADD task_implementations task_implementations
 ADD task_qc_implementations task_qc_implementations
+ADD test_task_configs test_task_configs
 
 # Build PlatoSIM
 RUN ./build/build.sh
