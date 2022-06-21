@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>plato_wp36.diagnostics package &#8212; plato-eas 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="plato_wp36.vendor package" href="plato_wp36.vendor.html" />
+    <link rel="prev" title="plato_wp36 package" href="plato_wp36.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="plato-wp36-diagnostics-package">
+<h1>plato_wp36.diagnostics package<a class="headerlink" href="#plato-wp36-diagnostics-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-plato_wp36.diagnostics.pass_fail_table">
+<span id="plato-wp36-diagnostics-pass-fail-table-module"></span><h2>plato_wp36.diagnostics.pass_fail_table module<a class="headerlink" href="#module-plato_wp36.diagnostics.pass_fail_table" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="plato_wp36.diagnostics.pass_fail_table.fetch_pass_fail_table">
+<span class="sig-prename descclassname"><span class="pre">plato_wp36.diagnostics.pass_fail_table.</span></span><span class="sig-name descname"><span class="pre">fetch_pass_fail_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plato_wp36.diagnostics.pass_fail_table.fetch_pass_fail_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>List pass/fail verdicts stored in the task database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>job_name</strong> (<em>str</em>) – Filter results by job name.</p></li>
+<li><p><strong>task_type</strong> (<em>str</em>) – Filter results by type of task.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-plato_wp36.diagnostics.progress_summary">
+<span id="plato-wp36-diagnostics-progress-summary-module"></span><h2>plato_wp36.diagnostics.progress_summary module<a class="headerlink" href="#module-plato_wp36.diagnostics.progress_summary" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="plato_wp36.diagnostics.progress_summary.fetch_progress_summary">
+<span class="sig-prename descclassname"><span class="pre">plato_wp36.diagnostics.progress_summary.</span></span><span class="sig-name descname"><span class="pre">fetch_progress_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plato_wp36.diagnostics.progress_summary.fetch_progress_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch task progress summary from the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>job_name</strong> – Filter the task tree in the database by job name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-plato_wp36.diagnostics.render_task_tree">
+<span id="plato-wp36-diagnostics-render-task-tree-module"></span><h2>plato_wp36.diagnostics.render_task_tree module<a class="headerlink" href="#module-plato_wp36.diagnostics.render_task_tree" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="plato_wp36.diagnostics.render_task_tree.fetch_job_tree">
+<span class="sig-prename descclassname"><span class="pre">plato_wp36.diagnostics.render_task_tree.</span></span><span class="sig-name descname"><span class="pre">fetch_job_tree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plato_wp36.diagnostics.render_task_tree.fetch_job_tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the hierarchy of jobs in the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>job_name</strong> – Filter the task tree in the database by job name.</p></li>
+<li><p><strong>parent_id</strong> – Only show tasks descended from a particular parent.</p></li>
+<li><p><strong>max_depth</strong> – Maximum depth of the task tree to descend to.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of lines of output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="plato_wp36.diagnostics.render_task_tree.fetch_running_job_tree">
+<span class="sig-prename descclassname"><span class="pre">plato_wp36.diagnostics.render_task_tree.</span></span><span class="sig-name descname"><span class="pre">fetch_running_job_tree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_recently_finished</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plato_wp36.diagnostics.render_task_tree.fetch_running_job_tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the hierarchy of jobs in the database which are marked as running.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>job_name</strong> – Filter the task tree in the database by job name.</p></li>
+<li><p><strong>include_recently_finished</strong> – Boolean flag indicating whether we should include tasks which have finished within past 5 seconds.</p></li>
+<li><p><strong>max_depth</strong> – Maximum depth of the task tree to descend to.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of lines of output</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-plato_wp36.diagnostics.timings_table">
+<span id="plato-wp36-diagnostics-timings-table-module"></span><h2>plato_wp36.diagnostics.timings_table module<a class="headerlink" href="#module-plato_wp36.diagnostics.timings_table" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="plato_wp36.diagnostics.timings_table.fetch_timings_table">
+<span class="sig-prename descclassname"><span class="pre">plato_wp36.diagnostics.timings_table.</span></span><span class="sig-name descname"><span class="pre">fetch_timings_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plato_wp36.diagnostics.timings_table.fetch_timings_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>List timings stored in the SQL database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>job_name</strong> (<em>str</em>) – Filter results by job name.</p></li>
+<li><p><strong>task_type</strong> (<em>str</em>) – Filter results by type of task.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="plato_wp36.diagnostics.timings_table.render_run_time">
+<span class="sig-prename descclassname"><span class="pre">plato_wp36.diagnostics.timings_table.</span></span><span class="sig-name descname"><span class="pre">render_run_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plato_wp36.diagnostics.timings_table.render_run_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Render the run-time of a task (in seconds) as a human-readable string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input</strong> – The run-time to render (or None)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-plato_wp36.diagnostics">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-plato_wp36.diagnostics" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">plato-eas</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">plato_wp36</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="plato_wp36.html">plato_wp36 package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">plato_wp36</a><ul>
+  <li><a href="plato_wp36.html">plato_wp36 package</a><ul>
+      <li>Previous: <a href="plato_wp36.html" title="previous chapter">plato_wp36 package</a></li>
+      <li>Next: <a href="plato_wp36.vendor.html" title="next chapter">plato_wp36.vendor package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Dominic Ford.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/source/plato_wp36.diagnostics.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

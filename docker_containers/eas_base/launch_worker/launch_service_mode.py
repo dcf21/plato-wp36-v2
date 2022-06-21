@@ -101,6 +101,9 @@ def enter_service_mode(db_engine: str, db_user: str, db_passwd: str, db_host: st
 
     # Enter an infinite processing loop
     while True:
+        # Count the number of tasks completed on each cycle
+        completed_task_count = 0
+
         # Query each queue in turn
         for queue_name in container_capabilities:
             # Fetch messages from queue, one by one, until no more messages are found
@@ -116,6 +119,8 @@ def enter_service_mode(db_engine: str, db_user: str, db_passwd: str, db_host: st
                 if attempt_id is None:
                     # Message queue was empty
                     break
+                else:
+                    completed_task_count += 1
 
                 # Read execution attempt details from the database
                 with task_database.TaskDatabaseConnection() as task_db:
@@ -200,7 +205,12 @@ def enter_service_mode(db_engine: str, db_user: str, db_passwd: str, db_host: st
             break
         else:
             # To avoid clobbering the database, have a quick snooze between polling to see if we have work to do
-            time.sleep(2)
+            if completed_task_count > 0:
+                # We found some work to do, so only take a very brief snooze
+                time.sleep(4)
+            else:
+                # Empty queue, so don't hammer message queue continually polling for work
+                time.sleep(90)
 
 
 if __name__ == "__main__":

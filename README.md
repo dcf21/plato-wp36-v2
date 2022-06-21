@@ -4,7 +4,7 @@ The code in this repository is a fully-functional prototype of the parallel-comp
 
 The prototype pipeline runs in a series of Docker containers within a Kubernetes environment:
 
-![The prototype pipeline structure](docs/code_structure.jpg)
+![The prototype pipeline structure](docs/kubenetes_structure.png)
 
 The key components are as follows:
 
@@ -23,7 +23,7 @@ outside world is defined via Kubernetes services.
 The simplest way to run the pipeline on a single laptop or desktop computer is
 by using `minikube`, which is a minimal Kubernetes implementation which nonetheless provides a test environment which is almost identical to Kubernetes on large clusters.
 
-Instructions on how to deploy the pipeline can be found in `install.md`.
+Instructions on how to deploy the pipeline can be found in [install.md](docs/install.md).
 
 ### Usage overview
 

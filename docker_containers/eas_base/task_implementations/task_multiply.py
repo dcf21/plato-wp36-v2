@@ -7,6 +7,7 @@ Implementation of the EAS pipeline task <multiply>.
 """
 
 import logging
+import os
 
 from plato_wp36 import lightcurve, task_database, task_execution, temporary_directory
 
@@ -40,31 +41,39 @@ def task_handler(execution_attempt: task_database.TaskExecutionAttempt):
                 tmp_dir=tmp_dir,
                 input_name="lightcurve_1"
             )
-        lc_in_1 = lightcurve.LightcurveArbitraryRaster.from_file(
-            file_path=lc_in_filename,
-            file_metadata=lc_in_metadata
-        )
+            lc_in_1 = lightcurve.LightcurveArbitraryRaster.from_file(
+                file_path=lc_in_filename,
+                file_metadata=lc_in_metadata
+            )
 
-        with task_database.TaskDatabaseConnection() as task_db:
             lc_in_filename, lc_in_metadata = task_db.task_open_file_input(
                 task=execution_attempt.task_object,
                 tmp_dir=tmp_dir,
                 input_name="lightcurve_2"
             )
-        lc_in_2 = lightcurve.LightcurveArbitraryRaster.from_file(
-            file_path=lc_in_filename,
-            file_metadata=lc_in_metadata
-        )
+            lc_in_2 = lightcurve.LightcurveArbitraryRaster.from_file(
+                file_path=lc_in_filename,
+                file_metadata=lc_in_metadata
+            )
 
-    # Multiply lightcurves together
-    lc_result = lc_in_1 * lc_in_2
+            # Multiply lightcurves together
+            lc_result = lc_in_1 * lc_in_2
 
-    # Write output
-    lc_result.to_file(directory=directory, filename=filename_out, execution_id=execution_attempt.attempt_id)
+            # Create a temporary path to store the LC in, until it is imported into the file repository
+            tmp_path = os.path.join(tmp_dir.tmp_dir, filename_out)
+            file_metadata = lc_result.to_file(target_path=tmp_path)
 
-    # Log lightcurve metadata to the database
-    with task_database.TaskDatabaseConnection() as task_db:
-        task_db.execution_attempt_update(attempt_id=execution_attempt.attempt_id, metadata=lc_result.metadata)
+            # Import lightcurve into the task database
+            task_db.execution_attempt_register_output(
+                execution_attempt=execution_attempt,
+                output_name="lightcurve",
+                file_path=tmp_path,
+                preserve=False,
+                file_metadata={**lc_result.metadata, **file_metadata}
+            )
+
+            # Log lightcurve metadata to the database
+            task_db.execution_attempt_update(attempt_id=execution_attempt.attempt_id, metadata=lc_result.metadata)
 
 
 if __name__ == "__main__":

@@ -106,14 +106,27 @@ def run_standalone_task(config_file: str):
         parent_attempt_id = task_db.execution_attempt_register(task_id=parent_task_id)
 
         # Import all input files
+        inputs_seen = {}  # If the same file is used for multiple inputs, only import it once
         if 'inputs' in config_parser:
             for semantic_type, input_filename in config_parser['inputs'].items():
+                # Logging update
                 logging.info("Importing input <{}> -> <{}>".format(semantic_type, input_filename))
 
                 input_full_path = os.path.join(s.settings['pythonPath'], input_filename)
 
-                # Create file product entry for this input file
+                # Extract the filename of this file from its full file path
                 name = os.path.split(input_filename)[1]
+
+                # Task runner will expect filename, rather than full path, once the file is imported into the database
+                task_description['inputs'][semantic_type] = name
+
+                # Check that the filename of this file product won't clash with an existing file
+                if input_filename in inputs_seen:
+                    continue
+                else:
+                    inputs_seen[input_filename] = True
+
+                # Create file product entry for this input file
                 product_id = task_db.file_product_register(generator_task=parent_task_id,
                                                            directory=working_directory,
                                                            filename=name,
@@ -133,7 +146,6 @@ def run_standalone_task(config_file: str):
                                               metadata=dict(metadata_parser['metadata']),
                                               passed_qc=True
                                               )
-                task_description['inputs'][semantic_type] = name
 
         # Dictionary of metadata to input into this task
         task_metadata = {

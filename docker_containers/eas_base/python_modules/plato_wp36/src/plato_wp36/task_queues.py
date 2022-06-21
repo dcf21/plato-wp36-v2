@@ -9,7 +9,9 @@ import logging
 import os
 import pika
 import platform
+import time
 
+from pika.exceptions import AMQPConnectionError
 from typing import Optional
 
 from .settings import Settings
@@ -665,8 +667,19 @@ class TaskQueueConnector:
         """
 
         if self.queue_engine == "amqp":
-            return TaskQueueAmqp(debugging=self.debugging)
+            # Return a connection handle to a task queue managed within an AMQP message queue
+            allowed_connection_failure = 5
+            try:
+                output = TaskQueueAmqp(debugging=self.debugging)
+                return output
+            except AMQPConnectionError:
+                if allowed_connection_failure < 1:
+                    raise
+                else:
+                    allowed_connection_failure -= 1
+                    time.sleep(60)
         elif self.queue_engine == "sql":
+            # Return a connection handle to a task queue managed within the SQL database
             return TaskQueueSQL()
         else:
             raise ValueError("Unknown task queue implementation <{}>".format(self.queue_engine))

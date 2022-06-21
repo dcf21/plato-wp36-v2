@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>plato_wp36.vendor package &#8212; plato-eas 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="plato_wp36.diagnostics package" href="plato_wp36.diagnostics.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="plato-wp36-vendor-package">
+<h1>plato_wp36.vendor package<a class="headerlink" href="#plato-wp36-vendor-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-plato_wp36.vendor.xmltodict">
+<span id="plato-wp36-vendor-xmltodict-module"></span><h2>plato_wp36.vendor.xmltodict module<a class="headerlink" href="#module-plato_wp36.vendor.xmltodict" title="Permalink to this heading">¶</a></h2>
+<p>Makes working with XML feel like you are working with JSON</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="plato_wp36.vendor.xmltodict.ParsingInterrupted">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plato_wp36.vendor.xmltodict.</span></span><span class="sig-name descname"><span class="pre">ParsingInterrupted</span></span><a class="headerlink" href="#plato_wp36.vendor.xmltodict.ParsingInterrupted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="plato_wp36.vendor.xmltodict.parse">
+<span class="sig-prename descclassname"><span class="pre">plato_wp36.vendor.xmltodict.</span></span><span class="sig-name descname"><span class="pre">parse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xml_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expat=&lt;module</span> <span class="pre">'xml.parsers.expat'</span> <span class="pre">from</span> <span class="pre">'/opt/anaconda3/lib/python3.8/xml/parsers/expat.py'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_namespaces=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">namespace_separator=':'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disable_entities=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plato_wp36.vendor.xmltodict.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the given XML input and convert it into a dictionary.</p>
+<p><cite>xml_input</cite> can either be a <cite>string</cite> or a file-like object.</p>
+<p>If <cite>xml_attribs</cite> is <cite>True</cite>, element attributes are put in the dictionary
+among regular child elements, using <cite>&#64;</cite> as a prefix to avoid collisions. If
+set to <cite>False</cite>, they are just ignored.</p>
+<p>Simple example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">xmltodict</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span> <span class="o">=</span> <span class="n">xmltodict</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="gp">... </span><span class="s2">&lt;a prop=&quot;x&quot;&gt;</span>
+<span class="gp">... </span><span class="s2">  &lt;b&gt;1&lt;/b&gt;</span>
+<span class="gp">... </span><span class="s2">  &lt;b&gt;2&lt;/b&gt;</span>
+<span class="gp">... </span><span class="s2">&lt;/a&gt;</span>
+<span class="gp">... </span><span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">][</span><span class="s1">&#39;@prop&#39;</span><span class="p">]</span>
+<span class="go">u&#39;x&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">][</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+<span class="go">[u&#39;1&#39;, u&#39;2&#39;]</span>
+</pre></div>
+</div>
+<p>If <cite>item_depth</cite> is <cite>0</cite>, the function returns a dictionary for the root
+element (default behavior). Otherwise, it calls <cite>item_callback</cite> every time
+an item at the specified depth is found and returns <cite>None</cite> in the end
+(streaming mode).</p>
+<p>The callback function receives two parameters: the <cite>path</cite> from the document
+root to the item (name-attribs pairs), and the <cite>item</cite> (dict). If the
+callback’s return value is false-ish, parsing will be stopped with the
+<a class="reference internal" href="#plato_wp36.vendor.xmltodict.ParsingInterrupted" title="plato_wp36.vendor.xmltodict.ParsingInterrupted"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParsingInterrupted</span></code></a> exception.</p>
+<p>Streaming example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;path:</span><span class="si">%s</span><span class="s1"> item:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">item</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="kc">True</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xmltodict</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="gp">... </span><span class="s2">&lt;a prop=&quot;x&quot;&gt;</span>
+<span class="gp">... </span><span class="s2">  &lt;b&gt;1&lt;/b&gt;</span>
+<span class="gp">... </span><span class="s2">  &lt;b&gt;2&lt;/b&gt;</span>
+<span class="gp">... </span><span class="s2">&lt;/a&gt;&quot;&quot;&quot;</span><span class="p">,</span> <span class="n">item_depth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">item_callback</span><span class="o">=</span><span class="n">handle</span><span class="p">)</span>
+<span class="go">path:[(u&#39;a&#39;, {u&#39;prop&#39;: u&#39;x&#39;}), (u&#39;b&#39;, None)] item:1</span>
+<span class="go">path:[(u&#39;a&#39;, {u&#39;prop&#39;: u&#39;x&#39;}), (u&#39;b&#39;, None)] item:2</span>
+</pre></div>
+</div>
+<p>The optional argument <cite>postprocessor</cite> is a function that takes <cite>path</cite>,
+<cite>key</cite> and <cite>value</cite> as positional arguments and returns a new <cite>(key, value)</cite>
+pair where both <cite>key</cite> and <cite>value</cite> may have changed. Usage example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">postprocessor</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">key</span> <span class="o">+</span> <span class="s1">&#39;:int&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xmltodict</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s1">&#39;&lt;a&gt;&lt;b&gt;1&lt;/b&gt;&lt;b&gt;2&lt;/b&gt;&lt;b&gt;x&lt;/b&gt;&lt;/a&gt;&#39;</span><span class="p">,</span>
+<span class="gp">... </span>                <span class="n">postprocessor</span><span class="o">=</span><span class="n">postprocessor</span><span class="p">)</span>
+<span class="go">OrderedDict([(u&#39;a&#39;, OrderedDict([(u&#39;b:int&#39;, [1, 2]), (u&#39;b&#39;, u&#39;x&#39;)]))])</span>
+</pre></div>
+</div>
+<p>You can pass an alternate version of <cite>expat</cite> (such as <cite>defusedexpat</cite>) by
+using the <cite>expat</cite> parameter. E.g:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">defusedexpat</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xmltodict</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s1">&#39;&lt;a&gt;hello&lt;/a&gt;&#39;</span><span class="p">,</span> <span class="n">expat</span><span class="o">=</span><span class="n">defusedexpat</span><span class="o">.</span><span class="n">pyexpat</span><span class="p">)</span>
+<span class="go">OrderedDict([(u&#39;a&#39;, u&#39;hello&#39;)])</span>
+</pre></div>
+</div>
+<p>You can use the force_list argument to force lists to be created even
+when there is only a single child of a given level of hierarchy. The
+force_list argument is a tuple of keys. If the key for a given level
+of hierarchy is in the force_list argument, that level of hierarchy
+will have a list as a child (even if there is only one sub-element).
+The index_keys operation takes precendence over this. This is applied
+after any user-supplied postprocessor has already run.</p>
+<blockquote>
+<div><p>For example, given this input:
+&lt;servers&gt;</p>
+<blockquote>
+<div><dl>
+<dt>&lt;server&gt;</dt><dd><p>&lt;name&gt;host1&lt;/name&gt;
+&lt;os&gt;Linux&lt;/os&gt;
+&lt;interfaces&gt;</p>
+<blockquote>
+<div><dl class="simple">
+<dt>&lt;interface&gt;</dt><dd><p>&lt;name&gt;em0&lt;/name&gt;
+&lt;ip_address&gt;10.0.0.1&lt;/ip_address&gt;</p>
+</dd>
+</dl>
+<p>&lt;/interface&gt;</p>
+</div></blockquote>
+<p>&lt;/interfaces&gt;</p>
+</dd>
+</dl>
+<p>&lt;/server&gt;</p>
+</div></blockquote>
+<p>&lt;/servers&gt;</p>
+<p>If called with force_list=(‘interface’,), it will produce
+this dictionary:
+{‘servers’:</p>
+<blockquote>
+<div><dl>
+<dt>{‘server’:</dt><dd><dl>
+<dt>{‘name’: ‘host1’,</dt><dd><p>‘os’: ‘Linux’},
+‘interfaces’:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>{‘interface’:</dt><dd><p>[ {‘name’: ‘em0’, ‘ip_address’: ‘10.0.0.1’ } ] } } }</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+<p><cite>force_list</cite> can also be a callable that receives <cite>path</cite>, <cite>key</cite> and
+<cite>value</cite>. This is helpful in cases where the logic that decides whether
+a list should be forced is more complex.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="plato_wp36.vendor.xmltodict.unparse">
+<span class="sig-prename descclassname"><span class="pre">plato_wp36.vendor.xmltodict.</span></span><span class="sig-name descname"><span class="pre">unparse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'utf-8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_document</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">short_empty_elements</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plato_wp36.vendor.xmltodict.unparse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Emit an XML document for the given <cite>input_dict</cite> (reverse of <cite>parse</cite>).</p>
+<blockquote>
+<div><p>The resulting XML document is returned as a string, but if <cite>output</cite> (a
+file-like object) is specified, it is written there instead.</p>
+<p>Dictionary keys prefixed with <cite>attr_prefix</cite> (default=`’&#64;’<cite>) are interpreted
+as XML node attributes, whereas keys equal to `cdata_key</cite>
+(default=`’#text’<a href="#id1"><span class="problematic" id="id2">`</span></a>) are treated as character data.</p>
+<p>The <cite>pretty</cite> parameter (default=`False`) enables pretty-printing. In this
+mode, lines are terminated with <a href="#id3"><span class="problematic" id="id4">`</span></a>’</p>
+</div></blockquote>
+<dl class="simple">
+<dt>‘` and indented with <cite>‘ ‘</cite>, but this</dt><dd><p>can be customized with the <cite>newl</cite> and <cite>indent</cite> parameters.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-plato_wp36.vendor">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-plato_wp36.vendor" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">plato-eas</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">plato_wp36</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="plato_wp36.html">plato_wp36 package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">plato_wp36</a><ul>
+  <li><a href="plato_wp36.html">plato_wp36 package</a><ul>
+      <li>Previous: <a href="plato_wp36.diagnostics.html" title="previous chapter">plato_wp36.diagnostics package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Dominic Ford.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/source/plato_wp36.vendor.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
