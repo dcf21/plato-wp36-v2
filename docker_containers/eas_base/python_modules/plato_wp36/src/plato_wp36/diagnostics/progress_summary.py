@@ -57,10 +57,14 @@ WHERE {constraint};
             if item['run_waiting']:
                 output_table[item['taskTypeName']][0] += item['run_waiting']
             else:
-                output_table[item['taskTypeName']][1] += item['run_queued']
-                output_table[item['taskTypeName']][2] += item['run_stalled']
-                output_table[item['taskTypeName']][3] += item['run_running']
-                output_table[item['taskTypeName']][4] += item['run_done']
+                if item['run_queued']:
+                    output_table[item['taskTypeName']][1] += item['run_queued']
+                if item['run_stalled']:
+                    output_table[item['taskTypeName']][2] += item['run_stalled']
+                if item['run_running']:
+                    output_table[item['taskTypeName']][3] += item['run_running']
+                if item['run_done']:
+                    output_table[item['taskTypeName']][4] += item['run_done']
 
         # Format table
         output = {
