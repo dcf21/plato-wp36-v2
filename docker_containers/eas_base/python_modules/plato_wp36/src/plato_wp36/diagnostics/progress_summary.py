@@ -76,7 +76,7 @@ WHERE {constraint};
             item = output_table[task]
             norm = sum(item) + 1e-8
             output['rows'].append(
-                [task] + ["{:d} ({:.0f}%)".format(col, col / norm * 100) for col in item]
+                [task] + ["{:d} ({:3.0f}%)".format(col, col / norm * 100) for col in item]
             )
 
     # Return results
