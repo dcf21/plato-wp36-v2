@@ -264,7 +264,7 @@ echo 'DROP DATABASE IF EXISTS {:s};' | mysql --defaults-extra-file={:s}
 """.format(self.db_database, db_config_filename)
         os.system(cmd)
         cmd = ("""
-echo 'CREATE DATABASE {:s} CHARACTER SET utf8mb4 COLLATE utf8_general_cs;' | mysql --defaults-extra-file={:s}
+echo 'CREATE DATABASE {:s} CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_cs;' | mysql --defaults-extra-file={:s}
 """.format(self.db_database, db_config_filename))
         os.system(cmd)
 
