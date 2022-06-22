@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Make sure we're in the directory where this script lives
+cd "$(dirname "$0")"
+cwd=`pwd`
+
 # Install FORTRAN compiler
 apt-get update ; apt-get install -y gfortran ; apt-get clean
 

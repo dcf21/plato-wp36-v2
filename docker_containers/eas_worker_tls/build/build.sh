@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Make sure we're in the directory where this script lives
+cd "$(dirname "$0")"
+cwd=`pwd`
+
 # For the moment (May 2022), tls->numba requires numpy<1.22
 # This means we need to replace the eas_base virtual environment with one based on an old numpy version
 rm -Rf /plato-wp36-v2/data/datadir_local/virtualenv

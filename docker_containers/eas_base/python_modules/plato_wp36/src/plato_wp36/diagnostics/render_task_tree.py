@@ -163,9 +163,17 @@ def fetch_job_tree(job_name: Optional[str] = None,
         """
         # Build an SQL query for all tasks with the selected parent
         if parent_id is not None:
-            constraint = "parentTask = {:d}".format(parent_id)
+            constraint = "parentTask = %s"
+            arguments = (parent_id,)
         else:
-            constraint = "parentTask IS NULL"
+            if job_name is None:
+                constraint = "parentTask IS NULL"
+                arguments = ()
+            else:
+                constraint = """
+jobName = %s AND NOT EXISTS (SELECT 1 FROM eas_task p WHERE p.jobName=%s AND p.taskId=t.parentTask)
+"""
+                arguments = (job_name, job_name)
 
         # The latest recorded heartbeat time at which a process is judged to be still running
         threshold_heartbeat_time = time.time() - s.installation_info['max_heartbeat_age']
@@ -177,7 +185,7 @@ def fetch_job_tree(job_name: Optional[str] = None,
 SELECT COUNT(t.taskId) AS count
 FROM eas_task t
 WHERE {constraint} ORDER BY taskId;
-""".format(constraint=constraint))
+""".format(constraint=constraint), arguments)
 
             task_count = task_db.db_handle.fetchall()[0]['count']
             return task_count > 0
@@ -195,7 +203,7 @@ SELECT t.taskId, t.jobName, ett.taskTypeName,
 FROM eas_task t
 INNER JOIN eas_task_types ett on t.taskTypeId = ett.taskTypeId
 WHERE {constraint} ORDER BY taskId;
-""".format(constraint=constraint, min_heartbeat=threshold_heartbeat_time))
+""".format(constraint=constraint, min_heartbeat=threshold_heartbeat_time), arguments)
 
         task_list = task_db.db_handle.fetchall()
 

@@ -257,11 +257,15 @@ class DatabaseInterfaceMySql(DatabaseInterface):
         self.make_sql_login_config()
 
         # Recreate database from scratch
-        cmd = "echo 'DROP DATABASE IF EXISTS {:s};' | mysql --defaults-extra-file={:s}".format(self.db_database,
-                                                                                               db_config_filename)
+        # We manually specify a UTF8 character set to ensure the database can handle non-ASCII characters, and
+        # also specify that all columns should use case-sensitive matching (which is not default in MySQL!!)
+        cmd = """
+echo 'DROP DATABASE IF EXISTS {:s};' | mysql --defaults-extra-file={:s}
+""".format(self.db_database, db_config_filename)
         os.system(cmd)
-        cmd = ("echo 'CREATE DATABASE {:s} CHARACTER SET utf8mb4;' | mysql --defaults-extra-file={:s}".
-               format(self.db_database, db_config_filename))
+        cmd = ("""
+echo 'CREATE DATABASE {:s} CHARACTER SET utf8mb4 COLLATE utf8_general_cs;' | mysql --defaults-extra-file={:s}
+""".format(self.db_database, db_config_filename))
         os.system(cmd)
 
         # Create basic database schema
