@@ -16,6 +16,10 @@ The steps are as follows:
 * Log into the Arcus control panel. Select "federated login", and use your Cambridge email address and Raven password: [https://arcus.openstack.hpc.cam.ac.uk/auth/login/?next=/project/](https://arcus.openstack.hpc.cam.ac.uk/auth/login/?next=/project/)
 * Select the "iris-plato" project in the top-left corner.
 
+|![EAS Arcus interface](img/arcus_dashboard_sm.png)|
+|:--:|
+|**EAS Arcus interface: Project dashboard**|
+
 ### First-time configuration
 
 Steps which Dominic has already done within the "iris-plato" project, but which need to be done within a clean project:
@@ -48,6 +52,9 @@ Remember to substitute the IP address of your particular VM. You need to be conn
 
 Now follow [the generic minikube installation instructions](minikube-setup.md).
 
+|![EAS Arcus interface](img/arcus_instances_sm.png)|
+|:--:|
+|**EAS Arcus interface: Project instances**|
 ---
 
 ## Author

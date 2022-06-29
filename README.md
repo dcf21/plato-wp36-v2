@@ -18,7 +18,7 @@ Within each worker container, a core Python module, `plato_wp36`, provides a sta
 
 The diagram below shows the block structure of the pipeline. The yellow block shows the Kubernetes cluster which hosts the pipeline - this may be an instance of `minikube` running on a single laptop, or a large geographically-distributed cluster with thousands of cores. Blue blocks show individual Docker containers running on the cluster, or external components which manage the pipeline:
 
-![The prototype pipeline structure](docs/kubenetes_structure.png)
+![The prototype pipeline structure](docs/img/kubenetes_structure.png)
 
 The key components are as follows:
 
@@ -39,7 +39,7 @@ The key components are as follows:
 
 The block diagram below gives an overview of the software environment within each worker's Docker container:
 
-![The prototype pipeline structure](docs/container_structure.png)
+![The prototype pipeline structure](docs/img/container_structure.png)
 
 The blue boxes represent code that is shared between all workers, and is provided by the `eas_base` Docker container from which all worker nodes are derived. This provides the core parts of the EAS infrastructure, and handles all communication with other parts of the pipeline.
 

@@ -26,9 +26,17 @@ Initialise a new, empty task database, and populate it with empty tables. Use th
 
 Print a text-based hierarchy diagram of the tasks in the task database.
 
+|![EAS command-line interface](img/cmd_line_job_tree_sm.png)|
+|:--:|
+|**EAS command-line interface: Hierarical job tree**|
+
 #### diagnostics/display_message_queue.py
 
 Print a summary of how many tasks are in the job queue.
+
+|![EAS command-line interface](img/cmd_line_msg_queue_sm.png)|
+|:--:|
+|**EAS command-line interface: Message queue**|
 
 #### diagnostics/errors_list.py
 
@@ -41,6 +49,10 @@ Produce a CSV table summarising all the tasks which have recorded in the databas
 #### diagnostics/progress_summary.py
 
 Produce a table summarising how many tasks are in the task database, how many have already completed, how many have failed, and how many are still waiting to run.
+
+|![EAS command-line interface](img/cmd_line_progress_sm.png)|
+|:--:|
+|**EAS command-line interface: Progress summary**|
 
 #### diagnostics/timings_list.py
 
