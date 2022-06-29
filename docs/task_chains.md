@@ -28,3 +28,9 @@ For example, a request to synthesise a lightcurve for the Earth using PSLS would
 More complex chains of tasks can easily be built by sequencing operations together into an execution chain (
 see. `demo_jobs` for some examples). Loops, such as for loops and while loops, can be executed using special tasks which
 perform iterations just like any other task.
+
+---
+
+## Author
+
+This code is developed and maintained by Dominic Ford, at the Institute of Astronomy, Cambridge.

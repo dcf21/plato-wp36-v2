@@ -196,8 +196,14 @@ Now that the database has been initialised, it's possible to start some workers:
 
 ```
 cd ../eas_controller/worker_orchestration
-./deploy.py --worker eas-worker-base
+./deploy.py --worker eas-worker-synthesis-psls-batman --worker eas-worker-tls
 ```
+
+### 13. Start using the pipeline
+
+Congratulations! The pipeline is now fully set up.
+
+To submit jobs to the pipeline, refer to the [pipeline usage](scheduling_tasks.md) tutorial.
 
 ## Restarting the pipeline
 
@@ -246,3 +252,9 @@ To clear out the archive of intermediate file products and start again afresh:
 cd data/datadir_output/
 ./wipe.sh
 ```
+
+---
+
+## Author
+
+This code is developed and maintained by Dominic Ford, at the Institute of Astronomy, Cambridge.

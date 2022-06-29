@@ -13,9 +13,14 @@
 * * [spartan cluster - kubernetes](k8s-spartan.md)
 * * [iris openstack - minikube](minikube-iris.md)
 * * [iris openstack - kubernetes](k8s-iris.md)
+* Using the pipeline
+* * [Scheduling tasks](scheduling_tasks.md)
+* * [EAS control diagnostic tools](code_structure_eas_control.md)
+* * [The web interface](web_interface.md)
+* Defining execution chains
+* * [Execution chain descriptors](task_chains.md)
 * Code structure
 * * [Directory structure](code_structure.md)
-* * [EAS control tools](code_structure_eas_control.md)
 * Implementing new pipeline tasks
 * * [Writing a module](writing-module.md)
 * Pipeline API reference
