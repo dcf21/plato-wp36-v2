@@ -74,6 +74,8 @@ kubectl scale --replicas=8 deployment/eas-worker-synthesis-psls-batman -n=plato
 
 ... or perhaps even more than that ...
 
+![Kubernetes deployment](img/cmd_line_deployment_large_sm.png)
+
 ---
 
 ## Author

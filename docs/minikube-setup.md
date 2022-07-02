@@ -157,6 +157,8 @@ We don't start any workers just yet, because they can't operate until the task d
 watch kubectl get pods -n=plato
 ```
 
+![Kubernetes deployment](img/cmd_line_deployment_initial_sm.png)
+
 This will show a live list of the containers running within Kubernetes. It often takes a minute or two for them to reach the `Running` state.
 
 ### 10. Initialise the databases
@@ -198,6 +200,8 @@ Now that the database has been initialised, it's possible to start some workers:
 cd ../eas_controller/worker_orchestration
 ./deploy.py --worker eas-worker-synthesis-psls-batman --worker eas-worker-tls
 ```
+
+![Kubernetes deployment](img/cmd_line_deployment_small_sm.png)
 
 ### 13. Start using the pipeline
 

@@ -13,7 +13,49 @@ Currently the Arcus web interface does not have any facility to automatically pr
 
 First you need to create a bunch of virtual machines to run your Kubernetes cluster on. The steps for doing this are described [here](minikube-iris.md), but don't proceed with installing minikube. You should create one master node and a bunch of worker nodes. They can have identical specifications, but you might want to call them `master`, `worker01`, `worker02`, etc. Only the master node needs to have a floating IP (i.e. a public IP that you can use to remotely log-in).
 
-### 2. Install Docker and kubeadm
+### 2. Create a persistent volume
+
+Virtual machine provisioned through Arcus only have extremely limited local storage, and so you will need to mount an additional volume. In the *volumes* section of the Arcus interface, provision a new volume to store your intermediate file products on. Mount this volume onto the master node of the Kubernetes cluster, using the dropdown menu on the far right of the instances list (below 'Create Snapshot').
+
+### 3. Partition and format the persistent volume
+
+ssh into the master node. The persistent volume will probably appear as the device `/dev/sdb`, but as yet it has no partitions or filing systems on it. You will need to partition it and format it from the command-line.
+
+First run `parted`:
+
+```
+mklabel gpt
+mkpart primary ext4 2048s -1s
+```
+
+Then run `mkfs` to format the new partition:
+
+```
+mkfs.ext4 /dev/sdb1
+```
+
+Finally, mount the partition:
+
+```
+mkdir /media/kubenetes_vol
+mount /dev/sdb1 /media/kubenetes_vol
+```
+
+### 4. Install the ssh key
+
+The Kubernetes master nodes needs to have a copy of the ssh private key that it will use to connect to the worker nodes.
+
+Create a file `/root/plato-key.pem` on the master node and copy the private key into it from the Arcus web interface.
+
+If you're feeling paranoid, you might want to run:
+
+```
+chmod 600 /root/plato-key.pem
+```
+
+... to make sure only root can read the private network key. In practice there probably won't be any other users with access to your virtual machine.
+
+### 5. Install Docker and kubeadm
 
 Run these shell commands as root on both the master node and also all your worker nodes:
 
@@ -37,7 +79,7 @@ apt update
 apt install -y kubelet kubeadm kubectl kubernetes-cni
 ```
 
-### 3. Disable swap
+### 6. Disable swap
 
 This is currently not necessary on Iris, but make sure that swap isn't enable on any worker nodes.
 
@@ -48,21 +90,7 @@ swapoff -a
 
 Edit `/etc/fstab` to remove swapfile.
 
-### 4. Install the ssh key
-
-The Kubernetes master nodes needs to have a copy of the ssh private key that it will use to connect to the worker nodes.
-
-Create a file `/root/plato-key.pem` on the master node and copy the private key into it from the Arcus web interface.
-
-If you're feeling paranoid, you might want to run:
-
-```
-chmod 600 /root/plato-key.pem
-```
-
-... to make sure only root can read the private network key. In practice there probably won't be any other users with access to your virtual machine.
-
-### 5. Enabled bridged network traffic
+### 7. Enabled bridged network traffic
 
 Run these commands as root, on both the master node and all the worker nodes:
 
@@ -86,7 +114,7 @@ systemctl daemon-reload
 systemctl restart docker
 ```
 
-### 6. Configure the master node
+### 8. Configure the master node
 
 Run these commands as root:
 
@@ -99,7 +127,7 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/k8s-manifests/kube-flannel-rbac.yml
 ```
 
-### 7. Add the worker nodes into the multi-node cluster
+### 9. Add the worker nodes into the multi-node cluster
 
 First, query the master node to find out the token you should use to add worker nodes:
 
@@ -115,13 +143,9 @@ kubeadm join 192.168.0.17:6443 --token e5c5vy.ju731qoypo583n0m --discovery-token
 
 You should substitute the discovery token that the master node told you to use.
 
-### 8. All done!
+### 10. All done!
 
 You can now submit jobs to the cluster from the master node.
-
-### To do
-
-The instructions above don't mount any network volumes for persistent storage...
 
 ---
 
