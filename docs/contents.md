@@ -24,7 +24,7 @@
 * Implementing new pipeline tasks
 * * [Writing a module](writing-module.md)
 * Pipeline API reference
-* * [API reference](api_reference/_build/html/source/plato_wp36.html)
+* * [API reference](api_reference_md/plato_wp36.md)
 
 ---
 
