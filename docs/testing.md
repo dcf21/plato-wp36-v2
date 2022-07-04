@@ -22,7 +22,7 @@ To build all of the workers will take around 10 minutes. If you want to save tim
 ./build-docker-containers.py --target local --container eas_base --container eas_worker_tls
 ```
 
-Note that it's always a good idea to rebuild the `eas_base` container as well as the one you want to test, since all worker containers are derived from `eas_base`.
+It's always a good idea to rebuild the `eas_base` container as well as the one you want to test, since all worker containers are derived from `eas_base`.
 
 ### 2. Run a test
 
